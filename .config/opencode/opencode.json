@@ -1,0 +1,40 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "oh-my-openagent@latest"
+  ],
+  "provider": {
+    "9router": {
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://127.0.0.1:20128/v1",
+        "apiKey": "sk-33c95053298a45e7-6rj8s3-ad0f027c"
+      },
+      "models": {
+        "cga/gpt-5.5-xhigh": {
+          "name": "cga/gpt-5.5-xhigh"
+        },
+        "cga/gpt-5.5": {
+          "name": "cga/gpt-5.5"
+        },
+        "cga/gpt-5.4-high": {
+          "name": "cga/gpt-5.4-high"
+        },
+        "oc/minimax-m2.5-free": {
+          "name": "oc/minimax-m2.5-free"
+        },
+        "oc/deepseek-v4-flash-free": {
+          "name": "oc/deepseek-v4-flash-free"
+        }
+      }
+    }
+  },
+  "model": "9router/cga/gpt-5.5-xhigh",
+  "agent": {
+    "explorer": {
+      "description": "Fast explorer subagent for codebase exploration",
+      "mode": "subagent",
+      "model": "9router/cga/gpt-5.5-xhigh"
+    }
+  }
+}

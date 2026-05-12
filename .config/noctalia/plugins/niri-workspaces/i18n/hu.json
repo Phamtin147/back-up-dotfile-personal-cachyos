@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Niri munkaterületek szűrése, váltás, átnevezés vagy visszaállítás"
+    },
+    "unnamedLabel": "{idx}. munkaterület",
+    "currentSuffix": " (aktuális)",
+    "focus": {
+      "description": "Váltás erre a munkaterületre",
+      "descriptionCurrent": "Aktuális munkaterület"
+    },
+    "actions": {
+      "rename": "Átnevezés",
+      "reset": "Név visszaállítása (indexre)"
+    },
+    "renamePrompt": {
+      "name": "Adj új nevet a {idx}. munkaterületnek",
+      "nameWithCurrent": "„{current}” nevének szerkesztése",
+      "description": "Enter az alkalmazáshoz. {sigil}{sigil} a visszaállításhoz."
+    },
+    "resetPrompt": {
+      "name": "{target} nevének visszaállítása",
+      "description": "Törli az egyéni nevet — Enter az alkalmazáshoz"
+    },
+    "applyRename": {
+      "name": "Név beállítása: {name}",
+      "description": "{target} átnevezése erre",
+      "unchangedName": "Név megtartása: {name}",
+      "unchangedDescription": "A név már be van állítva — Enter a bezáráshoz"
+    },
+    "noMatches": {
+      "name": "Nincs találat erre: „{filter}”",
+      "description": "Próbálj másik szűrőt vagy töröld"
+    },
+    "noHighlighted": {
+      "name": "Nincs szerkeszthető munkaterület",
+      "description": "Jelölj ki egy munkaterületet a listában, vagy nyisd meg a launchert Niri alatt"
+    },
+    "notNiri": {
+      "name": "Nem Niri-n fut",
+      "description": "Ez a plugin csak a Niri kompozitoron működik"
+    }
+  }
+}

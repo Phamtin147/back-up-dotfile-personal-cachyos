@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Lọc, chuyển, đổi tên hoặc đặt lại không gian làm việc Niri"
+    },
+    "unnamedLabel": "Không gian làm việc {idx}",
+    "currentSuffix": " (hiện tại)",
+    "focus": {
+      "description": "Chuyển sang không gian làm việc này",
+      "descriptionCurrent": "Không gian làm việc hiện tại"
+    },
+    "actions": {
+      "rename": "Đổi tên",
+      "reset": "Đặt lại tên (về chỉ số)"
+    },
+    "renamePrompt": {
+      "name": "Nhập tên mới cho không gian làm việc {idx}",
+      "nameWithCurrent": "Chỉnh sửa tên của „{current}”",
+      "description": "Nhấn Enter để áp dụng. Nhập {sigil}{sigil} để đặt lại."
+    },
+    "resetPrompt": {
+      "name": "Đặt lại tên của {target}",
+      "description": "Xóa tên tùy chỉnh — nhấn Enter để áp dụng"
+    },
+    "applyRename": {
+      "name": "Đặt tên: {name}",
+      "description": "Đổi tên {target} thành tên này",
+      "unchangedName": "Giữ tên: {name}",
+      "unchangedDescription": "Tên đã được đặt — nhấn Enter để đóng"
+    },
+    "noMatches": {
+      "name": "Không có không gian làm việc nào khớp với „{filter}”",
+      "description": "Hãy thử bộ lọc khác hoặc xóa nó"
+    },
+    "noHighlighted": {
+      "name": "Không có không gian làm việc để chỉnh sửa",
+      "description": "Chọn một không gian làm việc trong danh sách, hoặc mở launcher trên Niri"
+    },
+    "notNiri": {
+      "name": "Không chạy trên Niri",
+      "description": "Plugin này chỉ hoạt động trên compositor Niri"
+    }
+  }
+}

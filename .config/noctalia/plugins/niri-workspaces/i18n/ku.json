@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Qadên xebatê yên Niri parzûn bike, biguhere, nav biguhere an jî vegerîne"
+    },
+    "unnamedLabel": "Qada xebatê {idx}",
+    "currentSuffix": " (niha)",
+    "focus": {
+      "description": "Biçe vê qada xebatê",
+      "descriptionCurrent": "Qada xebatê ya niha"
+    },
+    "actions": {
+      "rename": "Nav biguhere",
+      "reset": "Navî vegerîne (bo îndeksê)"
+    },
+    "renamePrompt": {
+      "name": "Ji bo qada xebatê {idx} navekî nû binivîse",
+      "nameWithCurrent": "Navê „{current}“ serast bike",
+      "description": "Enter bike da ku sepandin. {sigil}{sigil} ji bo vegerandinê."
+    },
+    "resetPrompt": {
+      "name": "Navê {target} vegerîne",
+      "description": "Navê taybet jê dibe — Enter bike da ku sepandin"
+    },
+    "applyRename": {
+      "name": "Nav saz bike: {name}",
+      "description": "{target} bi vê binav bike",
+      "unchangedName": "Navî biparêze: {name}",
+      "unchangedDescription": "Nav jixwe hatiye sazkirin — Enter bike da ku bigire"
+    },
+    "noMatches": {
+      "name": "Tu qada xebatê bi „{filter}“ re li hev nayê",
+      "description": "Parzûnekî din biceribîne an jî paqij bike"
+    },
+    "noHighlighted": {
+      "name": "Qada xebatê ji bo sererastkirinê tune",
+      "description": "Qadekî xebatê di lîsteyê de hilbijêre, an jî destpêkerê li Niri veke"
+    },
+    "notNiri": {
+      "name": "Li ser Niri naxebite",
+      "description": "Ev pêvek tenê li ser komposîtorê Niri dixebite"
+    }
+  }
+}

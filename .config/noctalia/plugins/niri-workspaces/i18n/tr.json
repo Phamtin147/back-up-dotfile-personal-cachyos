@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Niri çalışma alanlarını filtreleyin, geçiş yapın, yeniden adlandırın veya sıfırlayın"
+    },
+    "unnamedLabel": "Çalışma Alanı {idx}",
+    "currentSuffix": " (geçerli)",
+    "focus": {
+      "description": "Bu çalışma alanına geç",
+      "descriptionCurrent": "Geçerli çalışma alanı"
+    },
+    "actions": {
+      "rename": "Yeniden adlandır",
+      "reset": "Adı sıfırla (indekse)"
+    },
+    "renamePrompt": {
+      "name": "Çalışma alanı {idx} için yeni bir ad yazın",
+      "nameWithCurrent": "„{current}” adını düzenle",
+      "description": "Uygulamak için Enter. Sıfırlamak için {sigil}{sigil} yazın."
+    },
+    "resetPrompt": {
+      "name": "{target} adını sıfırla",
+      "description": "Özel adı temizler — uygulamak için Enter"
+    },
+    "applyRename": {
+      "name": "Adı belirle: {name}",
+      "description": "{target} öğesini buna yeniden adlandır",
+      "unchangedName": "Adı koru: {name}",
+      "unchangedDescription": "Ad zaten belirlenmiş — kapatmak için Enter"
+    },
+    "noMatches": {
+      "name": "„{filter}” ile eşleşen çalışma alanı yok",
+      "description": "Farklı bir filtre deneyin veya temizleyin"
+    },
+    "noHighlighted": {
+      "name": "Düzenlenecek çalışma alanı yok",
+      "description": "Listeden bir çalışma alanı seçin veya başlatıcıyı Niri'de açın"
+    },
+    "notNiri": {
+      "name": "Niri üzerinde çalışmıyor",
+      "description": "Bu eklenti yalnızca Niri kompozitöründe çalışır"
+    }
+  }
+}

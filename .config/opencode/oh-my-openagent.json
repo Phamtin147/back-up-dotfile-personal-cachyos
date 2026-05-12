@@ -1,0 +1,64 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "agents": {
+    "hephaestus": {
+      "model": "9router/cga/gpt-5.5"
+    },
+    "oracle": {
+      "model": "9router/cga/gpt-5.4-high"
+    },
+    "librarian": {
+      "model": "9router/oc/minimax-m2.5-free"
+    },
+    "explore": {
+      "model": "9router/oc/minimax-m2.5-free"
+    },
+    "multimodal-looker": {
+      "model": "9router/cga/gpt-5.5"
+    },
+    "prometheus": {
+      "model": "9router/cga/gpt-5.4-high"
+    },
+    "metis": {
+      "model": "9router/cga/gpt-5.4-high"
+    },
+    "momus": {
+      "model": "9router/cga/gpt-5.5-xhigh"
+    },
+    "atlas": {
+      "model": "9router/cga/gpt-5.5"
+    },
+    "sisyphus-junior": {
+      "model": "9router/cga/gpt-5.5"
+    }
+  },
+  "categories": {
+    "visual-engineering": {
+      "model": "9router/oc/deepseek-v4-flash-free"
+    },
+    "ultrabrain": {
+      "model": "9router/cga/gpt-5.5-xhigh"
+    },
+    "deep": {
+      "model": "9router/cga/gpt-5.5"
+    },
+    "artistry": {
+      "model": "9router/oc/deepseek-v4-flash-free"
+    },
+    "quick": {
+      "model": "9router/oc/deepseek-v4-flash-free"
+    },
+    "unspecified-low": {
+      "model": "9router/oc/deepseek-v4-flash-free"
+    },
+    "unspecified-high": {
+      "model": "9router/cga/gpt-5.4-high"
+    },
+    "writing": {
+      "model": "9router/oc/deepseek-v4-flash-free"
+    }
+  },
+  "background_task": {
+    "providerConcurrency": { "9router": 4 }
+  }
+}

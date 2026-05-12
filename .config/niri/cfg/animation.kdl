@@ -1,0 +1,42 @@
+
+    animations {
+        // Chuyển workspace: Nhanh và mượt
+        workspace-switch {
+            spring damping-ratio=0.8 stiffness=1000 epsilon=0.0001
+        }
+        // Mở cửa sổ: Nhanh hơn một chút
+        window-open {
+            duration-ms 500
+            curve "ease-out-expo"
+        }
+        // Đóng cửa sổ
+        window-close {
+            duration-ms 200
+            curve "ease-out-expo"
+        }
+        // Di chuyển ngang (khi cuộn giữa các cột)
+        horizontal-view-movement {
+            spring damping-ratio=0.9 stiffness=800 epsilon=0.0001
+        }
+        // Di chuyển cửa sổ
+        window-movement {
+            spring damping-ratio=0.8 stiffness=1000 epsilon=0.0001
+        }
+        // Thay đổi kích thước cửa sổ
+        window-resize {
+            spring damping-ratio=0.9 stiffness=1000 epsilon=0.0001
+        }
+        // Thông báo cấu hình
+        config-notification-open-close {
+            spring damping-ratio=0.6 stiffness=1000 epsilon=0.001
+        }
+        // Giao diện chụp màn hình
+        screenshot-ui-open {
+            duration-ms 200
+            curve "ease-out-quad"
+        }
+        // Chế độ xem tổng quan (Overview) - Cần mượt và bay bổng
+        overview-open-close {
+            spring damping-ratio=0.85 stiffness=700 epsilon=0.0001
+        }
+    }

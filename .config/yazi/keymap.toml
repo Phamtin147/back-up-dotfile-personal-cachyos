@@ -1,0 +1,94 @@
+[[mgr.prepend_keymap]]
+on = "M"
+run = "plugin mount"
+desc = "Open mount menu"
+
+[[mgr.prepend_keymap]]
+on = ["g", "m"]
+run = "cd /run/media/$USER"
+desc = "Go to mount points"
+
+[[mgr.prepend_keymap]]
+on = ["g", "i"]
+run = "cd /home/$USER/Downloads"
+desc = "Go to Downloads"
+
+[[mgr.prepend_keymap]]
+on = ["g", "d"]
+run = "cd /home/$USER/.config"
+desc = "Go to dotfiles directory"
+
+[[mgr.prepend_keymap]]
+on = ["g", "c"]
+run = "cd /home/$USER/Code"
+desc = "Go to Code playground"
+
+[[mgr.prepend_keymap]]
+on = ["g", "p"]
+run = "cd /home/$USER/Projects/GitHub/personal"
+desc = "Go to personal GitHub local repository"
+
+[[mgr.prepend_keymap]]
+on = ["g", "w"]
+run = "cd /home/$USER/Projects/GitHub/work"
+desc = "Go to work GitHub local repository"
+
+[[mgr.prepend_keymap]]
+on = "f"
+run = "plugin jump-to-char"
+desc = "Jump to character"
+
+[[mgr.prepend_keymap]]
+on = "F"
+run = "filter --smart"
+desc = "Filter files"
+
+[[mgr.prepend_keymap]]
+on = ["R","o"]
+run = "plugin recycle-bin -- open"
+desc = "Open Trash"
+
+[[mgr.prepend_keymap]]
+on = ["R","e"]
+run = "plugin recycle-bin -- empty"
+desc = "Empty Trash"
+
+[[mgr.prepend_keymap]]
+on = ["R","D"]
+run = "plugin recycle-bin -- emptyDays"
+desc = "Empty by days deleted"
+
+[[mgr.prepend_keymap]]
+on = ["R","d"]
+run = "plugin recycle-bin -- delete"
+desc = "Delete from Trash"
+
+[[mgr.prepend_keymap]]
+on = ["R","r"]
+run = "plugin recycle-bin -- restore"
+desc = "Restore from Trash"
+
+[[mgr.prepend_keymap]]
+on   = [ "c", "a", "a" ]
+run  = "plugin compress"
+desc = "Archive selected files"
+
+[[mgr.prepend_keymap]]
+on   = [ "c", "a", "p" ]
+run  = "plugin compress -p"
+desc = "Archive selected files (password)"
+
+[[mgr.prepend_keymap]]
+on   = [ "c", "a", "h" ]
+run  = "plugin compress -ph"
+desc = "Archive selected files (password+header)"
+
+[[mgr.prepend_keymap]]
+on   = [ "c", "a", "l" ]
+run  = "plugin compress -l"
+desc = "Archive selected files (compression level)"
+
+[[mgr.prepend_keymap]]
+on   = [ "c", "a", "u" ]
+run  = "plugin compress -phl"
+desc = "Archive selected files (password+header+level)"

@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Filtra, cambia, rinomina o reimposta le aree di lavoro Niri"
+    },
+    "unnamedLabel": "Area di lavoro {idx}",
+    "currentSuffix": " (attuale)",
+    "focus": {
+      "description": "Passa a quest'area di lavoro",
+      "descriptionCurrent": "Area di lavoro attuale"
+    },
+    "actions": {
+      "rename": "Rinomina",
+      "reset": "Reimposta nome (all'indice)"
+    },
+    "renamePrompt": {
+      "name": "Inserisci un nuovo nome per l'area di lavoro {idx}",
+      "nameWithCurrent": "Modifica il nome di «{current}»",
+      "description": "Premi Invio per applicare. Digita {sigil}{sigil} per reimpostare."
+    },
+    "resetPrompt": {
+      "name": "Reimposta il nome di {target}",
+      "description": "Rimuove il nome personalizzato — premi Invio per applicare"
+    },
+    "applyRename": {
+      "name": "Imposta nome: {name}",
+      "description": "Rinomina {target} in questo",
+      "unchangedName": "Mantieni nome: {name}",
+      "unchangedDescription": "Il nome è già impostato — premi Invio per chiudere"
+    },
+    "noMatches": {
+      "name": "Nessuna area di lavoro corrisponde a «{filter}»",
+      "description": "Prova un altro filtro o cancellalo"
+    },
+    "noHighlighted": {
+      "name": "Nessuna area di lavoro da modificare",
+      "description": "Seleziona un'area di lavoro nell'elenco, o apri il launcher su Niri"
+    },
+    "notNiri": {
+      "name": "Non in esecuzione su Niri",
+      "description": "Questo plugin funziona solo sul compositor Niri"
+    }
+  }
+}

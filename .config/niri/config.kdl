@@ -1,0 +1,12 @@
+include "./cfg/autostart.kdl"
+include "./cfg/keybinds.kdl"
+include "./cfg/input.kdl"
+include "./cfg/display.kdl"
+include "./cfg/layout.kdl"
+include "./cfg/rules.kdl"
+include "./cfg/misc.kdl"
+include "./cfg/cursor.kdl"
+include "./noctalia.kdl"
+
+spawn-at-startup "niri-bar"
+spawn-at-startup "sh" "-c" "~/.local/bin/legion-startup.sh"

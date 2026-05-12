@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Filter, jump to, rename or reset Niri workspaces"
+    },
+    "unnamedLabel": "Workspace {idx}",
+    "currentSuffix": " (current)",
+    "focus": {
+      "description": "Switch to this workspace",
+      "descriptionCurrent": "Current workspace"
+    },
+    "actions": {
+      "rename": "Rename",
+      "reset": "Reset name (back to index)"
+    },
+    "renamePrompt": {
+      "name": "Type a new name for Workspace {idx}",
+      "nameWithCurrent": "Edit name of \"{current}\"",
+      "description": "Press Enter to apply. Type {sigil}{sigil} to reset."
+    },
+    "resetPrompt": {
+      "name": "Reset name of {target}",
+      "description": "Clears the custom name — press Enter to apply"
+    },
+    "applyRename": {
+      "name": "Set name: {name}",
+      "description": "Rename {target} to this",
+      "unchangedName": "Keep name: {name}",
+      "unchangedDescription": "Name is already set — press Enter to close"
+    },
+    "noMatches": {
+      "name": "No workspaces match \"{filter}\"",
+      "description": "Try a different filter or clear it"
+    },
+    "noHighlighted": {
+      "name": "No workspace to edit",
+      "description": "Highlight a workspace in the list, or open the launcher on Niri"
+    },
+    "notNiri": {
+      "name": "Not running on Niri",
+      "description": "This plugin only works on the Niri compositor"
+    }
+  }
+}

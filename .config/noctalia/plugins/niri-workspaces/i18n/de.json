@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Niri-Arbeitsflächen filtern, wechseln, umbenennen oder zurücksetzen"
+    },
+    "unnamedLabel": "Arbeitsfläche {idx}",
+    "currentSuffix": " (aktuell)",
+    "focus": {
+      "description": "Zu dieser Arbeitsfläche wechseln",
+      "descriptionCurrent": "Aktuelle Arbeitsfläche"
+    },
+    "actions": {
+      "rename": "Umbenennen",
+      "reset": "Name zurücksetzen (auf Index)"
+    },
+    "renamePrompt": {
+      "name": "Neuen Namen für Arbeitsfläche {idx} eingeben",
+      "nameWithCurrent": "Name von „{current}“ bearbeiten",
+      "description": "Mit Enter übernehmen. {sigil}{sigil} zum Zurücksetzen."
+    },
+    "resetPrompt": {
+      "name": "Namen von {target} zurücksetzen",
+      "description": "Entfernt den benutzerdefinierten Namen — Enter übernimmt"
+    },
+    "applyRename": {
+      "name": "Name setzen: {name}",
+      "description": "{target} auf diesen Namen umbenennen",
+      "unchangedName": "Name behalten: {name}",
+      "unchangedDescription": "Name ist bereits gesetzt — Enter schließt"
+    },
+    "noMatches": {
+      "name": "Keine Arbeitsflächen passen zu „{filter}“",
+      "description": "Anderen Filter versuchen oder zurücksetzen"
+    },
+    "noHighlighted": {
+      "name": "Keine Arbeitsfläche zum Bearbeiten",
+      "description": "Eine Arbeitsfläche in der Liste markieren oder den Launcher auf Niri öffnen"
+    },
+    "notNiri": {
+      "name": "Läuft nicht auf Niri",
+      "description": "Dieses Plugin funktioniert nur auf dem Niri-Compositor"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Niri ワークスペースの絞り込み・切り替え・名前変更・リセット"
+    },
+    "unnamedLabel": "ワークスペース {idx}",
+    "currentSuffix": "（現在）",
+    "focus": {
+      "description": "このワークスペースに切り替える",
+      "descriptionCurrent": "現在のワークスペース"
+    },
+    "actions": {
+      "rename": "名前を変更",
+      "reset": "名前をリセット（インデックスに戻す）"
+    },
+    "renamePrompt": {
+      "name": "ワークスペース {idx} の新しい名前を入力",
+      "nameWithCurrent": "「{current}」の名前を編集",
+      "description": "Enter で適用。{sigil}{sigil} でリセット。"
+    },
+    "resetPrompt": {
+      "name": "{target} の名前をリセット",
+      "description": "カスタム名を削除します — Enter で適用"
+    },
+    "applyRename": {
+      "name": "名前を設定: {name}",
+      "description": "{target} をこの名前に変更",
+      "unchangedName": "名前を維持: {name}",
+      "unchangedDescription": "名前はすでに設定されています — Enter で閉じる"
+    },
+    "noMatches": {
+      "name": "「{filter}」に一致するワークスペースがありません",
+      "description": "別の条件で絞り込むか、クリアしてください"
+    },
+    "noHighlighted": {
+      "name": "編集対象のワークスペースがありません",
+      "description": "リストでワークスペースを選択するか、Niri 上でランチャーを開いてください"
+    },
+    "notNiri": {
+      "name": "Niri 上で動作していません",
+      "description": "このプラグインは Niri コンポジタでのみ動作します"
+    }
+  }
+}

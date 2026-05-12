@@ -1,0 +1,28 @@
+{
+  "id": "niri-workspaces",
+  "name": "Niri Workspaces",
+  "version": "1.0.0",
+  "minNoctaliaVersion": "4.4.1",
+  "author": "Kohányi Róbert",
+  "license": "MIT",
+  "repository": "https://github.com/noctalia-dev/noctalia-plugins",
+  "description": "Filter, jump to, rename or reset Niri workspaces from the launcher.",
+  "tags": [
+    "Launcher",
+    "Utility",
+    "Niri"
+  ],
+  "entryPoints": {
+    "main": "Main.qml",
+    "launcherProvider": "LauncherProvider.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "commandPrefix": ">ws",
+    "defaultSettings": {
+      "launcherPrefix": ">ws"
+    }
+  }
+}

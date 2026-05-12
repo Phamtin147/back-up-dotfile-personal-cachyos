@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Filtruj, przełączaj, zmieniaj nazwy lub resetuj obszary robocze Niri"
+    },
+    "unnamedLabel": "Obszar roboczy {idx}",
+    "currentSuffix": " (bieżący)",
+    "focus": {
+      "description": "Przełącz na ten obszar roboczy",
+      "descriptionCurrent": "Bieżący obszar roboczy"
+    },
+    "actions": {
+      "rename": "Zmień nazwę",
+      "reset": "Zresetuj nazwę (do indeksu)"
+    },
+    "renamePrompt": {
+      "name": "Wpisz nową nazwę dla obszaru roboczego {idx}",
+      "nameWithCurrent": "Edytuj nazwę „{current}”",
+      "description": "Naciśnij Enter, aby zastosować. Wpisz {sigil}{sigil}, aby zresetować."
+    },
+    "resetPrompt": {
+      "name": "Zresetuj nazwę {target}",
+      "description": "Usuwa niestandardową nazwę — naciśnij Enter, aby zastosować"
+    },
+    "applyRename": {
+      "name": "Ustaw nazwę: {name}",
+      "description": "Zmień nazwę {target} na tę",
+      "unchangedName": "Zachowaj nazwę: {name}",
+      "unchangedDescription": "Nazwa jest już ustawiona — naciśnij Enter, aby zamknąć"
+    },
+    "noMatches": {
+      "name": "Żaden obszar roboczy nie pasuje do „{filter}”",
+      "description": "Spróbuj innego filtra lub go wyczyść"
+    },
+    "noHighlighted": {
+      "name": "Brak obszaru roboczego do edycji",
+      "description": "Zaznacz obszar roboczy na liście lub otwórz launcher w Niri"
+    },
+    "notNiri": {
+      "name": "Nie działa na Niri",
+      "description": "Ta wtyczka działa tylko na kompozytorze Niri"
+    }
+  }
+}
