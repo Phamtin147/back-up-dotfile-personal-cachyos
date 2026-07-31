@@ -60,9 +60,7 @@
         "middleClickCommand": "",
         "middleClickFollowMouse": false,
         "monitors": [
-            "DP-3",
-            "DP-1",
-            "eDP-1"
+            "__none__"
         ],
         "mouseWheelAction": "content",
         "mouseWheelWrap": true,
