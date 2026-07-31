@@ -1,0 +1,7 @@
+cursor {
+    // Thay "Apple-Cursor" bằng tên chính xác bạn vừa tìm thấy ở Bước 1
+    xcursor-theme "Skyrim-cursors"
+    
+    // Kích thước 24 là tiêu chuẩn, bạn có thể tăng lên 32 nếu thích to rõ
+    xcursor-size 32
+}

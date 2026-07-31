@@ -1,0 +1,5 @@
+setting_entries:
+  close_to_tray: false
+  open_closed_to_tray: false
+  enable_gui_monitoring: false
+  icon_color_mode: always-dark

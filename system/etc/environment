@@ -1,0 +1,7 @@
+#
+# This file is parsed by pam_env module
+#
+# Syntax: simple "KEY=VAL" pairs on separate lines
+#
+WLR_DRM_DEVICES=/dev/dri/card1
+WLR_RENDERER=pixman

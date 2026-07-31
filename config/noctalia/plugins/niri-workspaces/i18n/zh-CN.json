@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "筛选、切换、重命名或重置 Niri 工作区"
+    },
+    "unnamedLabel": "工作区 {idx}",
+    "currentSuffix": "（当前）",
+    "focus": {
+      "description": "切换到该工作区",
+      "descriptionCurrent": "当前工作区"
+    },
+    "actions": {
+      "rename": "重命名",
+      "reset": "重置名称（回到索引）"
+    },
+    "renamePrompt": {
+      "name": "为工作区 {idx} 输入新名称",
+      "nameWithCurrent": "编辑「{current}」的名称",
+      "description": "按 Enter 应用。输入 {sigil}{sigil} 重置。"
+    },
+    "resetPrompt": {
+      "name": "重置 {target} 的名称",
+      "description": "清除自定义名称 — 按 Enter 应用"
+    },
+    "applyRename": {
+      "name": "设置名称：{name}",
+      "description": "将 {target} 重命名为此",
+      "unchangedName": "保留名称：{name}",
+      "unchangedDescription": "名称已设置 — 按 Enter 关闭"
+    },
+    "noMatches": {
+      "name": "没有工作区与「{filter}」匹配",
+      "description": "尝试其他筛选条件或清除筛选"
+    },
+    "noHighlighted": {
+      "name": "没有可编辑的工作区",
+      "description": "在列表中选择一个工作区，或在 Niri 上打开启动器"
+    },
+    "notNiri": {
+      "name": "未在 Niri 上运行",
+      "description": "该插件仅在 Niri 合成器上工作"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+    layout {
+        gaps 3
+        center-focused-column "never" 
+        
+        focus-ring {
+            width 1.5
+            active-color "#333333"
+            inactive-color "#333333"  
+        }
+
+        background-color "transparent" 
+
+        preset-column-widths {
+            proportion 0.33333
+            proportion 0.5
+            proportion 0.66667
+        }
+
+        struts {}
+    }

@@ -1,0 +1,1 @@
+amtia ALL=(ALL) NOPASSWD: /home/amtia/.local/bin/legion_cli fancurve-write-preset-to-hw performance-ac, /home/amtia/.local/bin/legion_cli batteryconservation-enable

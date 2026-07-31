@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Filtrar, cambiar, renombrar o restablecer espacios de trabajo de Niri"
+    },
+    "unnamedLabel": "Espacio de trabajo {idx}",
+    "currentSuffix": " (actual)",
+    "focus": {
+      "description": "Cambiar a este espacio de trabajo",
+      "descriptionCurrent": "Espacio de trabajo actual"
+    },
+    "actions": {
+      "rename": "Renombrar",
+      "reset": "Restablecer nombre (al índice)"
+    },
+    "renamePrompt": {
+      "name": "Escribe un nuevo nombre para el espacio de trabajo {idx}",
+      "nameWithCurrent": "Editar nombre de «{current}»",
+      "description": "Pulsa Enter para aplicar. Escribe {sigil}{sigil} para restablecer."
+    },
+    "resetPrompt": {
+      "name": "Restablecer nombre de {target}",
+      "description": "Borra el nombre personalizado — pulsa Enter para aplicar"
+    },
+    "applyRename": {
+      "name": "Establecer nombre: {name}",
+      "description": "Renombrar {target} con este nombre",
+      "unchangedName": "Mantener nombre: {name}",
+      "unchangedDescription": "El nombre ya está establecido — pulsa Enter para cerrar"
+    },
+    "noMatches": {
+      "name": "Ningún espacio de trabajo coincide con «{filter}»",
+      "description": "Prueba con otro filtro o bórralo"
+    },
+    "noHighlighted": {
+      "name": "Ningún espacio de trabajo para editar",
+      "description": "Selecciona un espacio de trabajo en la lista, o abre el lanzador en Niri"
+    },
+    "notNiri": {
+      "name": "No se está ejecutando en Niri",
+      "description": "Este plugin solo funciona en el compositor Niri"
+    }
+  }
+}

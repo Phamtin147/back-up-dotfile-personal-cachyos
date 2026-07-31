@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Niri-werkruimtes filteren, wisselen, hernoemen of resetten"
+    },
+    "unnamedLabel": "Werkruimte {idx}",
+    "currentSuffix": " (huidig)",
+    "focus": {
+      "description": "Naar deze werkruimte wisselen",
+      "descriptionCurrent": "Huidige werkruimte"
+    },
+    "actions": {
+      "rename": "Hernoemen",
+      "reset": "Naam resetten (naar index)"
+    },
+    "renamePrompt": {
+      "name": "Typ een nieuwe naam voor werkruimte {idx}",
+      "nameWithCurrent": "Naam van „{current}” bewerken",
+      "description": "Druk op Enter om toe te passen. Typ {sigil}{sigil} om te resetten."
+    },
+    "resetPrompt": {
+      "name": "Naam van {target} resetten",
+      "description": "Wist de aangepaste naam — druk op Enter om toe te passen"
+    },
+    "applyRename": {
+      "name": "Naam instellen: {name}",
+      "description": "{target} hiernaar hernoemen",
+      "unchangedName": "Naam behouden: {name}",
+      "unchangedDescription": "Naam is al ingesteld — druk op Enter om te sluiten"
+    },
+    "noMatches": {
+      "name": "Geen werkruimtes komen overeen met „{filter}”",
+      "description": "Probeer een ander filter of wis het"
+    },
+    "noHighlighted": {
+      "name": "Geen werkruimte om te bewerken",
+      "description": "Selecteer een werkruimte in de lijst, of open de launcher op Niri"
+    },
+    "notNiri": {
+      "name": "Draait niet op Niri",
+      "description": "Deze plugin werkt alleen op de Niri-compositor"
+    }
+  }
+}

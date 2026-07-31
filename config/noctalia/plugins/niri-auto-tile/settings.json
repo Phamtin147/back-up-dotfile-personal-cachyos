@@ -1,0 +1,9 @@
+{
+  "maxVisible": 1,
+  "debounceMs": 300,
+  "maxEventsPerSecond": 20,
+  "enabled": false,
+  "perWorkspace": false,
+  "workspaceMaxVisible": {},
+  "language": "auto"
+}

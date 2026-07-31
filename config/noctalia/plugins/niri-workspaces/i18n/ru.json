@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Фильтрация, переключение, переименование и сброс рабочих столов Niri"
+    },
+    "unnamedLabel": "Рабочий стол {idx}",
+    "currentSuffix": " (текущий)",
+    "focus": {
+      "description": "Переключиться на этот рабочий стол",
+      "descriptionCurrent": "Текущий рабочий стол"
+    },
+    "actions": {
+      "rename": "Переименовать",
+      "reset": "Сбросить имя (до индекса)"
+    },
+    "renamePrompt": {
+      "name": "Введите новое имя для рабочего стола {idx}",
+      "nameWithCurrent": "Изменить имя «{current}»",
+      "description": "Enter — применить. {sigil}{sigil} — сбросить."
+    },
+    "resetPrompt": {
+      "name": "Сбросить имя {target}",
+      "description": "Очищает пользовательское имя — Enter применит"
+    },
+    "applyRename": {
+      "name": "Задать имя: {name}",
+      "description": "Переименовать {target} в это",
+      "unchangedName": "Оставить имя: {name}",
+      "unchangedDescription": "Имя уже задано — Enter закроет"
+    },
+    "noMatches": {
+      "name": "Нет рабочих столов по запросу «{filter}»",
+      "description": "Попробуйте другой фильтр или очистите его"
+    },
+    "noHighlighted": {
+      "name": "Нет рабочего стола для редактирования",
+      "description": "Выберите рабочий стол в списке или откройте лаунчер на Niri"
+    },
+    "notNiri": {
+      "name": "Не запущено на Niri",
+      "description": "Этот плагин работает только на композиторе Niri"
+    }
+  }
+}

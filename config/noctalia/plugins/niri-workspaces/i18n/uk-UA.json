@@ -1,0 +1,44 @@
+{
+  "launcher": {
+    "command": {
+      "description": "Фільтрування, перемикання, перейменування та скидання робочих просторів Niri"
+    },
+    "unnamedLabel": "Робочий простір {idx}",
+    "currentSuffix": " (поточний)",
+    "focus": {
+      "description": "Перейти до цього робочого простору",
+      "descriptionCurrent": "Поточний робочий простір"
+    },
+    "actions": {
+      "rename": "Перейменувати",
+      "reset": "Скинути назву (до індексу)"
+    },
+    "renamePrompt": {
+      "name": "Введіть нову назву для робочого простору {idx}",
+      "nameWithCurrent": "Редагувати назву «{current}»",
+      "description": "Enter — застосувати. {sigil}{sigil} — скинути."
+    },
+    "resetPrompt": {
+      "name": "Скинути назву {target}",
+      "description": "Очищає користувацьку назву — Enter застосує"
+    },
+    "applyRename": {
+      "name": "Встановити назву: {name}",
+      "description": "Перейменувати {target} на цю назву",
+      "unchangedName": "Залишити назву: {name}",
+      "unchangedDescription": "Назву вже встановлено — Enter закриє"
+    },
+    "noMatches": {
+      "name": "Немає робочих просторів за запитом «{filter}»",
+      "description": "Спробуйте інший фільтр або очистіть його"
+    },
+    "noHighlighted": {
+      "name": "Немає робочого простору для редагування",
+      "description": "Виберіть робочий простір у списку або відкрийте лаунчер у Niri"
+    },
+    "notNiri": {
+      "name": "Не запущено на Niri",
+      "description": "Цей плагін працює лише на композиторі Niri"
+    }
+  }
+}

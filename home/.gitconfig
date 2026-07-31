@@ -1,0 +1,7 @@
+[credential]
+	helper = /usr/lib/git-core/git-credential-libsecret
+[user]
+	email = huhume147@gmail.com
+	name = Phamtin147
+[core]
+	editor = vim

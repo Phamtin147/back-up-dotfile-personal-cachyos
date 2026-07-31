@@ -1,0 +1,8 @@
+{
+  "widget": {
+    "loading": "Loading...",
+    "no_events": "No upcoming events",
+    "heading": "Upcoming events",
+    "button": "calendar-month"
+  }
+}
