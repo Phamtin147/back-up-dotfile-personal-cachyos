@@ -17,8 +17,7 @@
         "iconMode": "tabler",
         "ignoreMouseInput": false,
         "overviewLayer": false,
-        "pinnedApps": [
-        ],
+        "pinnedApps": [],
         "position": "follow_bar",
         "screenshotAnnotationTool": "",
         "showCategories": true,
@@ -28,8 +27,7 @@
         "viewMode": "list"
     },
     "audio": {
-        "mprisBlacklist": [
-        ],
+        "mprisBlacklist": [],
         "preferredPlayer": "",
         "spectrumFrameRate": 60,
         "spectrumMirrored": true,
@@ -60,7 +58,9 @@
         "middleClickCommand": "",
         "middleClickFollowMouse": false,
         "monitors": [
-            "__none__"
+            "DP-3",
+            "DP-1",
+            "eDP-1"
         ],
         "mouseWheelAction": "content",
         "mouseWheelWrap": true,
@@ -186,8 +186,7 @@
                     "id": "plugin:catwalk"
                 },
                 {
-                    "blacklist": [
-                    ],
+                    "blacklist": [],
                     "chevronColor": "primary",
                     "colorizeIcons": true,
                     "drawerEnabled": true,
@@ -195,7 +194,7 @@
                     "id": "Tray",
                     "pinned": [
                         "steam",
-                        "DL speed: 400.3 KiB/s\nUP speed: 53.9 KiB/s"
+                        "DL speed: 400.3\u00a0KiB/s\nUP speed: 53.9\u00a0KiB/s"
                     ]
                 },
                 {
@@ -258,8 +257,7 @@
         }
     },
     "brightness": {
-        "backlightDeviceMappings": [
-        ],
+        "backlightDeviceMappings": [],
         "brightnessStep": 2,
         "enableDdcSupport": true,
         "enforceMinimum": true
@@ -481,8 +479,7 @@
             },
             {
                 "name": "DP-1",
-                "widgets": [
-                ]
+                "widgets": []
             }
         ],
         "overviewEnabled": true
@@ -514,8 +511,7 @@
             "DP-1"
         ],
         "onlySameOutput": true,
-        "pinnedApps": [
-        ],
+        "pinnedApps": [],
         "pinnedStatic": true,
         "position": "bottom",
         "showDockIndicator": false,
@@ -840,14 +836,12 @@
         "directory": "/home/amtia/Pictures/Wallpapers",
         "enableMultiMonitorDirectories": false,
         "enabled": true,
-        "favorites": [
-        ],
+        "favorites": [],
         "fillColor": "#000000",
         "fillMode": "crop",
         "hideWallpaperFilenames": false,
         "linkLightAndDarkWallpapers": true,
-        "monitorDirectories": [
-        ],
+        "monitorDirectories": [],
         "overviewBlur": 0.4,
         "overviewEnabled": false,
         "overviewTint": 0.6,

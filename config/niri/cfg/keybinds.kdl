@@ -14,20 +14,13 @@ binds {
 
     // ─── Applications ───
     MOD+RETURN                          hotkey-overlay-title="Open Terminal: Alacritty" { spawn "alacritty"; }
-    MOD+SPACE                            hotkey-overlay-title="Open App Launcher: skwd launcher" { spawn "skwd" "launcher" "toggle"; }
+    MOD+SPACE                            hotkey-overlay-title="Open App Launcher: noctalia launcher" { spawn-sh "qs -c noctalia-shell ipc call launcher toggle"; }
     MOD+B { 
         spawn "bash" "-c" "pgrep -x zen-browser || zen-browser" 
     }   
     MOD+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "qs -c noctalia-shell ipc call lockScreen lock"; }
     MOD+SHIFT+D                         hotkey-overlay-title="Wallpaper: noctalia wallpaper" { spawn-sh "qs -c noctalia-shell ipc call wallpaper toggle"; }
-    MOD+SHIFT+B                         hotkey-overlay-title="Toggle Bar: skwd bar" { spawn "skwd" "bar" "toggle"; }
-    MOD+COMMA                           hotkey-overlay-title="Skwd Settings" { spawn "skwd" "settings" "toggle"; }
-    MOD+ESCAPE                          hotkey-overlay-title="Power Menu: skwd power" { spawn "skwd" "power" "toggle"; }
-    Alt+Tab                             hotkey-overlay-title="Window Switcher: skwd" { spawn "skwd" "switch" "open"; }
-    Alt+Shift+Tab                       hotkey-overlay-title="Window Switcher prev: skwd" { spawn "skwd" "switch" "prev"; }
-    Alt+Return                          hotkey-overlay-title="Window Switcher confirm: skwd" { spawn "skwd" "switch" "confirm"; }
-    Alt+Escape                          hotkey-overlay-title="Window Switcher cancel: skwd" { spawn "skwd" "switch" "cancel"; }
-    Alt+C                               hotkey-overlay-title="Window Switcher close: skwd" { spawn "skwd" "switch" "close"; }
+    MOD+SHIFT+B                         hotkey-overlay-title="Toggle Bar: noctalia bar" { spawn-sh "qs -c noctalia-shell ipc call bar toggle"; }
     Alt+Shift+Q                          hotkey-overlay-title="Session Menu: noctalia session" { spawn-sh "qs -c noctalia-shell ipc call sessionMenu toggle"; }
 
     // Please choose your own file manager.
