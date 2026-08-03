@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=MateEngine
+Exec=bash /opt/mateengine/launch.sh
+Hidden=false
+NoDisplay=false
+Terminal=true
+X-GNOME-Autostart-enabled=true
+Comment=Autostart for MateEngine
