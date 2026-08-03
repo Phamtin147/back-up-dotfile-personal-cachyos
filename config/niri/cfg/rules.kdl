@@ -1,6 +1,6 @@
     // Bo tròn tất cả cửa sổ
     window-rule {
-        geometry-corner-radius 6
+        geometry-corner-radius 8
         clip-to-geometry true
         open-maximized true
     }

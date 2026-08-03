@@ -1,9 +1,9 @@
     layout {
-        gaps 3
+        gaps 5
         center-focused-column "never" 
-        
+  
         focus-ring {
-            width 1.5
+            width 2
             active-color "#333333"
             inactive-color "#333333"  
         }

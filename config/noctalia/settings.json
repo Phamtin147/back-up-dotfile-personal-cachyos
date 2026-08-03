@@ -14,24 +14,26 @@
         "enableSessionSearch": true,
         "enableSettingsSearch": true,
         "enableWindowsSearch": true,
-        "iconMode": "tabler",
+        "iconMode": "native",
         "ignoreMouseInput": false,
         "overviewLayer": false,
-        "pinnedApps": [],
-        "position": "follow_bar",
+        "pinnedApps": [
+        ],
+        "position": "top_center",
         "screenshotAnnotationTool": "",
         "showCategories": true,
-        "showIconBackground": false,
+        "showIconBackground": true,
         "sortByMostUsed": true,
         "terminalCommand": "alacritty -e",
         "viewMode": "list"
     },
     "audio": {
-        "mprisBlacklist": [],
+        "mprisBlacklist": [
+        ],
         "preferredPlayer": "",
         "spectrumFrameRate": 60,
         "spectrumMirrored": true,
-        "visualizerType": "linear",
+        "visualizerType": "wave",
         "volumeFeedback": false,
         "volumeFeedbackSoundFile": "",
         "volumeOverdrive": false,
@@ -40,11 +42,11 @@
     "bar": {
         "autoHideDelay": 500,
         "autoShowDelay": 150,
-        "backgroundOpacity": 0.5,
-        "barType": "floating",
+        "backgroundOpacity": 0.2,
+        "barType": "simple",
         "capsuleColorKey": "none",
         "capsuleOpacity": 1,
-        "contentPadding": 3,
+        "contentPadding": 2,
         "density": "compact",
         "displayMode": "always_visible",
         "enableExclusionZoneInset": true,
@@ -64,7 +66,7 @@
         ],
         "mouseWheelAction": "content",
         "mouseWheelWrap": true,
-        "outerCorners": true,
+        "outerCorners": false,
         "position": "top",
         "reverseScroll": false,
         "rightClickAction": "controlCenter",
@@ -86,31 +88,16 @@
         ],
         "showCapsule": true,
         "showOnWorkspaceSwitch": true,
-        "showOutline": true,
+        "showOutline": false,
         "useSeparateOpacity": true,
         "widgetSpacing": 6,
         "widgets": {
             "center": [
                 {
-                    "characterCount": 1,
-                    "colorizeIcons": false,
-                    "emptyColor": "secondary",
-                    "enableScrollWheel": true,
-                    "focusedColor": "primary",
-                    "followFocusedScreen": false,
-                    "fontWeight": "bold",
-                    "groupedBorderOpacity": 1,
-                    "hideUnoccupied": true,
-                    "iconScale": 0.8,
-                    "id": "Workspace",
-                    "labelMode": "name",
-                    "occupiedColor": "secondary",
-                    "pillSize": 0.6,
-                    "showApplications": false,
-                    "showApplicationsHover": false,
-                    "showBadge": true,
-                    "showLabelsOnlyWhenOccupied": true,
-                    "unfocusedIconsOpacity": 1
+                    "colorName": "primary",
+                    "hideWhenIdle": true,
+                    "id": "AudioVisualizer",
+                    "width": 400
                 }
             ],
             "left": [
@@ -144,6 +131,28 @@
                         "useDistroLogo": false
                     },
                     "id": "plugin:arch-updater"
+                },
+                {
+                    "characterCount": 2,
+                    "colorizeIcons": false,
+                    "emptyColor": "secondary",
+                    "enableScrollWheel": true,
+                    "focusedColor": "primary",
+                    "followFocusedScreen": false,
+                    "fontWeight": "bold",
+                    "groupedBorderOpacity": 1,
+                    "hideUnoccupied": true,
+                    "iconScale": 0.8,
+                    "id": "Workspace",
+                    "labelMode": "index",
+                    "occupiedColor": "secondary",
+                    "pillSize": 0.6,
+                    "showApplications": false,
+                    "showApplicationsHover": false,
+                    "showBadge": true,
+                    "showLabelsOnlyWhenOccupied": true,
+                    "showOnlyFocused": true,
+                    "unfocusedIconsOpacity": 1
                 },
                 {
                     "clockColor": "none",
@@ -186,7 +195,8 @@
                     "id": "plugin:catwalk"
                 },
                 {
-                    "blacklist": [],
+                    "blacklist": [
+                    ],
                     "chevronColor": "primary",
                     "colorizeIcons": true,
                     "drawerEnabled": true,
@@ -194,7 +204,7 @@
                     "id": "Tray",
                     "pinned": [
                         "steam",
-                        "DL speed: 400.3\u00a0KiB/s\nUP speed: 53.9\u00a0KiB/s"
+                        "DL speed: 400.3 KiB/s\nUP speed: 53.9 KiB/s"
                     ]
                 },
                 {
@@ -257,7 +267,8 @@
         }
     },
     "brightness": {
-        "backlightDeviceMappings": [],
+        "backlightDeviceMappings": [
+        ],
         "brightnessStep": 2,
         "enableDdcSupport": true,
         "enforceMinimum": true
@@ -280,7 +291,7 @@
     },
     "colorSchemes": {
         "darkMode": true,
-        "generationMethod": "faithful",
+        "generationMethod": "vibrant",
         "manualSunrise": "06:30",
         "manualSunset": "18:30",
         "monitorForColors": "",
@@ -418,68 +429,12 @@
             {
                 "name": "eDP-1",
                 "widgets": [
-                    {
-                        "hideMode": "visible",
-                        "id": "MediaPlayer",
-                        "roundedCorners": true,
-                        "scale": 1.02,
-                        "showAlbumArt": true,
-                        "showBackground": false,
-                        "showButtons": true,
-                        "showVisualizer": true,
-                        "visualizerType": "wave",
-                        "x": 24,
-                        "y": 48
-                    },
-                    {
-                        "diskPath": "/",
-                        "id": "SystemStat",
-                        "layout": "bottom",
-                        "roundedCorners": true,
-                        "scale": 1.1,
-                        "showBackground": false,
-                        "statType": "CPU",
-                        "x": 24,
-                        "y": 288
-                    },
-                    {
-                        "defaultSettings": {
-                            "hideBackground": false,
-                            "minimumThreshold": 10
-                        },
-                        "id": "plugin:catwalk",
-                        "scale": 0.5,
-                        "showBackground": true,
-                        "x": 24,
-                        "y": 816
-                    },
-                    {
-                        "diskPath": "/",
-                        "id": "SystemStat",
-                        "layout": "bottom",
-                        "roundedCorners": true,
-                        "scale": 1.1,
-                        "showBackground": false,
-                        "statType": "Network",
-                        "x": 24,
-                        "y": 144
-                    },
-                    {
-                        "diskPath": "/",
-                        "id": "SystemStat",
-                        "layout": "bottom",
-                        "roundedCorners": true,
-                        "scale": 1.1,
-                        "showBackground": false,
-                        "statType": "GPU",
-                        "x": 24,
-                        "y": 432
-                    }
                 ]
             },
             {
                 "name": "DP-1",
-                "widgets": []
+                "widgets": [
+                ]
             }
         ],
         "overviewEnabled": true
@@ -511,7 +466,8 @@
             "DP-1"
         ],
         "onlySameOutput": true,
-        "pinnedApps": [],
+        "pinnedApps": [
+        ],
         "pinnedStatic": true,
         "position": "bottom",
         "showDockIndicator": false,
@@ -602,7 +558,7 @@
     },
     "idle": {
         "customCommands": "[]",
-        "enabled": false,
+        "enabled": true,
         "fadeDuration": 5,
         "lockCommand": "",
         "lockTimeout": 660,
@@ -612,7 +568,7 @@
         "screenOffCommand": "",
         "screenOffTimeout": 600,
         "suspendCommand": "",
-        "suspendTimeout": 1800
+        "suspendTimeout": 0
     },
     "location": {
         "analogClockInCalendar": false,
@@ -632,7 +588,7 @@
     },
     "network": {
         "bluetoothAutoConnect": false,
-        "bluetoothDetailsViewMode": "grid",
+        "bluetoothDetailsViewMode": "list",
         "bluetoothHideUnnamedDevices": false,
         "bluetoothRssiPollIntervalMs": 60000,
         "bluetoothRssiPollingEnabled": false,
@@ -650,7 +606,7 @@
         "nightTemp": "6000"
     },
     "noctaliaPerformance": {
-        "disableDesktopWidgets": true,
+        "disableDesktopWidgets": false,
         "disableWallpaper": false
     },
     "notifications": {
@@ -696,7 +652,7 @@
             1,
             2
         ],
-        "location": "top_right",
+        "location": "top",
         "monitors": [
             "eDP-1",
             "HDMI-A-1",
@@ -782,7 +738,7 @@
         "batteryWarningThreshold": 20,
         "cpuCriticalThreshold": 90,
         "cpuWarningThreshold": 80,
-        "criticalColor": "#ffb4ab",
+        "criticalColor": "#ff0000",
         "diskAvailCriticalThreshold": 10,
         "diskAvailWarningThreshold": 20,
         "diskCriticalThreshold": 90,
@@ -798,7 +754,7 @@
         "tempCriticalThreshold": 90,
         "tempWarningThreshold": 80,
         "useCustomColors": true,
-        "warningColor": "#d2c1d1"
+        "warningColor": "#d27e00"
     },
     "templates": {
         "activeTemplates": [
@@ -819,7 +775,7 @@
     },
     "ui": {
         "boxBorderEnabled": false,
-        "fontDefault": "Adwaita Sans",
+        "fontDefault": "DejaVu Math TeX Gyre",
         "fontDefaultScale": 1,
         "fontFixed": "monospace",
         "fontFixedScale": 1,
@@ -836,21 +792,23 @@
         "directory": "/home/amtia/Pictures/Wallpapers",
         "enableMultiMonitorDirectories": false,
         "enabled": true,
-        "favorites": [],
+        "favorites": [
+        ],
         "fillColor": "#000000",
         "fillMode": "crop",
         "hideWallpaperFilenames": false,
         "linkLightAndDarkWallpapers": true,
-        "monitorDirectories": [],
+        "monitorDirectories": [
+        ],
         "overviewBlur": 0.4,
         "overviewEnabled": false,
         "overviewTint": 0.6,
-        "panelPosition": "follow_bar",
+        "panelPosition": "top_center",
         "randomIntervalSec": 300,
         "setWallpaperOnAllMonitors": true,
         "showHiddenFiles": true,
         "skipStartupTransition": false,
-        "solidColor": "#1a0000",
+        "solidColor": "#1a00ff",
         "sortOrder": "name",
         "transitionDuration": 1500,
         "transitionEdgeSmoothness": 0.05,

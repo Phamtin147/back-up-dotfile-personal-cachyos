@@ -3,23 +3,42 @@ animations {
         // workspace-switch {
         //     spring damping-ratio=0.8 stiffness=1000 epsilon=0.0001
         // }
-        // // Tắt animation chuyển workspace (chuyển ngay lập tức)
+        // Tắt animation chuyển workspace (chuyển ngay lập tức)
         // workspace-switch {
         //     off
         // }
-        // // Tắt animation di chuyển ngang - vuốt nhảy luôn
+        // Tắt animation di chuyển ngang - vuốt nhảy luôn
         // horizontal-view-movement {
         //     off
         // }
 
-        // crosshatch effect khi mở cửa sổ
+        // ink-splash effect khi mở cửa sổ
         window-open {
             custom-shader r"
 
-            // Ported from skwd-wall crosshatch transition
+            // Ported from skwd-wall ink-splash transition
 
-            float crosshatch_rand(vec2 co) {
-                return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+            float is_hash(vec2 p) {
+                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+            }
+
+            float is_noise(vec2 p) {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f * f * (3.0 - 2.0 * f);
+                return mix(mix(is_hash(i), is_hash(i + vec2(1.0, 0.0)), f.x),
+                           mix(is_hash(i + vec2(0.0, 1.0)), is_hash(i + vec2(1.0, 1.0)), f.x), f.y);
+            }
+
+            float is_fbm(vec2 p) {
+                float v = 0.0;
+                float amp = 0.5;
+                for (int i = 0; i < 4; i++) {
+                    v += amp * is_noise(p);
+                    p *= 2.1;
+                    amp *= 0.5;
+                }
+                return v;
             }
 
             vec4 open_color(vec3 coords_geo, vec3 size_geo) {
@@ -28,27 +47,50 @@ animations {
                 vec3 tc = niri_geo_to_tex * vec3(uv, 1.0);
                 vec4 win = texture2D(niri_tex, tc.st);
 
-                vec2 center = vec2(0.5);
-                float threshold = 3.0;
-                float fadeEdge = 0.1;
-                float dist = distance(center, uv) / threshold;
-                float r = p - min(crosshatch_rand(vec2(uv.y, 0.0)), crosshatch_rand(vec2(0.0, uv.x)));
-                float reveal = mix(0.0, mix(step(dist, r), 1.0, smoothstep(1.0 - fadeEdge, 1.0, p)), smoothstep(0.0, fadeEdge, p));
+                float blob = is_fbm(uv * 3.5);
+                float fingers = is_fbm(uv * 14.0);
+                float distortion = (blob - 0.5) * 0.5 + (fingers - 0.5) * 0.18;
+                vec2 c = uv - vec2(0.5);
+                c.x *= size_geo.x / max(size_geo.y, 0.0001);
+                float d = length(c);
+                float splash_d = d + distortion;
+                float boundary = p * 1.7 - 0.15;
+                float diff = splash_d - boundary;
+                float reveal = smoothstep(0.04, -0.04, diff);
 
                 return win * reveal;
             }
             "
-            duration-ms 500
+            duration-ms 1500
             curve "ease-out-cubic"
         }
-        // crosshatch effect khi đóng cửa sổ
+        // ink-splash effect khi đóng cửa sổ
         window-close {
             custom-shader r"
 
-            // Ported from skwd-wall crosshatch transition
+            // Ported from skwd-wall ink-splash transition
 
-            float crosshatch_rand(vec2 co) {
-                return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+            float is_hash(vec2 p) {
+                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+            }
+
+            float is_noise(vec2 p) {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f * f * (3.0 - 2.0 * f);
+                return mix(mix(is_hash(i), is_hash(i + vec2(1.0, 0.0)), f.x),
+                           mix(is_hash(i + vec2(0.0, 1.0)), is_hash(i + vec2(1.0, 1.0)), f.x), f.y);
+            }
+
+            float is_fbm(vec2 p) {
+                float v = 0.0;
+                float amp = 0.5;
+                for (int i = 0; i < 4; i++) {
+                    v += amp * is_noise(p);
+                    p *= 2.1;
+                    amp *= 0.5;
+                }
+                return v;
             }
 
             vec4 close_color(vec3 coords_geo, vec3 size_geo) {
@@ -57,17 +99,21 @@ animations {
                 vec3 tc = niri_geo_to_tex * vec3(uv, 1.0);
                 vec4 win = texture2D(niri_tex, tc.st);
 
-                vec2 center = vec2(0.5);
-                float threshold = 3.0;
-                float fadeEdge = 0.1;
-                float dist = distance(center, uv) / threshold;
-                float r = p - min(crosshatch_rand(vec2(uv.y, 0.0)), crosshatch_rand(vec2(0.0, uv.x)));
-                float reveal = mix(0.0, mix(step(dist, r), 1.0, smoothstep(1.0 - fadeEdge, 1.0, p)), smoothstep(0.0, fadeEdge, p));
+                float blob = is_fbm(uv * 3.5);
+                float fingers = is_fbm(uv * 14.0);
+                float distortion = (blob - 0.5) * 0.5 + (fingers - 0.5) * 0.18;
+                vec2 c = uv - vec2(0.5);
+                c.x *= size_geo.x / max(size_geo.y, 0.0001);
+                float d = length(c);
+                float splash_d = d + distortion;
+                float boundary = p * 1.7 - 0.15;
+                float diff = splash_d - boundary;
+                float reveal = smoothstep(0.04, -0.04, diff);
 
                 return win * reveal;
             }
             "
-            duration-ms 500
+            duration-ms 1500
             curve "ease-out-cubic"
         }
 
