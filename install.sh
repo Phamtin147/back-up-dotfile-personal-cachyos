@@ -66,6 +66,18 @@ install_config() {
     done
 }
 
+install_bin() {
+    echo "==> Cài đặt scripts vào ~/.local/bin"
+    local bin_dir="$HOME/.local/bin"
+    mkdir -p "$bin_dir"
+    shopt -s nullglob
+    for script in "$DOTFILES_DIR"/scripts/*/*; do
+        [ -f "$script" ] || continue
+        link_file "$script" "$bin_dir/$(basename "$script")" ""
+    done
+    shopt -u nullglob
+}
+
 install_system() {
     echo "==> Cài đặt cấu hình hệ thống (/etc)"
     if ! $DRY_RUN; then
@@ -84,6 +96,7 @@ install_system() {
 
 install_home
 install_config
+install_bin
 if $WITH_SYSTEM; then
     install_system
 else

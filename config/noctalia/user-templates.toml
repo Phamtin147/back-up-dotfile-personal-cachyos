@@ -15,3 +15,9 @@
 #input_path = "/etc/xdg/quickshell/noctalia-shell/Assets/Templates/noctalia.json"
 #output_path = "/home/amtia/.cache/noctalia/placeholder.json"
 
+# Antigravity IDE - đồng bộ màu tự động (cùng input code.json như VSCode)
+[templates.antigravity]
+input_path = "/etc/xdg/quickshell/noctalia-shell/Assets/Templates/code.json"
+output_path = "~/.antigravity/extensions/noctalia.noctaliatheme-0.0.5-universal/themes/NoctaliaTheme-color-theme.json"
+post_hook = "~/.local/bin/noctalia-sync-antigravity.sh"
+
