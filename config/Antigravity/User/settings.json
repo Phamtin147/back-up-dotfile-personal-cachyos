@@ -1,0 +1,16 @@
+{
+    "powermode.enabled": true,
+    "powermode.presets": "flames",
+    "powermode.combo.counterEnabled": "hide",
+    "powermode.combo.timerEnabled": "hide",
+    "powermode.shake.enabled": false,
+    "files.autoSave": "afterDelay",
+    "workbench.productIconTheme": "fluent-icons",
+    "workbench.iconTheme": "symbols",
+    "explorer.confirmDragAndDrop": false,
+    "redhat.telemetry.enabled": true,
+    "terminal.integrated.fontFamily": "MesloLGS NF",
+    "chat.viewSessions.orientation": "stacked",
+    "explorer.confirmDelete": false,
+    "workbench.colorTheme": "NoctaliaTheme"
+}

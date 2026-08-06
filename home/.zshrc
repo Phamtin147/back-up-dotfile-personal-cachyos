@@ -11,10 +11,10 @@ source $HOME/cachyos-config.zsh
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # Created by `pipx` on 2026-05-04 02:47:01
-export PATH="$PATH:$HOME/.local/bin"
+export PATH="$PATH:/home/amtia/.local/bin"
 
 # bun completions
-[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
+[ -s "/home/amtia/.bun/_bun" ] && source "/home/amtia/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
@@ -26,3 +26,4 @@ export PATH=$HOME/.npm-global/bin:$PATH
 source <(ng completion script)
 export PATH="$PATH:$HOME/flutter/bin"
 export NODE_TLS_REJECT_UNAUTHORIZED=0
+

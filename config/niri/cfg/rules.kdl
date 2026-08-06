@@ -2,61 +2,76 @@
     window-rule {
         geometry-corner-radius 8
         clip-to-geometry true
-        open-maximized true
-    }
+        open-maximized true    }
 
     window-rule {
         match app-id="^steam_app_"
         geometry-corner-radius 3
-        clip-to-geometry true
-    }
+        clip-to-geometry true    }
 
     window-rule {
         match is-active=false
         focus-ring {
             on
-        }
-    }
+        }    }
 
     layer-rule {
         match namespace="^noctalia-wallpaper*"
-        place-within-backdrop true
-    }
+        place-within-backdrop true    }
 
     layer-rule {
         match namespace="^noctalia-bar.*"
         geometry-corner-radius 0
-        opacity 0.9
-    }
+        opacity 0.9    }
 
     layer-rule {
         match namespace="^noctalia-background.*"
-        geometry-corner-radius 0
-    }
+        geometry-corner-radius 0    }
 
-    // Opacity cho VS Code
+    // VS Code: frosted glass
     window-rule {
         match app-id="^code$"
-                opacity 0.95
+        opacity 0.9
         draw-border-with-background false
-    }
+        background-effect {
+            blur true
+        }    }
 
-    // Opacity cho AntiGravity IDE
+    // AntiGravity IDE: frosted glass
     window-rule {
         match app-id="^antigravity-ide$"
-                opacity 0.95
+        opacity 0.9
         draw-border-with-background false
+        background-effect {
+            blur true
+        }
     }
 
-    // Opacity cho AntiGravity
     window-rule {
         match app-id="^Antigravity$"
-                opacity 0.95
+        opacity 0.9
         draw-border-with-background false
+        background-effect {
+            blur true
+        }
     }
 
+    // Zen Browser: frosted glass
     window-rule {
         match app-id="^zen$"
-        opacity 0.98
+        opacity 0.92
         draw-border-with-background false
+        background-effect {
+            blur true
+        }
     }
+
+    // Frosted glass cho Alacritty (dang trong suot 0.5 - them blur de mo nen sau)
+    window-rule {
+        match app-id="^Alacritty$"
+
+        background-effect {
+            blur true
+        }
+    }
+
