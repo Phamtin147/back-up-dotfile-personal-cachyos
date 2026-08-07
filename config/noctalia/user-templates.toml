@@ -21,3 +21,9 @@ input_path = "/etc/xdg/quickshell/noctalia-shell/Assets/Templates/code.json"
 output_path = "~/.antigravity/extensions/noctalia.noctaliatheme-0.0.5-universal/themes/NoctaliaTheme-color-theme.json"
 post_hook = "~/.local/bin/noctalia-sync-antigravity.sh"
 
+[templates.antigravity_ide]
+input_path = "/etc/xdg/quickshell/noctalia-shell/Assets/Templates/code.json"
+output_path = "~/.antigravity-ide/extensions/noctalia.noctaliatheme-0.0.5-universal/themes/NoctaliaTheme-color-theme.json"
+post_hook = "~/.local/bin/noctalia-sync-antigravity.sh"
+
+

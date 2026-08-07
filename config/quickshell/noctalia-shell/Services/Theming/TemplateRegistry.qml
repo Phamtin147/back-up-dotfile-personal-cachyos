@@ -546,7 +546,7 @@ Singleton {
 
   Process {
     id: antigravityResolverProcess
-    command: ["python3", vscodeHelperScript, "~/.antigravity/extensions"]
+    command: ["python3", vscodeHelperScript, "~/.antigravity/extensions", "~/.antigravity-ide/extensions"]
     running: true
     property var paths: []
     stdout: SplitParser {

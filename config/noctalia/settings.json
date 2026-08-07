@@ -6,7 +6,7 @@
         "clipboardWrapText": true,
         "customLaunchPrefix": "",
         "customLaunchPrefixEnabled": false,
-        "density": "default",
+        "density": "compact",
         "enableClipPreview": true,
         "enableClipboardChips": true,
         "enableClipboardHistory": false,
@@ -17,19 +17,17 @@
         "iconMode": "native",
         "ignoreMouseInput": false,
         "overviewLayer": false,
-        "pinnedApps": [
-        ],
+        "pinnedApps": [],
         "position": "top_center",
         "screenshotAnnotationTool": "",
-        "showCategories": true,
+        "showCategories": false,
         "showIconBackground": true,
         "sortByMostUsed": true,
         "terminalCommand": "alacritty -e",
         "viewMode": "list"
     },
     "audio": {
-        "mprisBlacklist": [
-        ],
+        "mprisBlacklist": [],
         "preferredPlayer": "",
         "spectrumFrameRate": 60,
         "spectrumMirrored": true,
@@ -46,11 +44,11 @@
         "barType": "simple",
         "capsuleColorKey": "none",
         "capsuleOpacity": 1,
-        "contentPadding": 2,
+        "contentPadding": 0,
         "density": "compact",
         "displayMode": "always_visible",
-        "enableExclusionZoneInset": true,
-        "fontScale": 1,
+        "enableExclusionZoneInset": false,
+        "fontScale": 1.1,
         "frameRadius": 12,
         "frameThickness": 8,
         "hideOnOverview": false,
@@ -66,7 +64,7 @@
         ],
         "mouseWheelAction": "content",
         "mouseWheelWrap": true,
-        "outerCorners": false,
+        "outerCorners": true,
         "position": "top",
         "reverseScroll": false,
         "rightClickAction": "controlCenter",
@@ -86,10 +84,10 @@
                 "name": "DP-1"
             }
         ],
-        "showCapsule": true,
+        "showCapsule": false,
         "showOnWorkspaceSwitch": true,
         "showOutline": false,
-        "useSeparateOpacity": true,
+        "useSeparateOpacity": false,
         "widgetSpacing": 6,
         "widgets": {
             "center": [
@@ -101,37 +99,6 @@
                 }
             ],
             "left": [
-                {
-                    "defaultSettings": {
-                        "aurCmd": "paru -Qua 2>/dev/null",
-                        "aurHomepageCmd": "LC_ALL=C paru -Si {id} 2>/dev/null | awk '/^URL/ {print $3}'",
-                        "boldText": true,
-                        "boldVer": true,
-                        "boldVerDesktop": true,
-                        "boldVerPanel": true,
-                        "closeButton": true,
-                        "closeOnSettings": false,
-                        "customIconPath": "",
-                        "desktopTip": true,
-                        "enableColorization": false,
-                        "flatpak": true,
-                        "hideOnEmpty": false,
-                        "hoverTip": true,
-                        "iconColor": "none",
-                        "iconName": "arrow-big-down-lines",
-                        "noctalia": true,
-                        "panelContext": true,
-                        "panelTooltip": true,
-                        "refreshInterval": 120,
-                        "refreshTimer": true,
-                        "systemCmd": "checkupdates 2>/dev/null",
-                        "toast": false,
-                        "tooltip": true,
-                        "updateCmd": "ghostty -e bash -c 'echo \"Updating System...\";paru; flatpak update; read -n 1 -p \"Press any key to exit...\"'",
-                        "useDistroLogo": false
-                    },
-                    "id": "plugin:arch-updater"
-                },
                 {
                     "characterCount": 2,
                     "colorizeIcons": false,
@@ -146,7 +113,7 @@
                     "id": "Workspace",
                     "labelMode": "index",
                     "occupiedColor": "secondary",
-                    "pillSize": 0.6,
+                    "pillSize": 0.7000000000000001,
                     "showApplications": false,
                     "showApplicationsHover": false,
                     "showBadge": true,
@@ -156,7 +123,7 @@
                 },
                 {
                     "clockColor": "none",
-                    "customFont": "icomoon",
+                    "customFont": "Noto Sans Bamum Medium",
                     "formatHorizontal": "HH:mm ddd, MMM dd",
                     "formatVertical": "HH mm - dd MM",
                     "id": "Clock",
@@ -195,8 +162,7 @@
                     "id": "plugin:catwalk"
                 },
                 {
-                    "blacklist": [
-                    ],
+                    "blacklist": [],
                     "chevronColor": "primary",
                     "colorizeIcons": true,
                     "drawerEnabled": true,
@@ -204,7 +170,7 @@
                     "id": "Tray",
                     "pinned": [
                         "steam",
-                        "DL speed: 400.3 KiB/s\nUP speed: 53.9 KiB/s"
+                        "DL speed: 400.3\u00a0KiB/s\nUP speed: 53.9\u00a0KiB/s"
                     ]
                 },
                 {
@@ -229,7 +195,7 @@
                 },
                 {
                     "deviceNativePath": "__default__",
-                    "displayMode": "graphic-clean",
+                    "displayMode": "graphic",
                     "hideIfIdle": false,
                     "hideIfNotDetected": false,
                     "id": "Battery",
@@ -238,37 +204,18 @@
                 },
                 {
                     "defaultSettings": {
-                        "batteryMinPercent": 0,
-                        "clockDuration": 3,
-                        "clockFont": "",
-                        "clockFormat": "%H:%M",
-                        "cursorHide": true,
-                        "dismissOnKey": true,
-                        "enabled": true,
-                        "excludeEffects": "dev_worm",
-                        "fadeInEffect": "",
-                        "fadeOutEffect": "",
-                        "frameRate": 60,
-                        "idleSeconds": 300,
-                        "includeEffects": "",
-                        "killCommand": "niri-screensaver-launch kill",
-                        "launcherCommand": "niri-screensaver-launch launch",
-                        "logoDir": "",
-                        "logoPath": "",
-                        "multiMonitorMode": "independent",
-                        "nowPlayingDuration": 3,
-                        "randomLogo": false,
-                        "showClock": false,
-                        "showNowPlaying": false
+                        "compactMode": false,
+                        "defaultDuration": 0,
+                        "iconColor": "none",
+                        "textColor": "none"
                     },
-                    "id": "plugin:niri-screensaver"
+                    "id": "plugin:timer"
                 }
             ]
         }
     },
     "brightness": {
-        "backlightDeviceMappings": [
-        ],
+        "backlightDeviceMappings": [],
         "brightnessStep": 2,
         "enableDdcSupport": true,
         "enforceMinimum": true
@@ -428,13 +375,11 @@
             },
             {
                 "name": "eDP-1",
-                "widgets": [
-                ]
+                "widgets": []
             },
             {
                 "name": "DP-1",
-                "widgets": [
-                ]
+                "widgets": []
             }
         ],
         "overviewEnabled": true
@@ -466,8 +411,7 @@
             "DP-1"
         ],
         "onlySameOutput": true,
-        "pinnedApps": [
-        ],
+        "pinnedApps": [],
         "pinnedStatic": true,
         "position": "bottom",
         "showDockIndicator": false,
@@ -487,12 +431,12 @@
         "clockStyle": "digital",
         "compactLockScreen": false,
         "dimmerOpacity": 0,
-        "enableBlurBehind": true,
+        "enableBlurBehind": false,
         "enableLockScreenCountdown": true,
         "enableLockScreenMediaControls": true,
         "enableShadows": true,
         "forceBlackScreenCorners": false,
-        "iRadiusRatio": 2,
+        "iRadiusRatio": 1,
         "keybinds": {
             "keyDown": [
                 "Down"
@@ -530,7 +474,7 @@
         ],
         "lockScreenTint": 0.3,
         "passwordChars": true,
-        "radiusRatio": 0.7000000000000001,
+        "radiusRatio": 1,
         "reverseScroll": false,
         "scaleRatio": 1,
         "screenRadiusRatio": 1,
@@ -545,16 +489,16 @@
         "telemetryEnabled": false
     },
     "hooks": {
-        "colorGeneration": "",
+        "colorGeneration": "/home/amtia/.local/bin/noctalia-sync-antigravity.sh",
         "darkModeChange": "",
-        "enabled": false,
+        "enabled": true,
         "performanceModeDisabled": "",
         "performanceModeEnabled": "",
         "screenLock": "",
         "screenUnlock": "",
         "session": "",
         "startup": "",
-        "wallpaperChange": ""
+        "wallpaperChange": "/home/amtia/.local/bin/noctalia-sync-antigravity.sh"
     },
     "idle": {
         "customCommands": "[]",
@@ -791,9 +735,9 @@
         "fontDefaultScale": 1,
         "fontFixed": "monospace",
         "fontFixedScale": 1,
-        "panelBackgroundOpacity": 0.5,
+        "panelBackgroundOpacity": 0.85,
         "panelsAttachedToBar": true,
-        "scrollbarAlwaysVisible": true,
+        "scrollbarAlwaysVisible": false,
         "settingsPanelMode": "attached",
         "settingsPanelSideBarCardStyle": false,
         "tooltipsEnabled": true,
@@ -804,14 +748,12 @@
         "directory": "/home/amtia/Pictures/Wallpapers",
         "enableMultiMonitorDirectories": false,
         "enabled": true,
-        "favorites": [
-        ],
+        "favorites": [],
         "fillColor": "#000000",
         "fillMode": "crop",
         "hideWallpaperFilenames": false,
         "linkLightAndDarkWallpapers": true,
-        "monitorDirectories": [
-        ],
+        "monitorDirectories": [],
         "overviewBlur": 0.4,
         "overviewEnabled": false,
         "overviewTint": 0.6,
@@ -821,7 +763,7 @@
         "showHiddenFiles": true,
         "skipStartupTransition": false,
         "solidColor": "#1a00ff",
-        "sortOrder": "name",
+        "sortOrder": "date_desc",
         "transitionDuration": 1500,
         "transitionEdgeSmoothness": 0.05,
         "transitionType": [
@@ -832,7 +774,7 @@
             "pixelate",
             "honeycomb"
         ],
-        "useOriginalImages": false,
+        "useOriginalImages": true,
         "useSolidColor": false,
         "useWallhaven": false,
         "viewMode": "recursive",

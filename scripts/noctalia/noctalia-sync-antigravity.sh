@@ -1,59 +1,93 @@
 #!/usr/bin/env bash
 # noctalia-sync-antigravity.sh
-# Đồng bộ màu Noctalia hiện tại vào settings.json của Antigravity (cả 2 bản)
-# Cách dùng: sau mỗi lần Noctalia đổi màu, chạy lệnh này.
+# Đồng bộ màu Noctalia hiện tại vào settings.json của Antigravity
 set -euo pipefail
 
-THEME_FILE="$HOME/.vscode/extensions/noctalia.noctaliatheme-0.0.5/themes/NoctaliaTheme-color-theme.json"
-SETTINGS_AG="$HOME/.config/Antigravity/User/settings.json"
-SETTINGS_AGIDE="$HOME/.config/Antigravity IDE/User/settings.json"
+# Tìm theme file từ .antigravity hoặc .vscode
+THEME_FILE=""
+for candidate in \
+    "$HOME/.antigravity/extensions/noctalia.noctaliatheme-0.0.5-universal/themes/NoctaliaTheme-color-theme.json" \
+    "$HOME/.vscode/extensions/noctalia.noctaliatheme-0.0.5/themes/NoctaliaTheme-color-theme.json"; do
+    if [ -f "$candidate" ]; then
+        THEME_FILE="$candidate"
+        break
+    fi
+done
 
-if [ ! -f "$THEME_FILE" ]; then
+if [ -z "$THEME_FILE" ]; then
+    # Thử tìm theo wildcard
+    THEME_FILE=$(find "$HOME/.antigravity/extensions" "$HOME/.vscode/extensions" -maxdepth 4 -name "NoctaliaTheme-color-theme.json" 2>/dev/null | head -n 1 || true)
+fi
+
+if [ -z "$THEME_FILE" ] || [ ! -f "$THEME_FILE" ]; then
     echo "LỖI: Không tìm thấy theme Noctalia tại $THEME_FILE"
-    echo "Bạn cần cài extension noctalia.noctaliatheme vào VSCode trước."
     exit 1
 fi
 
-python3 - "$THEME_FILE" "$SETTINGS_AG" <<'EOF'
+SETTINGS_TARGETS=()
+for target in "$HOME/.config/Antigravity/User/settings.json" "$HOME/.config/Antigravity IDE/User/settings.json"; do
+    if [ -f "$target" ]; then
+        SETTINGS_TARGETS+=("$target")
+    fi
+done
+
+if [ ${#SETTINGS_TARGETS[@]} -eq 0 ]; then
+    echo "Không tìm thấy file settings.json nào của Antigravity"
+    exit 0
+fi
+
+python3 - "$THEME_FILE" "${SETTINGS_TARGETS[@]}" <<'EOF'
 import json, sys
 
-theme_path, settings_path = sys.argv[1], sys.argv[2]
+theme_path = sys.argv[1]
+settings_paths = sys.argv[2:]
 
-theme = json.load(open(theme_path))
+try:
+    theme = json.load(open(theme_path))
+except Exception as e:
+    print(f"Lỗi đọc theme file {theme_path}: {e}", file=sys.stderr)
+    sys.exit(1)
 
-# settings.json của Antigravity có thể chứa trailing comma -> làm sạch trước khi parse
-raw = open(settings_path).read()
-raw = raw.replace(',\n}', '\n}')
-settings = json.loads(raw)
-
-# Giữ nguyên theme ID cho trường hợp extension được load
-settings["workbench.colorTheme"] = "NoctaliaTheme"
-# Inject toàn bộ màu UI
-settings["workbench.colorCustomizations"] = theme.get("colors", {})
-
-# Inject màu syntax (tokenColors)
+colors = theme.get("colors", {})
 token_rules = []
 for item in theme.get("tokenColors", []):
     scope = item.get("scope")
     fg = item.get("settings", {}).get("foreground")
     if scope and fg:
         token_rules.append({"scope": scope, "settings": {"foreground": fg}})
-settings["editor.tokenColorCustomizations"] = {"textMateRules": token_rules}
 
-# Inject semantic tokens
 sem = theme.get("semanticTokenColors", {})
-if sem:
-    settings["editor.semanticTokenColorCustomizations"] = {"rules": sem}
 
-json.dump(settings, open(settings_path, "w"), indent=4)
-print(f"  OK: {settings_path}")
-print(f"      colors={len(theme.get('colors', {}))}, tokenRules={len(token_rules)}")
+for settings_path in settings_paths:
+    try:
+        raw = open(settings_path, "r", encoding="utf-8").read()
+        # Clean trailing commas if any
+        cleaned_lines = []
+        for line in raw.splitlines():
+            # Basic cleanup for json trailing commas before close brace/bracket
+            cleaned_lines.append(line)
+        cleaned_raw = "\n".join(cleaned_lines)
+        
+        # Parse using standard json or json5 regex fallback if needed
+        import re
+        cleaned_raw = re.sub(r',(\s*[\}\]])', r'\1', cleaned_raw)
+        settings = json.loads(cleaned_raw)
+
+        settings["workbench.colorTheme"] = "NoctaliaTheme"
+        settings["workbench.colorCustomizations"] = colors
+        settings["editor.tokenColorCustomizations"] = {"textMateRules": token_rules}
+        if sem:
+            settings["editor.semanticTokenColorCustomizations"] = {"rules": sem}
+
+        with open(settings_path, "w", encoding="utf-8") as f:
+            json.dump(settings, f, indent=4, ensure_ascii=False)
+
+        print(f"  OK: {settings_path}")
+        print(f"      colors={len(colors)}, tokenRules={len(token_rules)}")
+    except Exception as e:
+        print(f"  LỖI cập nhật {settings_path}: {e}", file=sys.stderr)
+
 EOF
 
-for s in "$SETTINGS_AG" "$SETTINGS_AGIDE"; do
-    if [ -f "$s" ]; then
-        echo "  OK: $s"
-    fi
-done
+echo "Xong! Đã đồng bộ màu cho Antigravity."
 
-echo "Xong! Mở lại Antigravity (Reload Window) để thấy màu mới."
