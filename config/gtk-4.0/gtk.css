@@ -1,1 +1,26 @@
 @import url("noctalia.css");
+
+/* Fix GTK4 / Libadwaita / Nautilus popover double layer issue */
+window.popup,
+window.popup > .background,
+window.popover,
+window.menu,
+popover,
+popover.menu,
+popover.background,
+.popover,
+.menu {
+    background-color: transparent;
+    background-image: none;
+    box-shadow: none;
+}
+
+popover > contents,
+popover.menu > contents,
+popover contents,
+.popover > contents,
+.popover.menu > contents {
+    background-color: var(--popover-bg-color);
+    color: var(--popover-fg-color);
+}
+
