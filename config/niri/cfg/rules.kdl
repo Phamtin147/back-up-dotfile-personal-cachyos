@@ -120,22 +120,10 @@
         }
     }
 
+
     // Kitty: frosted glass (menu giu nen dac)
     window-rule {
         match app-id="^kitty$"
-        background-effect {
-            blur true
-        }
-        popups {
-            background-effect {
-                blur false
-            }
-        }
-    }
-
-    // Nautilus: frosted glass (menu chuot phai giu nen dac - fix loi lop thua)
-    window-rule {
-        match app-id="^org.gnome.Nautilus$"
         background-effect {
             blur true
         }
@@ -150,18 +138,6 @@
     window-rule {
         match app-id="^protonplus$"
         opacity 0.95
-        background-effect {
-            blur true
-        }
-        popups {
-            background-effect {
-                blur false
-            }
-        }
-    }
-
-    // Catch-all: blur cho moi window co nen trong suot (popups/menu giu nen dac)
-    window-rule {
         background-effect {
             blur true
         }
