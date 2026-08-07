@@ -155,14 +155,17 @@ Variants {
       AnimatedImage {
         id: currentWallpaper
 
+        anchors.fill: parent
+        fillMode: root.fillMode === 3.0 ? Image.Stretch : (root.fillMode === 2.0 ? Image.PreserveAspectFit : (root.fillMode === 0.0 ? Image.Pad : Image.PreserveAspectCrop))
         source: ""
         smooth: true
         mipmap: false
-        visible: true
-        opacity: 0
+        visible: source.toString().toLowerCase().endsWith(".gif") && root.transitionProgress === 0.0
+        opacity: visible ? 1.0 : 0.0
         cache: true // Cached so Overview can share the same texture
         asynchronous: true
         playing: true
+        z: 10
         onStatusChanged: {
           if (status === Image.Error) {
             Logger.w("Current wallpaper failed to load:", source);
@@ -498,8 +501,8 @@ Variants {
 
         const wallpaperPath = WallpaperService.getWallpaper(modelData.name);
 
-        // Check if the path is a solid color
-        if (WallpaperService.isSolidColorPath(wallpaperPath)) {
+        // Check if the path is a solid color or animated GIF
+        if (WallpaperService.isSolidColorPath(wallpaperPath) || wallpaperPath.toLowerCase().endsWith(".gif")) {
           futureWallpaper = wallpaperPath;
           performStartupTransition();
           WallpaperService.wallpaperProcessingComplete(modelData.name, wallpaperPath, "");
@@ -533,8 +536,8 @@ Variants {
         // Store the original path we're working towards
         transitioningToOriginalPath = originalPath;
 
-        // Handle solid color paths - no preprocessing needed
-        if (WallpaperService.isSolidColorPath(originalPath)) {
+        // Handle solid color paths or animated GIF - no static PNG preprocessing needed
+        if (WallpaperService.isSolidColorPath(originalPath) || originalPath.toLowerCase().endsWith(".gif")) {
           futureWallpaper = originalPath;
           debounceTimer.restart();
           WallpaperService.wallpaperProcessingComplete(modelData.name, originalPath, "");
