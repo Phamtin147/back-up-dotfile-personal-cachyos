@@ -66,7 +66,7 @@
     // Zen Browser: frosted glass
     window-rule {
         match app-id="^zen$"
-        opacity 0.92
+        opacity 0.9
         draw-border-with-background false
         background-effect {
             blur true
@@ -76,6 +76,47 @@
     // Frosted glass cho Alacritty (dang trong suot 0.5 - them blur de mo nen sau)
     window-rule {
         match app-id="^Alacritty$"
+        background-effect {
+            blur true
+        }
+    }
+
+    // Frosted glass cho Brave
+    window-rule {
+        match app-id="^brave$"
+        opacity 0.95
+        background-effect {
+            blur true
+        }
+    }
+
+    // Frosted glass cho Kitty
+    window-rule {
+        match app-id="^kitty$"
+        background-effect {
+            blur true
+        }
+    }
+
+    // Frosted glass cho Nautilus
+    window-rule {
+        match app-id="^org.gnome.Nautilus$"
+        background-effect {
+            blur true
+        }
+    }
+
+    // Frosted glass cho Proton (ProtonPlus)
+    window-rule {
+        match app-id="^protonplus$"
+        opacity 0.95
+        background-effect {
+            blur true
+        }
+    }
+
+    // Catch-all: blur cho moi window co nen trong suot
+    window-rule {
         background-effect {
             blur true
         }
