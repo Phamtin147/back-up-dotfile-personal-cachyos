@@ -2,31 +2,37 @@
     window-rule {
         geometry-corner-radius 8
         clip-to-geometry true
-        open-maximized true    }
+        open-maximized true
+    }
 
     window-rule {
         match app-id="^steam_app_"
         geometry-corner-radius 3
-        clip-to-geometry true    }
+        clip-to-geometry true
+    }
 
     window-rule {
         match is-active=false
         focus-ring {
             on
-        }    }
+        }
+    }
 
     layer-rule {
         match namespace="^noctalia-wallpaper*"
-        place-within-backdrop true    }
+        place-within-backdrop true
+    }
 
     layer-rule {
         match namespace="^noctalia-bar.*"
         geometry-corner-radius 0
-        opacity 0.9    }
+        opacity 0.9
+    }
 
     layer-rule {
         match namespace="^noctalia-background.*"
-        geometry-corner-radius 0    }
+        geometry-corner-radius 0
+    }
 
     // VS Code: frosted glass
     window-rule {
@@ -35,7 +41,8 @@
         draw-border-with-background false
         background-effect {
             blur true
-        }    }
+        }
+    }
 
     // AntiGravity IDE: frosted glass
     window-rule {
@@ -69,9 +76,7 @@
     // Frosted glass cho Alacritty (dang trong suot 0.5 - them blur de mo nen sau)
     window-rule {
         match app-id="^Alacritty$"
-
         background-effect {
             blur true
         }
     }
-
