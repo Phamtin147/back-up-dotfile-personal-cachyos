@@ -34,7 +34,7 @@
         geometry-corner-radius 0
     }
 
-    // VS Code: frosted glass
+    // VS Code: frosted glass (menu giu nen dac)
     window-rule {
         match app-id="^code$"
         opacity 0.9
@@ -42,15 +42,25 @@
         background-effect {
             blur true
         }
+        popups {
+            background-effect {
+                blur false
+            }
+        }
     }
 
-    // AntiGravity IDE: frosted glass
+    // AntiGravity IDE: frosted glass (menu giu nen dac)
     window-rule {
         match app-id="^antigravity-ide$"
         opacity 0.9
         draw-border-with-background false
         background-effect {
             blur true
+        }
+        popups {
+            background-effect {
+                blur false
+            }
         }
     }
 
@@ -61,9 +71,14 @@
         background-effect {
             blur true
         }
+        popups {
+            background-effect {
+                blur false
+            }
+        }
     }
 
-    // Zen Browser: frosted glass
+    // Zen Browser: frosted glass (menu giu nen dac)
     window-rule {
         match app-id="^zen$"
         opacity 0.9
@@ -71,53 +86,88 @@
         background-effect {
             blur true
         }
+        popups {
+            background-effect {
+                blur false
+            }
+        }
     }
 
-    // Frosted glass cho Alacritty (dang trong suot 0.5 - them blur de mo nen sau)
+    // Alacritty: frosted glass (menu giu nen dac)
     window-rule {
         match app-id="^Alacritty$"
         background-effect {
             blur true
         }
+        popups {
+            background-effect {
+                blur false
+            }
+        }
     }
 
-    // Frosted glass cho Brave
+    // Brave: frosted glass (menu giu nen dac)
     window-rule {
         match app-id="^brave$"
         opacity 0.95
         background-effect {
             blur true
         }
+        popups {
+            background-effect {
+                blur false
+            }
+        }
     }
 
-    // Frosted glass cho Kitty
+    // Kitty: frosted glass (menu giu nen dac)
     window-rule {
         match app-id="^kitty$"
         background-effect {
             blur true
         }
+        popups {
+            background-effect {
+                blur false
+            }
+        }
     }
 
-    // Frosted glass cho Nautilus
+    // Nautilus: frosted glass (menu chuot phai giu nen dac - fix loi lop thua)
     window-rule {
         match app-id="^org.gnome.Nautilus$"
         background-effect {
             blur true
         }
+        popups {
+            background-effect {
+                blur false
+            }
+        }
     }
 
-    // Frosted glass cho Proton (ProtonPlus)
+    // ProtonPlus: frosted glass (menu giu nen dac)
     window-rule {
         match app-id="^protonplus$"
         opacity 0.95
         background-effect {
             blur true
         }
+        popups {
+            background-effect {
+                blur false
+            }
+        }
     }
 
-    // Catch-all: blur cho moi window co nen trong suot
+    // Catch-all: blur cho moi window co nen trong suot (popups/menu giu nen dac)
     window-rule {
         background-effect {
             blur true
+        }
+        popups {
+            background-effect {
+                blur false
+            }
         }
     }
