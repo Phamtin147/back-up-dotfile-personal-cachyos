@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# lock-screen-shader: Lock screen using hyprlock with crosshatch transition
+set -euo pipefail
+
+# Ensure crosshatch shader is active in Niri
+niri-shader crosshatch 2>/dev/null || true
+
+# Execute hyprlock
+exec hyprlock "$@"
