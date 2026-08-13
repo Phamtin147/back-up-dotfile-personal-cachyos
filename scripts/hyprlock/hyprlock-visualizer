@@ -1,42 +1,12 @@
-#!/usr/bin/env python3
-import sys
-import time
-import math
-import subprocess
+#!/usr/bin/env bash
+# hyprlock-visualizer: Real-time 32-band PipeWire audio FFT spectrum from CAVA
 
-MODE = "bars"
-if len(sys.argv) > 1:
-    MODE = sys.argv[1]
+if ! pgrep -f "hyprlock-cava-real-daemon" >/dev/null 2>&1; then
+    /home/amtia/.local/bin/hyprlock-cava-real-daemon >/dev/null 2>&1 &
+fi
 
-def get_now_playing():
-    try:
-        status = subprocess.check_output(["playerctl", "status"], stderr=subprocess.DEVNULL).decode().strip()
-        if status == "Playing":
-            pos = float(subprocess.check_output(["playerctl", "position"], stderr=subprocess.DEVNULL).decode().strip() or "0")
-            return True, pos
-    except Exception:
-        pass
-    return False, 0.0
-
-playing, pos = get_now_playing()
-
-# Spectrum levels: index 0 is thin baseline " ", index 1-7 are rising bars
-chars = [" ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
-
-if playing:
-    t = time.time() * 10.0 + pos * 6.0
-    res = []
-    # 32 frequency bands across Hz spectrum width
-    for i in range(32):
-        # Dynamic frequency amplitude: bass (left), mid (center), treble (right)
-        b = math.sin(t * 2.2 + i * 0.75) * math.cos(t * 1.3 + i * 0.3)
-        if b > 0.05:
-            idx = int(b * 6.5) + 1
-            idx = max(0, min(7, idx))
-        else:
-            idx = 0  # Thin baseline when frequency is quiet
-        res.append(chars[idx])
-    print("".join(res))
-else:
-    # Quiet thin baseline across 32 bands
-    print("                                ")
+if [ -s /dev/shm/hyprlock-real-vis.txt ]; then
+    cat /dev/shm/hyprlock-real-vis.txt
+else
+    echo "                                "
+fi

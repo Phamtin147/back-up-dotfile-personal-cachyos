@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+# Real-time CAVA PipeWire Audio FFT daemon (Pure Bytes PTY)
+import os
+import pty
+import subprocess
+import time
+
+cava_config = os.path.expanduser("~/.config/cava/config-hyprlock-real")
+shm_path = "/dev/shm/hyprlock-real-vis.txt"
+
+master, slave = pty.openpty()
+
+proc = subprocess.Popen(
+    ["cava", "-p", cava_config],
+    stdout=slave,
+    stderr=subprocess.DEVNULL,
+    stdin=subprocess.DEVNULL,
+    close_fds=True,
+)
+os.close(slave)
+
+bars = [b" ", b"\xe2\x96\x81", b"\xe2\x96\x82", b"\xe2\x96\x83", b"\xe2\x96\x84", b"\xe2\x96\x85", b"\xe2\x96\x86", b"\xe2\x96\x87"]
+
+buffer = b""
+
+while True:
+    try:
+        data = os.read(master, 256)
+        if not data:
+            time.sleep(0.01)
+            continue
+        buffer += data
+        while b"\n" in buffer:
+            line, buffer = buffer.split(b"\n", 1)
+            line = line.strip()
+            if not line:
+                continue
+            res = bytearray()
+            for b in line:
+                if 48 <= b <= 55:
+                    res.extend(bars[b - 48])
+                else:
+                    res.extend(b" ")
+            with open(shm_path, "wb") as f:
+                f.write(bytes(res))
+    except Exception:
+        time.sleep(0.01)
