@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
-# hyprlock-visualizer: Real-time 32-band PipeWire audio FFT spectrum
+# hyprlock-visualizer: reads live CAVA spectrum from /tmp/cava-hyprlock.txt
 
-PIDFILE="/tmp/hyprlock-cava-real.pid"
-
-if [ ! -f "$PIDFILE" ] || ! kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null; then
-    python3 /home/amtia/.local/bin/hyprlock-cava-real-daemon >/dev/null 2>&1 &
+if ! pgrep -f "hyprlock-cava-daemon" >/dev/null 2>&1; then
+    /home/amtia/.local/bin/hyprlock-cava-daemon >/dev/null 2>&1 &
 fi
 
-if [ -f /dev/shm/hyprlock-real-vis.txt ]; then
-    cat /dev/shm/hyprlock-real-vis.txt
+if [ -s /tmp/cava-hyprlock.txt ]; then
+    cat /tmp/cava-hyprlock.txt
 else
-    echo "▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂"
+    echo "▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂"
 fi
