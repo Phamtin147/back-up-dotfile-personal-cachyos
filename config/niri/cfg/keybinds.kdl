@@ -141,7 +141,7 @@ binds {
     // ─── Emergency Escape Key ───
     // Use this when a fullscreen app blocks your keybinds.
     // It disables any active keyboard shortcut inhibitor, restoring control.
-    MOD+ESCAPE                          allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    MOD+SHIFT+ESCAPE                    allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
     // ─── Exit / Power ───
     // CTRL+ALT+DELETE                     { quit; } // Also quits Niri
@@ -149,9 +149,9 @@ binds {
     MOD+O                               repeat=false { toggle-overview; }
 
     // ─── Lockscreen Power Shortcuts (Hyprlock bottom label bindings) ───
-    MOD+ESCAPE                          allow-when-locked=true { power-off-monitors; }
-    MOD+S                               allow-when-locked=true { spawn "systemctl" "suspend"; }
-    MOD+R                               allow-when-locked=true { spawn "systemctl" "reboot"; }
-    MOD+P                               allow-when-locked=true { spawn "systemctl" "poweroff"; }
+    MOD+ESCAPE                          allow-when-locked=true allow-inhibiting=false { spawn "niri" "msg" "action" "power-off-monitors"; }
+    MOD+S                               allow-when-locked=true allow-inhibiting=false { spawn "systemctl" "suspend"; }
+    MOD+R                               allow-when-locked=true allow-inhibiting=false { spawn "systemctl" "reboot"; }
+    MOD+P                               allow-when-locked=true allow-inhibiting=false { spawn "systemctl" "poweroff"; }
 
 }
