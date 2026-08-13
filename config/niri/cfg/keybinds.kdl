@@ -19,7 +19,7 @@ binds {
         spawn "bash" "-c" "pgrep -x zen-browser || zen-browser" 
     }   
     // MOD+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "qs -c noctalia-shell ipc call lockScreen lock"; }
-    MOD+ALT+L                           hotkey-overlay-title="Lock Screen: hyprlock" { spawn "lock-screen-shader"; }
+    MOD+ALT+L                           hotkey-overlay-title="Lock Screen: hyprlock" { spawn "hyprlock"; }
     MOD+SHIFT+D                         hotkey-overlay-title="Wallpaper: noctalia wallpaper" { spawn-sh "qs -c noctalia-shell ipc call wallpaper toggle"; }
     MOD+SHIFT+B                         hotkey-overlay-title="Toggle Bar: noctalia bar" { spawn-sh "qs -c noctalia-shell ipc call bar toggle"; }
     Alt+Shift+Q                          hotkey-overlay-title="Session Menu: noctalia session" { spawn-sh "qs -c noctalia-shell ipc call sessionMenu toggle"; }
@@ -147,5 +147,11 @@ binds {
     // CTRL+ALT+DELETE                     { quit; } // Also quits Niri
     MOD+SHIFT+P                         { power-off-monitors; } // Turn off screens (useful for OLED or privacy)
     MOD+O                               repeat=false { toggle-overview; }
+
+    // ─── Lockscreen Power Shortcuts (Hyprlock bottom label bindings) ───
+    MOD+ESCAPE                          allow-when-locked=true { power-off-monitors; }
+    MOD+S                               allow-when-locked=true { spawn "systemctl" "suspend"; }
+    MOD+R                               allow-when-locked=true { spawn "systemctl" "reboot"; }
+    MOD+P                               allow-when-locked=true { spawn "systemctl" "poweroff"; }
 
 }
