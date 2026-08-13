@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Fast 60 FPS CAVA Audio Visualizer daemon writing directly to /dev/shm (RAM)
+set -euo pipefail
+
+SHM_FILE="/dev/shm/hyprlock-vis.txt"
+
+# Create CAVA config in RAM if needed
+CONFIG="/dev/shm/cava-hyprlock-fast.conf"
+cat > "$CONFIG" << 'EOF'
+[general]
+bars = 16
+framerate = 60
+
+[input]
+method = pulse
+source = auto
+
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 7
+bar_delimiter = 0
+EOF
+
+# Run cava reading output line by line and writing formatted string to /dev/shm
+cava -p "$CONFIG" 2>/dev/null | while read -r line; do
+    echo "$line" | sed 'y/01234567/ ▂▃▄▅▆▇█/' > "$SHM_FILE"
+done

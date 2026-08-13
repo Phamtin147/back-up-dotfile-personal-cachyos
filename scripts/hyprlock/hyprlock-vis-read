@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Ultra-fast 60 FPS reader script for hyprlock
+
+if ! pgrep -f "hyprlock-cava-fast" >/dev/null 2>&1; then
+    /home/amtia/.local/bin/hyprlock-cava-fast >/dev/null 2>&1 &
+fi
+
+if [ -s /dev/shm/hyprlock-vis.txt ]; then
+    cat /dev/shm/hyprlock-vis.txt
+else
+    echo " ▂▃▄▅▆▇█▇▆▅▄▃▂ "
+fi
