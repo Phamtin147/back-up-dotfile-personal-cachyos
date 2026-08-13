@@ -5,7 +5,7 @@ cava -p "$HOME/.config/cava/config-hyprlock" 2>/dev/null | \
 python3 -u -c "
 import sys, os, io
 
-bars = [' ', '▂', '▃', '▄', '▅', '▆', '▇', '█']
+bars = ['▂', '▂', '▃', '▄', '▅', '▆', '▇', '█']
 stdin = sys.stdin.buffer.raw if hasattr(sys.stdin.buffer, 'raw') else sys.stdin.buffer
 buf = b''
 while True:
