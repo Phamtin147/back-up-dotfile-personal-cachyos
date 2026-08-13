@@ -1,0 +1,7 @@
+#!/bin/bash
+user=$(whoami)
+host=$(hostname)
+kernel=$(uname -r | sed 's/-.*$//')
+uptime=$(awk '{if ($1<86400) print int($1/3600)" hours"; else print int($1/86400)" days"}' /proc/uptime)
+
+echo "<span alpha=\"56%\">User: </span><span weight=\"bold\" alpha=\"72%\">$user</span>   <span alpha=\"56%\">Host: </span><span weight=\"bold\" alpha=\"72%\">$host</span>   <span alpha=\"56%\">OS: </span><span weight=\"bold\" alpha=\"72%\">CachyOS</span>   <span alpha=\"56%\">Kernel: </span><span weight=\"bold\" alpha=\"72%\">$kernel</span>   <span alpha=\"56%\">Uptime: </span><span weight=\"bold\" alpha=\"72%\">$uptime</span>"

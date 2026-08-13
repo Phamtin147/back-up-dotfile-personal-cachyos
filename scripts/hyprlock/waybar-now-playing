@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+status=$(playerctl status 2>/dev/null) || exit 0
+[ "$status" = "Playing" ] || exit 0
+
+artist=$(playerctl metadata --format '{{xesam:artist}}' 2>/dev/null)
+title=$(playerctl metadata --format '{{xesam:title}}' 2>/dev/null)
+[ -n "$title" ] || exit 0
+
+if [ -n "$artist" ]; then
+    printf '{"text":"  %s - %s"}\n' "$title" "$artist"
+else
+    printf '{"text":"  %s"}\n' "$title"
+fi

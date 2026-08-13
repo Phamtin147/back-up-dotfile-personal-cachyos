@@ -1,0 +1,29 @@
+#!/bin/bash
+bat_path=$(ls -d /sys/class/power_supply/BAT* 2>/dev/null | head -n 1)
+if [ -z "$bat_path" ] || [ ! -d "$bat_path" ]; then
+    exit 0
+fi
+
+cap=$(cat "$bat_path/capacity" 2>/dev/null)
+status=$(cat "$bat_path/status" 2>/dev/null)
+
+[ -n "$cap" ] || exit 0
+
+if [ "$status" = "Charging" ] || [ "$status" = "Full" ]; then
+    echo " $cap%"
+    exit 0
+fi
+
+case $cap in
+    100) echo "󰂅 $cap%" ;;
+    9*)  echo "󰁹 $cap%" ;;
+    8*)  echo "󰂂 $cap%" ;;
+    7*)  echo "󰂁 $cap%" ;;
+    6*)  echo "󰂀 $cap%" ;;
+    5*)  echo "󰁿 $cap%" ;;
+    4*)  echo "󰁾 $cap%" ;;
+    3*)  echo "󰁽 $cap%" ;;
+    2*)  echo "󰁼 $cap%" ;;
+    1*)  echo "󰁻 $cap%" ;;
+    0*)  echo "󰁺 $cap%" ;;
+esac

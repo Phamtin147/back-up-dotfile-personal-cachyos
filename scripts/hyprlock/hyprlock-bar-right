@@ -1,0 +1,13 @@
+#!/bin/bash
+now_playing=$(waybar-now-playing 2>/dev/null | jq -r '.text' 2>/dev/null)
+if [ "$now_playing" = "null" ]; then now_playing=""; fi
+
+battery=$(hyprlock-battery-incidator 2>/dev/null)
+
+if [ -n "$now_playing" ] && [ -n "$battery" ]; then
+  echo "<span alpha=\"56%\">$now_playing</span>   <span>$battery</span>"
+elif [ -n "$now_playing" ]; then
+  echo "<span alpha=\"56%\">$now_playing</span>"
+elif [ -n "$battery" ]; then
+  echo "<span>$battery</span>"
+fi
