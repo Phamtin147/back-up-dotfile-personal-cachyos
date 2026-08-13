@@ -1,6 +1,5 @@
 [config]
 
-[templates]
 
 # User-defined templates
 # Add your custom templates below
@@ -29,5 +28,6 @@ post_hook = "~/.local/bin/noctalia-sync-antigravity.sh"
 [templates.hyprlock]
 input_path = "~/.config/noctalia/templates/hyprlock.conf"
 output_path = "~/.config/hypr/hyprlock.conf"
+post_hook = "systemctl --user restart hyprlock-cava.service"
 
 
