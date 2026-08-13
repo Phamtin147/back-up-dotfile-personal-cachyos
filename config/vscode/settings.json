@@ -1,0 +1,35 @@
+{
+    "powermode.enabled": true,
+    "powermode.presets": "flames",
+    "powermode.combo.counterEnabled": "hide",
+    "powermode.combo.timerEnabled": "hide",
+    "powermode.shake.enabled": false,
+    "files.autoSave": "afterDelay",
+    "workbench.productIconTheme": "fluent-icons",
+    "workbench.iconTheme": "symbols",
+    "explorer.confirmDragAndDrop": false,
+    "redhat.telemetry.enabled": true,
+    "terminal.integrated.fontFamily": "LMMono10, MesloLGS Nerd Font, monospace",
+    "editor.fontFamily": "LMMono10, Latin Modern Mono, MesloLGS Nerd Font, monospace",
+    "chat.viewSessions.orientation": "stacked",
+    "explorer.confirmDelete": false,
+    "git.enableSmartCommit": true,
+    "vs-kubernetes": {
+        "vscode-kubernetes.kubectl-path-linux": "/home/amtia/.local/state/vs-kubernetes/tools/kubectl/kubectl",
+        "vscode-kubernetes.helm-path-linux": "/home/amtia/.local/state/vs-kubernetes/tools/helm/linux-amd64/helm",
+        "vscode-kubernetes.minikube-path-linux": "/home/amtia/.local/state/vs-kubernetes/tools/minikube/linux-amd64/minikube"
+    },
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": true,
+    "python.analysis.autoFormatStrings": true,
+    "diffEditor.ignoreTrimWhitespace": false,
+    "workbench.colorTheme": "NoctaliaTheme",
+    "security.workspace.trust.untrustedFiles": "open",
+    "chat.tips.enabled": false,
+    "window.titleBarStyle": "custom",
+    "window.decorations": "enabled",
+    "vscode_custom_css.imports": [
+        "file:///home/amtia/vscode-custom.css"
+    ]
+}

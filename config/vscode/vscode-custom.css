@@ -1,0 +1,673 @@
+/*
+  Custom VS Code theme overrides for light and dark workbench layouts.
+  Defines reusable CSS variables and component styles for sidebar, editor,
+  panels, and auxiliary surfaces, suitable for sharing as a GitHub Gist.
+*/
+/*========================================
+  Custom VS Code Theme
+  ========================================*/
+
+/* BACKGROUND */
+
+:root {
+  --action-label-foreground: rgba(0, 0, 0, 0.22);
+  /* --- Border Radii --- */
+  --border-radius-large: 7px;
+  --border-radius-medium: 3px;
+  --border-radius-small: 2px;
+  /* --- Margins --- */
+  --base-margin: 3px;
+  --tabs-padding: 1px;
+  /* --- Font Families --- */
+  --font-family-system: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-mono: 'Google Sans Code', 'Latin Modern Mono 10 Regular', 'Latin Modern Mono', monospace;
+
+  /* --- Spacing & Gaps --- */
+  --gutter-outer: 3px;
+  /* outer margins for major parts */
+  --gutter-inner: 6px;
+  /* inner container padding */
+  --gap-tabs: 4px;
+  /* space between tabs */
+  --gap-list: 6px;
+  /* list row vertical rhythm */
+
+  /* --- Component Sizing --- */
+  --tabbar-height: 48px;
+  --tab-height: 36px;
+  --pane-header-height: 26px;
+  --panel-title-height: 32px;
+
+  /* --- Borders --- */
+  --border-width-thin: 1px;
+  --border-width: 2px;
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.18);
+  --shadow-1: 0 1px 2px var(--shadow-color);
+  --shadow-2: 0 2px 6px var(--shadow-color);
+  --scroll-decoration-shadow: inset 0 4px 4px -4px var(--vscode-scrollbar-shadow);
+
+  /* --- Scrollbars --- */
+  --scrollbar-size: 8px;
+  --scrollbar-offset: 4px;
+
+  /* --- Quick Input & Notifications --- */
+  --quick-input-opacity: 0.9;
+  --quick-input-row-height: 34px;
+  --quick-input-input-height: 40px;
+}
+
+/* ========================================
+   Dark Theme Overrides
+   ======================================== */
+
+/* .monaco-workbench.vs-dark,
+.monaco-workbench.hc-black {
+  --action-label-foreground: rgba(255, 255, 255, 0.22);
+} */
+
+/* ========================================
+   Global Typography
+   ======================================== */
+
+.monaco-workbench .part>.content {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 18px;
+  background-color: transparent !important;
+}
+
+.explorer-folders-view .editor-group,
+.explorer-folders-view .explorer-item {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 19px;
+}
+
+#workbench\.parts\.titlebar {
+  overflow: hidden;
+  border: transparent !important;
+  border-radius: 0 0 var(--border-radius-large) var(--border-radius-large) !important;
+}
+
+.monaco-workbench {
+  background-color: var(--vscode-titleBar-activeBackground) !important;
+}
+
+/* .monaco-workbench .panel {
+  font-family: var(--font-family-mono);
+} */
+
+#workbench\.parts\.statusbar {
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 0px !important;
+  --status-border-top-color: transparent !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family-system) !important;
+  font-weight: 700 !important;
+  letter-spacing: normal !important;
+}
+
+/* ========================================
+   Tabbed Editor
+   ======================================== */
+
+.monaco-workbench .part.editor>.content .editor-group-container>.title {
+  padding: calc(0.25*var(--base-margin)) 0px calc(0.25*var(--base-margin)) 0px !important;
+  height: var(--tabbar-height) !important;
+  min-height: var(--tabbar-height) !important;
+  max-height: var(--tabbar-height) !important;
+  background-color: var(--vscode-editor-background) !important;
+}
+
+.monaco-workbench .part.editor>.content .editor-group-container>.title .tabs-container {
+  padding: calc(0.5*var(--base-margin)) 0px calc(0.5*var(--base-margin)) 0px !important;
+  height: var(--tabbar-height) !important;
+  min-height: var(--tabbar-height) !important;
+  max-height: var(--tabbar-height) !important;
+  background-color: var(--vscode-editor-background) !important;
+}
+
+.monaco-workbench .part.editor>.content .editor-group-container>.title .tabs-container>.tab {
+  border: none !important;
+  margin-top: calc(2*var(--base-margin));
+  margin-left: calc(2*var(--base-margin));
+  height: var(--tab-height) !important;
+  min-height: var(--tab-height) !important;
+  max-height: var(--tab-height) !important;
+  line-height: var(--tab-height) !important;
+  padding: 0 calc(0.5*var(--base-margin));
+  transition: color 0.25s ease;
+  border-radius: var(--border-radius-small) !important;
+  letter-spacing: -0.5px;
+  font-size: 10px;
+  z-index: 10;
+  font-family: var(--font-family-mono) !important;
+  font-stretch: condensed !important;
+}
+
+.monaco-workbench .part.editor>.content .editor-group-container>.title .tabs-container>.tab:hover {
+  box-shadow: var(--shadow-1);
+  z-index: 10;
+  transition: color 0.25s ease;
+}
+
+.monaco-workbench .part.editor>.content .editor-group-container>.title .tabs-container>.tab.sizing-fit {
+  border-right: none !important;
+  z-index: 10;
+}
+
+.tabs-container>.tab+.tab {
+  padding-left: var(--tabs-padding);
+  padding-right: var(--tabs-padding);
+}
+
+.tabs-container>.tab:before {
+  content: "";
+  position: absolute;
+}
+
+.tabs-container .monaco-icon-label:before {
+  margin-left: calc(3*var(--base-margin));
+}
+
+.monaco-workbench .part.editor>.content .editor-group-container>.title {
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+.editor-actions.hidden::after {
+  content: none !important;
+  height: 0 !important;
+  box-shadow: none !important;
+  background: none !important;
+}
+
+.monaco-workbench .part.editor>.content .editor-group-container>.title .tabs-container>.tab.active {
+  font-weight: 500 !important;
+  font-size: 10px;
+  border-radius: var(--border-radius-small) !important;
+}
+
+/* .monaco-workbench .part.editor>.content .editor-group-container>.title .tabs-container>.tab:hover {
+  color: var() !important;
+} */
+
+.title.tabs.show-file-icons.title-border-bottom {
+  --title-border-bottom-color: transparent !important;
+}
+
+/* ========================================
+   Editor Surface
+   ======================================== */
+
+.monaco-editor .scroll-decoration {
+  box-shadow: var(--scroll-decoration-shadow);
+  height: calc(3*var(--base-margin));
+  left: 0;
+  position: absolute;
+  top: 0;
+}
+
+.monaco-editor .suggest-widget {
+  border-radius: var(--border-radius-medium) !important;
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+}
+
+.monaco-editor .monaco-list-row {
+  border-radius: var(--border-radius-small)
+}
+
+.title.tabs.show-file-icons.title-border-bottom {
+  border-bottom: none !important;
+}
+
+.monaco-workbench .part.editor {
+  border-collapse: separate !important;
+  border-radius: calc(var(--border-radius-large) + 2px) !important;
+  overflow: hidden;
+  margin-bottom: 0px;
+  border-style: solid;
+  border-width: var(--border-width) !important;
+  border-color: transparent;
+  margin-top: calc(0.5*var(--gutter-outer));
+  height: 100%;
+  width: calc(100% - 0.5*var(--base-margin));
+}
+
+.monaco-workbench .part.editor>.content .editor-group-container>.title.title-border-bottom:after,
+.monaco-workbench .part.editor>.content .editor-group-container>.title>.tabs-and-actions-container.tabs-border-bottom:after {
+  border-bottom: none !important;
+  background-color: transparent !important;
+}
+
+.monaco-workbench .part {
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: var(--border-radius-medium) !important;
+}
+
+/* ========================================
+   Activity Bar
+   ======================================== */
+
+#workbench\.parts\.activitybar {
+  border-radius: var(--border-radius-large) !important;
+  overflow: hidden;
+  margin-top: var(--gutter-outer);
+  margin-left: calc(var(--gutter-outer));
+  height: calc(100% - 2*var(--base-margin));
+  width: calc(100% - 1*var(--base-margin));
+  background: linear-gradient(to bottom, var(--vscode-activityBar-background), var(--vscode-panel-background)) !important;
+}
+
+.monaco-workbench .activitybar.left.bordered:before {
+  border-style: solid !important;
+  border-width: var(--border-width-thin) !important;
+  border-color: transparent !important;
+}
+
+/* Move all elements inside the activitybar by --base-margin to the left */
+#workbench\.parts\.activitybar .content {
+  position: relative;
+  left: calc(-0.5 * var(--base-margin));
+}
+
+/* ========================================
+   Side Bar
+   ======================================== */
+
+.monaco-workbench .part.sidebar {
+  border-radius: var(--border-radius-large) !important;
+  overflow: hidden;
+  width: calc(100% - 0.5*var(--base-margin) - var(--gutter-outer));
+  margin-top: var(--gutter-outer);
+  margin-left: calc(1 * var(--gutter-outer));
+  height: calc(100% - var(--base-margin));
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  font-family: var(--font-family-system);
+  letter-spacing: -0.5px;
+  border-right: none !important;
+}
+
+.monaco-workbench .part.sidebar .pane-header {
+  border: none !important;
+  margin-left: calc(1.5*var(--base-margin));
+  height: calc(0.7*var(--pane-header-height)) !important;
+  font-family: var(--font-family-system) !important;
+  font-weight: 700 !important;
+  border-radius: var(--border-radius-small) var(--border-radius-small) 0px 0px !important;
+  background-color: transparent !important;
+}
+
+.monaco-workbench .part.sidebar>.title {
+  border-radius: var(--border-radius-small) var(--border-radius-small) 0px 0px !important;
+  letter-spacing: normal !important;
+}
+
+.monaco-workbench .part.sidebar .monaco-list-rows {
+  padding: calc(2*var(--base-margin)) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  scrollbar-gutter: stable both-edges;
+  font-family: var(--font-family-mono) !important;
+  letter-spacing: -0.5px;
+}
+
+.monaco-workbench .part.sidebar .monaco-list-row.selected {
+  border-radius: var(--border-radius-small) !important;
+  width: 100% !important;
+}
+
+.monaco-workbench .part.sidebar .monaco-list-row.selected:active {
+  border-radius: var(--border-radius-small) !important;
+  width: 100% !important;
+}
+
+.monaco-workbench .part.sidebar .monaco-list-row:hover {
+  border: transparent !important;
+  border-radius: var(--border-radius-small) !important;
+  width: 100% !important;
+}
+
+.monaco-workbench .part>.content>.composite {
+  background-color: transparent !important;
+}
+
+.monaco-workbench .monaco-pane-view .pane>.pane-header>.codicon:first-of-type {
+  font-size: 12px !important;
+  margin: 0 calc(3*var(--base-margin)) var(--base-margin) var(--base-margin);
+  font-weight: bolder !important;
+}
+
+.monaco-pane-view {
+  width: calc(100% - 2.5*var(--base-margin));
+}
+
+/* ========================================
+   Sidebar.Chat
+   ======================================== */
+
+.interactive-item-container .value .rendered-markdown {
+  line-height: 1.2 !important;
+  font-stretch: condensed !important;
+  font-size: 14px !important;
+}
+
+.chat-input-container,
+.chat-editor-container,
+.chat-editor-container .view-lines.monaco-mouse-cursor-text {
+  border: transparent !important;
+}
+
+.chat-diff-change-content-widget .monaco-action-bar,
+.chat-editor-overlay-widget {
+  border-radius: var(--border-radius-small) !important;
+  box-shadow: var(--shadow-2);
+  /* Prevent margin, border, or box-shadow changes on hover */
+}
+
+.chat-diff-change-content-widget .monaco-action-bar:hover,
+.chat-editor-overlay-widget:hover {
+  margin: 0 !important;
+  border-radius: var(--border-radius-small) !important;
+  box-shadow: var(--shadow-2) !important;
+  border: none !important;
+}
+
+.interactive-item-container.editing-session.interactive-response.chat-most-recent-response.chat-response-loading {
+  border-radius: var(--border-radius-small) !important;
+  box-shadow: var(--shadow-2);
+  /* Prevent margin, border, or box-shadow changes on hover */
+}
+
+.interactive-item-container.editing-session.interactive-response.chat-most-recent-response.chat-response-loading:hover {
+  margin: 0 !important;
+  border-radius: var(--border-radius-small) !important;
+  box-shadow: var(--shadow-2) !important;
+  border: none !important;
+}
+
+.interactive-item-container.interactive-request .value .rendered-markdown {
+  max-width: calc(100% - 2*var(--base-margin)) !important;
+}
+
+.interactive-session .interactive-input-part .chat-editor-container .interactive-input-editor .monaco-editor, .interactive-session .interactive-input-part .chat-editor-container .interactive-input-editor .monaco-editor .monaco-editor-background {
+  background-color: transparent !important;
+}
+
+/* ========================================
+   Auxiliary Bar
+   ======================================== */
+
+.monaco-workbench .part.auxiliarybar {
+  border-radius: var(--border-radius-large) !important;
+  overflow: hidden;
+  margin-left: calc(0*var(--gutter-outer));
+  width: calc(100% - 1*var(--base-margin));
+  margin-top: var(--gutter-outer);
+  height: calc(100% - var(--base-margin));
+  border-style: solid !important;
+  border-width: var(--border-width) !important;
+  border-color: transparent !important;
+  border-left: none !important;
+}
+
+.monaco-workbench .part.auxiliarybar .pane-header {
+  border: none !important;
+  height: var(--pane-header-height) !important;
+  min-height: var(--pane-header-height) !important;
+  max-height: var(--pane-header-height) !important;
+  font-family: var(--font-family-system) !important;
+  font-weight: 700 !important;
+  border-radius: var(--border-radius-small) var(--border-radius-small) 0px 0px !important;
+}
+
+.monaco-workbench .part.auxiliarybar>.title {
+  border-radius: var(--border-radius-small) var(--border-radius-small) 0px 0px !important;
+  letter-spacing: normal !important;
+}
+
+.monaco-workbench .part.auxiliarybar .monaco-list-rows {
+  padding: calc(2*var(--base-margin)) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  scrollbar-gutter: stable both-edges;
+  font-family: var(--font-family-mono) !important;
+}
+
+.monaco-workbench .part.auxiliarybar .monaco-list-row.selected {
+  border-radius: var(--border-radius-small) !important;
+  width: 100% !important;
+}
+
+.monaco-workbench .part.auxiliarybar .monaco-list-row:hover {
+  border: transparent !important;
+  border-radius: var(--border-radius-small) !important;
+  width: 100% !important;
+}
+
+.monaco-workbench .pane-composite-part>.title>.composite-bar-container>.composite-bar>.monaco-action-bar .action-item.checked .action-label {
+  font-weight: 700 !important;
+  border: transparent !important;
+  z-index: 10;
+}
+
+.monaco-workbench .pane-composite-part:not(.empty)>.header {
+  border-bottom: none !important;
+}
+
+/* ========================================
+   Panel
+   ======================================== */
+
+.monaco-workbench .part.panel {
+  border-radius: var(--border-radius-large) !important;
+  border-style: solid !important;
+  border-width: var(--border-width-thin) !important;
+  border-color: transparent !important;
+}
+
+.monaco-workbench .panel.basepanel.bottom .composite.title {
+  border-top-style: hidden;
+  margin-bottom: calc(-2*var(--base-margin));
+  height: var(--panel-title-height) !important;
+  min-height: var(--panel-title-height) !important;
+  max-height: var(--panel-title-height) !important;
+}
+
+.monaco-workbench .panel.basepanel {
+  border-radius: var(--border-radius-large) !important;
+  overflow: hidden;
+  margin-top: calc(0.875*var(--base-margin));
+  height: calc(100% - 2*var(--base-margin));
+  margin-left: var(--gutter-outer);
+  width: calc(100% - 1*var(--base-margin));
+}
+
+.monaco-workbench .pane-composite-part>.header-or-footer>.composite-bar-container>.composite-bar>.monaco-action-bar .action-item.icon .action-label.codicon:not(.codicon-more),
+.monaco-workbench .pane-composite-part>.header-or-footer>.composite-bar-container>.composite-bar>.monaco-action-bar .action-item:not(.icon) .action-label,
+.monaco-workbench .pane-composite-part>.title>.composite-bar-container>.composite-bar>.monaco-action-bar .action-item.icon .action-label.codicon:not(.codicon-more),
+.monaco-workbench .pane-composite-part>.title>.composite-bar-container>.composite-bar>.monaco-action-bar .action-item.checked .action-label {
+  font-weight: 700 !important;
+  text-transform: capitalize !important;
+  border-radius: var(--border-radius-small) !important;
+  z-index: 10;
+  padding: calc(0.5*var(--base-margin)) var(--base-margin);
+}
+
+.monaco-workbench .pane-composite-part>.title.has-composite-bar>.title-actions .monaco-action-bar .actions-container {
+  height: 30% !important;
+  margin-top: calc(1*var(--base-margin)) !important;
+}
+
+.monaco-workbench .pane>.pane-body .welcome-view-content {
+  border: transparent !important;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .split-view-view:not(:first-child),
+.monaco-workbench .pane-body.integrated-terminal .tabs-container {
+  border-left-style: solid !important;
+  border-left-width: var(--border-width-thin) !important;
+  border-left-color: var(--vscode-panel-border) !important;
+}
+
+.monaco-workbench .pane-body.integrated-terminal .terminal-wrapper {
+  padding-top: calc(3*var(--base-margin)) !important;
+}
+
+.action-label.codicon.codicon-panel-close {
+  margin-top: calc(-3*var(--base-margin)) !important;
+}
+
+/* ========================================
+   Notebook
+   ======================================== */
+
+.notebookOverlay .monaco-list-row .cell-editor-part:before {
+  border-radius: var(--border-radius-medium) !important;
+  outline: var(--vscode-notebook-cellBorderColor) solid 2.25px !important;
+  /* box-shadow: 0 0 var(--base-margin) var(--base-margin) var(--shadow-color); */
+}
+
+
+.monaco-workbench .notebookOverlay .notebook-toolbar-container {
+  margin-top: calc(6*var(--base-margin));
+  background-color: var(--vscode-tab-inactiveBackground) !important;
+  border-radius: var(--border-radius-small) !important;
+  box-shadow: var(--shadow-2);
+  width: calc(100% - 9.5*var(--base-margin));
+  padding: calc(0.5*var(--base-margin)) calc(2*var(--base-margin));
+  margin-left: calc(2*var(--base-margin));
+  margin-right: calc(2*var(--base-margin));
+}
+
+/* ========================================
+   Notifications
+   ======================================== */
+
+.monaco-workbench>.notifications-center>.notifications-center-header {
+  border-radius: var(--border-radius-large) var(--border-radius-large) 0px 0px !important;
+  opacity: var(--quick-input-opacity) !important;
+  font-family: var(--font-family-mono) !important;
+}
+
+.notification-toast.notification-fade-in-done {
+  box-shadow: inset 0 0 4px 4px var(--shadow-color);
+  opacity: var(--quick-input-opacity) !important;
+  font-family: var(--font-family-mono) !important;
+}
+
+.monaco-workbench>.notifications-toasts .notification-toast-container>.notification-toast,
+.monaco-workbench>.notifications-toasts .notification-toast-container>.notification-toast .monaco-list-row,
+.monaco-workbench>.notifications-toasts .notification-toast-container>.notification-toast .monaco-list:not(.element-focused):focus:before,
+.monaco-workbench>.notifications-toasts .notification-toast-container>.notification-toast .monaco-scrollable-element,
+.monaco-workbench>.notifications-toasts .notifications-list-container,
+.monaco-workbench>.notifications-center {
+  border-radius: var(--border-radius-large) !important;
+  opacity: var(--quick-input-opacity) !important;
+  font-family: var(--font-family-mono) !important;
+}
+
+/* ========================================
+   Buttons and badges
+   ======================================== */
+
+.monaco-button.monaco-text-button {
+  border-radius: var(--border-radius-small) !important;
+  border-color: transparent !important;
+}
+
+.monaco-button.monaco-dropdown-button .codicon.codicon-drop-down-button {
+  border: transparent !important;
+  border-radius: 0px 0px var(--border-radius-small) var(--border-radius-small) !important;
+}
+
+.monaco-button-dropdown>.monaco-button.monaco-dropdown-button {
+  border: transparent !important;
+}
+
+.badge .badge-content {
+  border-radius: var(--border-radius-small) !important;
+  font-weight: 700 !important;
+  font-size: 10px !important;
+}
+
+/* ========================================
+   Command Palette
+   ======================================== */
+
+.quick-input-widget {
+  position: absolute;
+  top: 0% !important;
+  left: 50% !important;
+  transform: translate(-50%, 0%) !important;
+  font-family: var(--font-family-mono) !important;
+  background-color: var(--vscode-tab-inactiveBackground) !important;
+  opacity: var(--quick-input-opacity) !important;
+  border-radius: var(--border-radius-large) !important;
+  box-shadow: var(--shadow-2) !important;
+}
+
+.quick-input-widget .quick-input-list .monaco-list-row {
+  height: var(--quick-input-row-height) !important;
+  line-height: var(--quick-input-row-height) !important;
+  background-color: var(--vscode-tab-inactiveBackground) !important;
+  color: var(--vscode-foreground) !important;
+  font-family: var(--font-family-mono) !important;
+  opacity: var(--quick-input-opacity) !important;
+}
+
+.quick-input-widget .quick-input-list .monaco-list-row.focused {
+  background-color: var(--vscode-tab-activeBackground) !important;
+  z-index: 100 !important;
+  position: relative !important;
+}
+
+.quick-input-widget .quick-input-list .monaco-list-row .monaco-highlighted-label .highlight {
+  color: inherit !important;
+}
+
+.quick-input-widget .monaco-inputbox {
+  border: transparent !important;
+  background-color: var(--vscode-tab-inactiveBackground) !important;
+  border-radius: var(--border-radius-medium) !important;
+  height: var(--quick-input-input-height) !important;
+  font-family: var(--font-family-mono) !important;
+  display: flex !important;
+  align-items: center !important;
+  color: var(--vscode-foreground) !important;
+}
+
+/* ========================================
+   Scrollbars
+   ======================================== */
+
+.monaco-editor .scrollbar.horizontal {
+  bottom: var(--scrollbar-offset) !important;
+}
+
+.scrollbar.horizontal>.slider {
+  border-radius: var(--border-radius-medium) !important;
+  height: var(--scrollbar-size) !important;
+}
+
+.scrollbar.vertical {
+  right: var(--scrollbar-offset) !important;
+}
+
+.scrollbar.vertical>.slider {
+  border-radius: var(--border-radius-medium) !important;
+  width: var(--scrollbar-size) !important;
+}
