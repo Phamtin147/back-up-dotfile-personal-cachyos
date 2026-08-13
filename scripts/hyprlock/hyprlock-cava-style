@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+# hyprlock-cava-style [style-name|list]
+set -euo pipefail
+
+STYLE="${1:-list}"
+
+case "$STYLE" in
+    bars)
+        cat > "$HOME/.config/cava/config-hyprlock" << 'EOF'
+[general]
+bars = 20
+framerate = 30
+[input]
+method = pulse
+source = auto
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 7
+bar_delimiter = 0
+EOF
+        cat > "$HOME/.local/bin/hyprlock-cava" << 'EOF'
+#!/usr/bin/env bash
+pipe="/tmp/cava-hyprlock.fifo"
+[ -p "$pipe" ] || mkfifo "$pipe"
+pgrep -f "cava -p $HOME/.config/cava/config-hyprlock" >/dev/null 2>&1 || cava -p "$HOME/.config/cava/config-hyprlock" > "$pipe" 2>/dev/null &
+if read -r -t 1 line < "$pipe" 2>/dev/null; then
+    echo "$line" | sed 'y/01234567/ ▂▃▄▅▆▇█/'
+else
+    echo " ▂▃▄▅▆▇█▇▆▅▄▃▂ "
+fi
+EOF
+        chmod +x "$HOME/.local/bin/hyprlock-cava"
+        pkill -f "cava -p" || true
+        echo "Active CAVA style: Solid Bars ( ▂▃▄▅▆▇█)"
+        ;;
+
+    braille)
+        cat > "$HOME/.config/cava/config-hyprlock" << 'EOF'
+[general]
+bars = 16
+framerate = 30
+[input]
+method = pulse
+source = auto
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 5
+bar_delimiter = 0
+EOF
+        cat > "$HOME/.local/bin/hyprlock-cava" << 'EOF'
+#!/usr/bin/env bash
+pipe="/tmp/cava-hyprlock.fifo"
+[ -p "$pipe" ] || mkfifo "$pipe"
+pgrep -f "cava -p $HOME/.config/cava/config-hyprlock" >/dev/null 2>&1 || cava -p "$HOME/.config/cava/config-hyprlock" > "$pipe" 2>/dev/null &
+if read -r -t 1 line < "$pipe" 2>/dev/null; then
+    echo "$line" | sed 'y/012345/⣀⣄⣤⣶⣷⣿/'
+else
+    echo "⣀⣄⣤⣶⣷⣿⣷⣶⣤⣄⣀"
+fi
+EOF
+        chmod +x "$HOME/.local/bin/hyprlock-cava"
+        pkill -f "cava -p" || true
+        echo "Active CAVA style: Braille Grid (⣀⣤⣶⣿)"
+        ;;
+
+    mirror)
+        cat > "$HOME/.config/cava/config-hyprlock" << 'EOF'
+[general]
+bars = 10
+framerate = 30
+[input]
+method = pulse
+source = auto
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 7
+bar_delimiter = 0
+EOF
+        cat > "$HOME/.local/bin/hyprlock-cava" << 'EOF'
+#!/usr/bin/env bash
+pipe="/tmp/cava-hyprlock.fifo"
+[ -p "$pipe" ] || mkfifo "$pipe"
+pgrep -f "cava -p $HOME/.config/cava/config-hyprlock" >/dev/null 2>&1 || cava -p "$HOME/.config/cava/config-hyprlock" > "$pipe" 2>/dev/null &
+if read -r -t 1 line < "$pipe" 2>/dev/null; then
+    bars=$(echo "$line" | sed 'y/01234567/ ▂▃▄▅▆▇█/')
+    revbars=$(echo "$bars" | rev)
+    echo "${revbars}${bars}"
+else
+    echo " ▂▃▄▅▆▇██▇▆▅▄▃▂ "
+fi
+EOF
+        chmod +x "$HOME/.local/bin/hyprlock-cava"
+        pkill -f "cava -p" || true
+        echo "Active CAVA style: Center-Out Mirror (█▇▆▅▄▃▂  ▂▃▄▅▆▇█)"
+        ;;
+
+    ascii)
+        cat > "$HOME/.config/cava/config-hyprlock" << 'EOF'
+[general]
+bars = 20
+framerate = 30
+[input]
+method = pulse
+source = auto
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 7
+bar_delimiter = 0
+EOF
+        cat > "$HOME/.local/bin/hyprlock-cava" << 'EOF'
+#!/usr/bin/env bash
+pipe="/tmp/cava-hyprlock.fifo"
+[ -p "$pipe" ] || mkfifo "$pipe"
+pgrep -f "cava -p $HOME/.config/cava/config-hyprlock" >/dev/null 2>&1 || cava -p "$HOME/.config/cava/config-hyprlock" > "$pipe" 2>/dev/null &
+if read -r -t 1 line < "$pipe" 2>/dev/null; then
+    echo "$line" | sed 'y/01234567/ .:-=+*#/'
+else
+    echo " .:-=+*##*+=-:. "
+fi
+EOF
+        chmod +x "$HOME/.local/bin/hyprlock-cava"
+        pkill -f "cava -p" || true
+        echo "Active CAVA style: Retro ASCII ( .:-=+*#)"
+        ;;
+
+    pulse)
+        cat > "$HOME/.config/cava/config-hyprlock" << 'EOF'
+[general]
+bars = 8
+framerate = 30
+[input]
+method = pulse
+source = auto
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 7
+bar_delimiter = 0
+EOF
+        cat > "$HOME/.local/bin/hyprlock-cava" << 'EOF'
+#!/usr/bin/env bash
+pipe="/tmp/cava-hyprlock.fifo"
+[ -p "$pipe" ] || mkfifo "$pipe"
+pgrep -f "cava -p $HOME/.config/cava/config-hyprlock" >/dev/null 2>&1 || cava -p "$HOME/.config/cava/config-hyprlock" > "$pipe" 2>/dev/null &
+if read -r -t 1 line < "$pipe" 2>/dev/null; then
+    echo "$line" | sed 'y/01234567/|iI1l!|█/'
+else
+    echo "|iI1l!|█|!l1Ii|"
+fi
+EOF
+        chmod +x "$HOME/.local/bin/hyprlock-cava"
+        pkill -f "cava -p" || true
+        echo "Active CAVA style: Bass Pulse Meter (|iI1l!|█)"
+        ;;
+
+    off)
+        pkill -f "cava -p" || true
+        cat > "$HOME/.local/bin/hyprlock-cava" << 'EOF'
+#!/usr/bin/env bash
+echo ""
+EOF
+        chmod +x "$HOME/.local/bin/hyprlock-cava"
+        echo "CAVA visualizer disabled"
+        ;;
+
+    *)
+        echo "Usage: hyprlock-cava-style <bars|braille|mirror|ascii|pulse|off>"
+        echo ""
+        echo "Available styles:"
+        echo "  1. bars    - Solid Vertical Bars ( ▂▃▄▅▆▇█)"
+        echo "  2. braille - High-Density Braille Dots (⣀⣤⣶⣿)"
+        echo "  3. mirror  - Center-Out Symmetric Wave (█▇▆▅▄▃▂  ▂▃▄▅▆▇█)"
+        echo "  4. ascii   - Retro Hacker Characters ( .:-=+*#)"
+        echo "  5. pulse   - Bass Pulse Meter (|iI1l!|█)"
+        echo "  6. off     - Disable visualizer"
+        ;;
+esac
