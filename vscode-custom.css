@@ -104,6 +104,8 @@
   overflow: hidden;
   border-radius: 0px !important;
   --status-border-top-color: transparent !important;
+  position: relative !important;
+  z-index: 100 !important;
 }
 
 h1,
@@ -413,15 +415,29 @@ h6 {
 
 .monaco-workbench .part.auxiliarybar {
   border-radius: var(--border-radius-large) !important;
-  overflow: hidden;
+  overflow: hidden !important;
   margin-left: calc(0*var(--gutter-outer));
   width: calc(100% - 1*var(--base-margin));
   margin-top: var(--gutter-outer);
-  height: calc(100% - var(--base-margin));
+  height: calc(100% - 2*var(--gutter-outer)) !important;
+  margin-bottom: var(--gutter-outer) !important;
   border-style: solid !important;
   border-width: var(--border-width) !important;
   border-color: transparent !important;
   border-left: none !important;
+}
+
+/* Agent Toggle Button & Agent Container Rounding */
+.monaco-workbench .part.auxiliarybar .action-label,
+.monaco-action-bar .action-item[title*="Agent"],
+.monaco-action-bar .action-item[title*="agent"],
+.monaco-action-bar .action-item[aria-label*="Agent"],
+.monaco-action-bar .action-item[aria-label*="agent"],
+.agent-toggle-button,
+.toggle-agent,
+.antigravity-agent-toggle {
+  border-radius: var(--border-radius-large) !important;
+  overflow: hidden !important;
 }
 
 .monaco-workbench .part.auxiliarybar .pane-header {
