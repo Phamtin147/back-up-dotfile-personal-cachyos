@@ -7,7 +7,14 @@ title=$(playerctl metadata --format '{{xesam:title}}' 2>/dev/null)
 [ -n "$title" ] || exit 0
 
 if [ -n "$artist" ]; then
-    printf '{"text":"  %s - %s"}\n' "$title" "$artist"
+    full="$title - $artist"
 else
-    printf '{"text":"  %s"}\n' "$title"
+    full="$title"
 fi
+
+# Truncate if longer than 28 characters to prevent screen overflow
+if [ ${#full} -gt 28 ]; then
+    full="${full:0:25}..."
+fi
+
+printf '{"text":"  %s"}\n' "$full"
