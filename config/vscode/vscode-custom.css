@@ -712,5 +712,25 @@ h6 {
 .monaco-workbench .tabs-container > .tab::after,
 .monaco-workbench .tabs-container > .tab.active::before,
 .monaco-workbench .tabs-container > .tab.active::after {
-  border-radius: inherit !important;
+  content: none !important;
+  display: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title.title-border-bottom::after,
+.monaco-workbench .part.editor > .content .editor-group-container > .title > .tabs-and-actions-container.tabs-border-bottom::after,
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tab-border-top-container,
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tab-border-bottom-container,
+.monaco-workbench .tabs-container > .tab > .tab-border-top-container,
+.monaco-workbench .tabs-container > .tab > .tab-border-bottom-container,
+.monaco-workbench .tabs-container > .tab.active > .tab-border-top-container,
+.monaco-workbench .tabs-container > .tab.active > .tab-border-bottom-container {
+  content: none !important;
+  display: none !important;
+  height: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
