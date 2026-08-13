@@ -12,9 +12,9 @@
 :root {
   --action-label-foreground: rgba(0, 0, 0, 0.22);
   /* --- Border Radii --- */
-  --border-radius-large: 10px;
-  --border-radius-medium: 6px;
-  --border-radius-small: 4px;
+  --border-radius-large: 7px;
+  --border-radius-medium: 3px;
+  --border-radius-small: 2px;
   /* --- Margins --- */
   --base-margin: 3px;
   --tabs-padding: 1px;
@@ -670,4 +670,48 @@ h6 {
 .scrollbar.vertical>.slider {
   border-radius: var(--border-radius-medium) !important;
   width: var(--scrollbar-size) !important;
+}
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-and-actions-container .tabs-container > .tab,
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab,
+.monaco-workbench .tabs-container > .tab {
+  border-radius: 10px !important;
+  margin: 6px 3px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  overflow: hidden !important;
+  border: 1px solid transparent !important;
+  background-color: var(--vscode-tab-inactiveBackground) !important;
+  box-shadow: none !important;
+}
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-and-actions-container .tabs-container > .tab.active,
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.active,
+.monaco-workbench .tabs-container > .tab.active {
+  border-radius: 12px !important;
+  background-color: var(--vscode-tab-activeBackground) !important;
+  color: var(--vscode-tab-activeForeground) !important;
+  border-color: var(--vscode-focusBorder, var(--vscode-tab-activeBorder)) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
+}
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab:hover,
+.monaco-workbench .tabs-container > .tab:hover {
+  border-radius: 12px !important;
+  background-color: var(--vscode-tab-hoverBackground, var(--vscode-tab-inactiveBackground)) !important;
+  color: var(--vscode-tab-activeForeground) !important;
+}
+
+.monaco-workbench .tabs-container > .tab .tab-label,
+.monaco-workbench .tabs-container > .tab .monaco-icon-label,
+.monaco-workbench .tabs-container > .tab .monaco-icon-label-container {
+  border-radius: inherit !important;
+}
+
+.monaco-workbench .tabs-container > .tab::before,
+.monaco-workbench .tabs-container > .tab::after,
+.monaco-workbench .tabs-container > .tab.active::before,
+.monaco-workbench .tabs-container > .tab.active::after {
+  border-radius: inherit !important;
 }
