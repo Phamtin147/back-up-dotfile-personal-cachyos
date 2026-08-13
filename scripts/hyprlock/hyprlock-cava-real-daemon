@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Real-time CAVA PipeWire Audio FFT daemon with PID file tracking
+# Real-time CAVA PipeWire Audio FFT daemon (32 Bands with guaranteed visible baseline)
 import os
 import pty
 import subprocess
@@ -26,15 +26,16 @@ proc = subprocess.Popen(
 )
 os.close(slave)
 
+# Guaranteed visible block heights (Level 0 = ▂, Level 7 = █)
 bars = [
-    b"\xe2\x96\x81",
-    b"\xe2\x96\x82",
-    b"\xe2\x96\x83",
-    b"\xe2\x96\x84",
-    b"\xe2\x96\x85",
-    b"\xe2\x96\x86",
-    b"\xe2\x96\x87",
-    b"\xe2\x96\x88",
+    b"\xe2\x96\x82",  # Level 0 (▂ baseline)
+    b"\xe2\x96\x82",  # Level 1 (▂)
+    b"\xe2\x96\x83",  # Level 2 (▃)
+    b"\xe2\x96\x84",  # Level 3 (▄)
+    b"\xe2\x96\x85",  # Level 4 (▅)
+    b"\xe2\x96\x86",  # Level 5 (▆)
+    b"\xe2\x96\x87",  # Level 6 (▇)
+    b"\xe2\x96\x88",  # Level 7 (█)
 ]
 
 buffer = b""

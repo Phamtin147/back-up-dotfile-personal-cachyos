@@ -10,5 +10,5 @@ fi
 if [ -s /dev/shm/hyprlock-real-vis.txt ]; then
     cat /dev/shm/hyprlock-real-vis.txt
 else
-    echo "                                "
+    echo "▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂"
 fi
