@@ -6,3 +6,10 @@ import = [
 [window]
 opacity = 0.5
 blur = true
+
+[font]
+size = 11.0
+
+[font.normal]
+family = "LMMono10"
+style = "Regular"
