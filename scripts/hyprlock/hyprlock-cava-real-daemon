@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
-# Real-time CAVA PipeWire Audio FFT daemon (32 Bands with 1-pixel Baseline)
+# Real-time CAVA PipeWire Audio FFT daemon with PID file tracking
 import os
 import pty
 import subprocess
 import time
+
+pid_file = "/tmp/hyprlock-cava-real.pid"
+try:
+    with open(pid_file, "w") as f:
+        f.write(str(os.getpid()))
+except Exception:
+    pass
 
 cava_config = os.path.expanduser("~/.config/cava/config-hyprlock-real")
 shm_path = "/dev/shm/hyprlock-real-vis.txt"
@@ -19,16 +26,15 @@ proc = subprocess.Popen(
 )
 os.close(slave)
 
-# 8 block heights: Level 0 = lowest 1/8 block " ", Level 7 = full block "█"
 bars = [
-    b"\xe2\x96\x81",  # Level 0 (1/8 height baseline)
-    b"\xe2\x96\x82",  # Level 1 (2/8 height)
-    b"\xe2\x96\x83",  # Level 2 (3/8 height)
-    b"\xe2\x96\x84",  # Level 3 (4/8 height)
-    b"\xe2\x96\x85",  # Level 4 (5/8 height)
-    b"\xe2\x96\x86",  # Level 5 (6/8 height)
-    b"\xe2\x96\x87",  # Level 6 (7/8 height)
-    b"\xe2\x96\x88",  # Level 7 (8/8 full block)
+    b"\xe2\x96\x81",
+    b"\xe2\x96\x82",
+    b"\xe2\x96\x83",
+    b"\xe2\x96\x84",
+    b"\xe2\x96\x85",
+    b"\xe2\x96\x86",
+    b"\xe2\x96\x87",
+    b"\xe2\x96\x88",
 ]
 
 buffer = b""
