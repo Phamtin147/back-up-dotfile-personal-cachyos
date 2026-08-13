@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+# niri-shader [effect-name|next] - swap window open/close shader effect
+set -euo pipefail
+
+SHADERS_DIR="$HOME/shaders"
+CONFIG_FILE="$HOME/.config/niri/cfg/animation.kdl"
+STATE_FILE="/tmp/niri-shader-state"
+
+# Get sorted list of effects
+mapfile -t EFFECTS < <(find "$SHADERS_DIR" -maxdepth 1 -type d ! -name ".*" -printf '%f\n' | sort)
+
+apply_effect() {
+    local EFFECT="$1"
+    local EFFECT_DIR="$SHADERS_DIR/$EFFECT"
+    local OPEN_FILE="$EFFECT_DIR/open.glsl"
+    local CLOSE_FILE="$EFFECT_DIR/close.glsl"
+    local CONFIG_FILE_SRC="$EFFECT_DIR/config"
+
+    OPEN=$(cat "$OPEN_FILE")
+    CLOSE=$(cat "$CLOSE_FILE")
+
+    DURATION=500
+    CURVE="ease-out-cubic"
+    if [ -f "$CONFIG_FILE_SRC" ]; then
+        while IFS= read -r line; do
+            case "$line" in
+                duration-ms*) DURATION=$(echo "$line" | awk '{print $2}') ;;
+                curve*)       CURVE=$(echo "$line" | awk '{print $2}' | tr -d '"') ;;
+            esac
+        done < "$CONFIG_FILE_SRC"
+    fi
+
+    cat > "$CONFIG_FILE" << ANIMEOF
+animations {
+        // workspace-switch cũ (giữ lại để tham khảo)
+        // workspace-switch {
+        //     spring damping-ratio=0.8 stiffness=1000 epsilon=0.0001
+        // }
+        // Tắt animation chuyển workspace (chuyển ngay lập tức)
+        // workspace-switch {
+        //     off
+        // }
+        // Tắt animation di chuyển ngang - vuốt nhảy luôn
+        // horizontal-view-movement {
+        //     off
+        // }
+
+        // $EFFECT effect khi mở cửa sổ
+        window-open {
+            custom-shader r"
+$OPEN
+            "
+            duration-ms $DURATION
+            curve "$CURVE"
+        }
+        // $EFFECT effect khi đóng cửa sổ
+        window-close {
+            custom-shader r"
+$CLOSE
+            "
+            duration-ms $DURATION
+            curve "$CURVE"
+        }
+
+        // Di chuyển cửa sổ
+        window-movement {
+            spring damping-ratio=0.8 stiffness=1000 epsilon=0.0001
+        }
+        // Thay đổi kích thước cửa sổ
+        window-resize {
+            spring damping-ratio=0.9 stiffness=1000 epsilon=0.0001
+        }
+        // Thông báo cấu hình
+        config-notification-open-close {
+            spring damping-ratio=0.6 stiffness=1000 epsilon=0.001
+        }
+        // Giao diện chụp màn hình
+        screenshot-ui-open {
+            duration-ms 200
+            curve "ease-out-quad"
+        }
+        // Chế độ xem tổng quan (Overview) - Cần mượt và bay bổng
+        overview-open-close {
+            spring damping-ratio=0.85 stiffness=700 epsilon=0.0001
+        }
+    }
+ANIMEOF
+
+    niri msg action load-config-file
+    echo "Current: $EFFECT"
+}
+
+case "${1:-}" in
+    next)
+        CURRENT=""
+        if [ -f "$STATE_FILE" ]; then
+            CURRENT=$(cat "$STATE_FILE")
+        fi
+
+        if [ -z "$CURRENT" ]; then
+            NEXT="${EFFECTS[0]}"
+        else
+            IDX=0
+            for i in "${!EFFECTS[@]}"; do
+                if [ "${EFFECTS[$i]}" = "$CURRENT" ]; then
+                    IDX=$(( (i + 1) % ${#EFFECTS[@]} ))
+                    break
+                fi
+            done
+            NEXT="${EFFECTS[$IDX]}"
+        fi
+
+        echo "$NEXT" > "$STATE_FILE"
+        apply_effect "$NEXT"
+        ;;
+    prev)
+        CURRENT=""
+        if [ -f "$STATE_FILE" ]; then
+            CURRENT=$(cat "$STATE_FILE")
+        fi
+
+        if [ -z "$CURRENT" ]; then
+            NEXT="${EFFECTS[-1]}"
+        else
+            IDX=0
+            for i in "${!EFFECTS[@]}"; do
+                if [ "${EFFECTS[$i]}" = "$CURRENT" ]; then
+                    IDX=$(( (i - 1 + ${#EFFECTS[@]}) % ${#EFFECTS[@]} ))
+                    break
+                fi
+            done
+            NEXT="${EFFECTS[$IDX]}"
+        fi
+
+        echo "$NEXT" > "$STATE_FILE"
+        apply_effect "$NEXT"
+        ;;
+    list)
+        echo "Available effects:"
+        for e in "${EFFECTS[@]}"; do
+            echo "  $e"
+        done
+        ;;
+    *)
+        if [ $# -eq 0 ]; then
+            echo "Usage: niri-shader <effect-name|next|prev|list>"
+            echo ""
+            echo "Available effects:"
+            for e in "${EFFECTS[@]}"; do
+                echo "  $e"
+            done
+            exit 1
+        fi
+
+        EFFECT="$1"
+        if [ ! -d "$SHADERS_DIR/$EFFECT" ]; then
+            echo "Error: effect '$EFFECT' not found"
+            echo "Available:"
+            for e in "${EFFECTS[@]}"; do
+                echo "  $e"
+            done
+            exit 1
+        fi
+
+        echo "$EFFECT" > "$STATE_FILE"
+        apply_effect "$EFFECT"
+        ;;
+esac
