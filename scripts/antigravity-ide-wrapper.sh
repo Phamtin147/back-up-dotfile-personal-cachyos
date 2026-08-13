@@ -1,4 +1,3 @@
-1
 #!/bin/bash
 
 XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-~/.config}
