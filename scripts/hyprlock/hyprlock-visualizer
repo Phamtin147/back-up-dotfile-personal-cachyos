@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# hyprlock-visualizer: Real-time 32-band PipeWire audio FFT spectrum with baseline
+# hyprlock-visualizer: Real-time 32-band PipeWire audio FFT spectrum
 
 if ! pgrep -f "hyprlock-cava-real-daemon" >/dev/null 2>&1; then
     python3 /home/amtia/.local/bin/hyprlock-cava-real-daemon >/dev/null 2>&1 &
