@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# noctalia-shutdown: Play 90s CRT TV shutdown animation then power off system
+set -euo pipefail
+
+# Apply CRT TV shutdown shader to Niri
+niri-shader crt-tv 2>/dev/null || true
+
+# Short sleep for CRT TV collapse animation (450ms)
+sleep 0.55
+
+# Execute poweroff
+systemctl poweroff

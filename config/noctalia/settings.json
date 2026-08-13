@@ -17,7 +17,8 @@
         "iconMode": "native",
         "ignoreMouseInput": false,
         "overviewLayer": false,
-        "pinnedApps": [],
+        "pinnedApps": [
+        ],
         "position": "top_center",
         "screenshotAnnotationTool": "",
         "showCategories": false,
@@ -27,7 +28,8 @@
         "viewMode": "list"
     },
     "audio": {
-        "mprisBlacklist": [],
+        "mprisBlacklist": [
+        ],
         "preferredPlayer": "",
         "spectrumFrameRate": 60,
         "spectrumMirrored": true,
@@ -162,7 +164,8 @@
                     "id": "plugin:catwalk"
                 },
                 {
-                    "blacklist": [],
+                    "blacklist": [
+                    ],
                     "chevronColor": "primary",
                     "colorizeIcons": true,
                     "drawerEnabled": true,
@@ -170,7 +173,7 @@
                     "id": "Tray",
                     "pinned": [
                         "steam",
-                        "DL speed: 400.3\u00a0KiB/s\nUP speed: 53.9\u00a0KiB/s"
+                        "DL speed: 400.3 KiB/s\nUP speed: 53.9 KiB/s"
                     ]
                 },
                 {
@@ -215,7 +218,8 @@
         }
     },
     "brightness": {
-        "backlightDeviceMappings": [],
+        "backlightDeviceMappings": [
+        ],
         "brightnessStep": 2,
         "enableDdcSupport": true,
         "enforceMinimum": true
@@ -375,11 +379,13 @@
             },
             {
                 "name": "eDP-1",
-                "widgets": []
+                "widgets": [
+                ]
             },
             {
                 "name": "DP-1",
-                "widgets": []
+                "widgets": [
+                ]
             }
         ],
         "overviewEnabled": true
@@ -411,7 +417,8 @@
             "DP-1"
         ],
         "onlySameOutput": true,
-        "pinnedApps": [],
+        "pinnedApps": [
+        ],
         "pinnedStatic": true,
         "position": "bottom",
         "showDockIndicator": false,
@@ -653,7 +660,7 @@
             },
             {
                 "action": "shutdown",
-                "command": "",
+                "command": "noctalia-shutdown",
                 "countdownEnabled": true,
                 "enabled": true,
                 "keybind": "5"
@@ -731,7 +738,7 @@
     },
     "ui": {
         "boxBorderEnabled": false,
-        "fontDefault": "DejaVu Math TeX Gyre",
+        "fontDefault": "Liberation Mono",
         "fontDefaultScale": 1,
         "fontFixed": "monospace",
         "fontFixedScale": 1,
@@ -748,12 +755,14 @@
         "directory": "/home/amtia/Pictures/Wallpapers",
         "enableMultiMonitorDirectories": false,
         "enabled": true,
-        "favorites": [],
+        "favorites": [
+        ],
         "fillColor": "#000000",
         "fillMode": "crop",
         "hideWallpaperFilenames": false,
         "linkLightAndDarkWallpapers": true,
-        "monitorDirectories": [],
+        "monitorDirectories": [
+        ],
         "overviewBlur": 0.4,
         "overviewEnabled": false,
         "overviewTint": 0.6,
@@ -762,7 +771,7 @@
         "setWallpaperOnAllMonitors": true,
         "showHiddenFiles": true,
         "skipStartupTransition": false,
-        "solidColor": "#1a00ff",
+        "solidColor": "#000000",
         "sortOrder": "date_desc",
         "transitionDuration": 1500,
         "transitionEdgeSmoothness": 0.05,
