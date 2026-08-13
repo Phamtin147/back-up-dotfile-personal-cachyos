@@ -152,6 +152,8 @@ async def sync_system_appearance(mode: str, *, update_gtk_theme: bool = True) ->
             
             # Set gtk-theme to Adwaita so GTK4 reads user ~/.config/gtk-4.0/gtk.css
             await run_command("gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", "Adwaita")
+            await run_command("gsettings", "set", "org.gnome.desktop.interface", "font-name", "LMMono10 11")
+            await run_command("gsettings", "set", "org.gnome.desktop.interface", "monospace-font-name", "LMMono10 11")
             return
 
 
