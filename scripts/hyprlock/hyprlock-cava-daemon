@@ -14,7 +14,7 @@ while True:
     if not data:
         break
     buf += data
-    while b'\n' in buffer:
+    while b'\n' in buf:
         frame, buf = buf.split(b'\n', 1)
         vals = [b - 48 for b in frame if 48 <= b <= 55]
         if len(vals) >= 32:
