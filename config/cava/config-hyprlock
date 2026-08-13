@@ -2,8 +2,9 @@
 bars = 64
 framerate = 60
 autosens = 1
-lower_cutoff_freq = 50
-higher_cutoff_freq = 10000
+sensitivity = 200
+lower_cutoff_freq = 40
+higher_cutoff_freq = 12000
 
 [input]
 method = pulse
@@ -17,6 +18,6 @@ ascii_max_range = 7
 bar_delimiter = 0
 
 [smoothing]
-noise_reduction = 77
+noise_reduction = 30
 monstercat = 1
 waves = 0
