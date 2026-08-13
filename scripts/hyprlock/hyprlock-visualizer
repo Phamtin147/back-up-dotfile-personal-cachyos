@@ -7,7 +7,7 @@ if [ ! -f "$PIDFILE" ] || ! kill -0 "$(cat "$PIDFILE" 2>/dev/null)" 2>/dev/null;
     python3 /home/amtia/.local/bin/hyprlock-cava-real-daemon >/dev/null 2>&1 &
 fi
 
-if [ -s /dev/shm/hyprlock-real-vis.txt ]; then
+if [ -f /dev/shm/hyprlock-real-vis.txt ]; then
     cat /dev/shm/hyprlock-real-vis.txt
 else
     echo "▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂"

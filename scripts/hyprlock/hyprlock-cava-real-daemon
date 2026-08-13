@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Real-time CAVA PipeWire Audio FFT daemon (32 Bands with guaranteed visible baseline)
+# Real-time CAVA PipeWire Audio FFT daemon with POSIX Atomic RAM replace
 import os
 import pty
 import subprocess
@@ -13,6 +13,7 @@ except Exception:
     pass
 
 cava_config = os.path.expanduser("~/.config/cava/config-hyprlock-real")
+tmp_path = "/dev/shm/hyprlock-real-vis.tmp"
 shm_path = "/dev/shm/hyprlock-real-vis.txt"
 
 master, slave = pty.openpty()
@@ -26,7 +27,6 @@ proc = subprocess.Popen(
 )
 os.close(slave)
 
-# Guaranteed visible block heights (Level 0 = ▂, Level 7 = █)
 bars = [
     b"\xe2\x96\x82",  # Level 0 (▂ baseline)
     b"\xe2\x96\x82",  # Level 1 (▂)
@@ -58,7 +58,8 @@ while True:
                     res.extend(bars[b - 48])
                 else:
                     res.extend(bars[0])
-            with open(shm_path, "wb") as f:
+            with open(tmp_path, "wb") as f:
                 f.write(bytes(res))
+            os.replace(tmp_path, shm_path)
     except Exception:
         time.sleep(0.01)
