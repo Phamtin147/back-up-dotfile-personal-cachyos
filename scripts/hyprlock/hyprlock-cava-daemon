@@ -18,7 +18,10 @@ while True:
         frame, buf = buf.split(b'\n', 1)
         vals = [b - 48 for b in frame if 48 <= b <= 55]
         if len(vals) >= 32:
-            out = ''.join(bars[v] for v in vals)
+            if not any(v > 0 for v in vals):
+                out = ''
+            else:
+                out = ''.join(bars[v] for v in vals)
             try:
                 with open('/tmp/cava-hyprlock.txt', 'w') as f:
                     f.write(out)
