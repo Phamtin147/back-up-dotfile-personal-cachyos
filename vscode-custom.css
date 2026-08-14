@@ -427,17 +427,44 @@ h6 {
   border-left: none !important;
 }
 
-/* Agent Toggle Button & Agent Container Rounding */
+/* Agent Toggle Button & Actions (Xóa bỏ hoàn toàn viền vuông bị đè phía sau) */
+.monaco-action-bar .action-item,
+.monaco-action-bar .action-item .action-label,
+.monaco-action-bar .action-item a,
+.monaco-workbench .part.auxiliarybar .action-item,
 .monaco-workbench .part.auxiliarybar .action-label,
-.monaco-action-bar .action-item[title*="Agent"],
-.monaco-action-bar .action-item[title*="agent"],
-.monaco-action-bar .action-item[aria-label*="Agent"],
-.monaco-action-bar .action-item[aria-label*="agent"],
+.monaco-workbench .part.activitybar .action-item,
+.monaco-workbench .part.activitybar .action-label,
 .agent-toggle-button,
 .toggle-agent,
-.antigravity-agent-toggle {
-  border-radius: var(--border-radius-large) !important;
+.antigravity-agent-toggle,
+[id*="agent-toggle"],
+[class*="agent-toggle"],
+[aria-label*="Agent"],
+[aria-label*="agent"],
+[title*="Agent"],
+[title*="agent"] {
+  border-radius: var(--border-radius-medium) !important;
   overflow: hidden !important;
+  outline: none !important;
+}
+
+.monaco-action-bar .action-item {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.monaco-action-bar .action-item.checked,
+.monaco-action-bar .action-item:hover,
+.monaco-action-bar .action-item.active {
+  border-radius: var(--border-radius-medium) !important;
+}
+
+.monaco-action-bar .action-item::before,
+.monaco-action-bar .action-item::after {
+  display: none !important;
+  content: none !important;
 }
 
 .monaco-workbench .part.auxiliarybar .pane-header {
