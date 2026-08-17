@@ -158,165 +158,147 @@ Loader {
                 z: -50
               }
 
-              // 3. Animated Widgets Wrapper with Multi-Profile Transitions
+              // 3. Animated Widgets Wrapper with Pure CRT-TV Turn-On / Turn-Off
               Item {
                 id: lockContentWrapper
                 anchors.fill: parent
                 z: 10
-                transformOrigin: Item.Center
 
-                property real animProgress: 0.0
-                property real slideYOffset: 0.0
+                property real scaleXVal: 0.005
+                property real scaleYVal: 0.01
+                property real contentOpacity: 0.0
                 property real crtFlashOpacity: 0.0
                 property bool isClosing: false
 
-                // Category checks for active shader
-                readonly property string activeEff: root.currentEffect
-                readonly property bool isCrt: activeEff === "crt-tv"
-                readonly property bool isBounce: activeEff === "bounce" || activeEff === "snap"
-                readonly property bool isCircle: activeEff === "circle" || activeEff === "ink-splash" || activeEff === "inkwell-drop" || activeEff === "ripple"
-                readonly property bool isSlide: activeEff === "directional" || activeEff === "directional-wipe" || activeEff === "crosshatch" || activeEff === "crosswarp"
+                opacity: lockContentWrapper.contentOpacity
 
-                opacity: animProgress
-                y: isSlide ? slideYOffset : 0
-
-                scale: {
-                  if (lockContentWrapper.isBounce) {
-                    return isClosing ? (0.2 + 0.8 * lockContentWrapper.animProgress) : (0.15 + 0.85 * lockContentWrapper.animProgress);
+                transform: [
+                  Scale {
+                    origin.x: lockContentWrapper.width / 2
+                    origin.y: lockContentWrapper.height / 2
+                    xScale: lockContentWrapper.scaleXVal
+                    yScale: lockContentWrapper.scaleYVal
                   }
-                  if (lockContentWrapper.isCircle) {
-                    return isClosing ? (1.0 + 0.5 * (1.0 - lockContentWrapper.animProgress)) : (0.25 + 0.75 * lockContentWrapper.animProgress);
-                  }
-                  if (lockContentWrapper.isCrt) {
-                    return isClosing ? (0.05 + 0.95 * lockContentWrapper.animProgress) : (0.05 + 0.95 * lockContentWrapper.animProgress);
-                  }
-                  // Default / smooth scale
-                  return isClosing ? (1.0 + 0.08 * (1.0 - lockContentWrapper.animProgress)) : (0.92 + 0.08 * lockContentWrapper.animProgress);
-                }
+                ]
 
                 // CRT Phosphor Flash Overlay
                 Rectangle {
                   anchors.fill: parent
                   color: "#ffffff"
-                  opacity: lockContentWrapper.crtFlashOpacity
+                  opacity: lockContentWrapper.crtFlashOpacity * 0.45
                   visible: opacity > 0.01
+                  z: 998
+                }
+
+                // CRT Horizontal Line Beam
+                Rectangle {
+                  anchors.horizontalCenter: parent.horizontalCenter
+                  anchors.verticalCenter: parent.verticalCenter
+                  width: parent.width * lockContentWrapper.scaleXVal
+                  height: 3
+                  color: "#ffffff"
+                  visible: lockContentWrapper.crtFlashOpacity > 0.05
+                  opacity: lockContentWrapper.crtFlashOpacity
                   z: 999
                 }
 
-                // Standard Entrance Animation
-                ParallelAnimation {
-                  id: standardEnterAnim
-                  NumberAnimation {
-                    target: lockContentWrapper
-                    property: "animProgress"
-                    from: 0.0
-                    to: 1.0
-                    duration: lockContentWrapper.isBounce ? 600 : (lockContentWrapper.isCircle ? 500 : 400)
-                    easing.type: lockContentWrapper.isBounce ? Easing.OutBack : (lockContentWrapper.isCircle ? Easing.OutExpo : Easing.OutCubic)
-                  }
-                  NumberAnimation {
-                    target: lockContentWrapper
-                    property: "slideYOffset"
-                    from: -300.0
-                    to: 0.0
-                    duration: 500
-                    easing.type: Easing.OutCubic
-                  }
-                }
-
-                // CRT-TV Entrance Animation
+                // CRT-TV Entrance Animation (Turn ON)
                 SequentialAnimation {
                   id: crtEnterAnim
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 1.0 }
+                  PropertyAction { target: lockContentWrapper; property: "scaleXVal"; value: 0.005 }
+                  PropertyAction { target: lockContentWrapper; property: "scaleYVal"; value: 0.01 }
+                  PropertyAction { target: lockContentWrapper; property: "crtFlashOpacity"; value: 0.9 }
+
+                  // Stage 1: Expand horizontal ray
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "scaleXVal"
+                    from: 0.005
+                    to: 1.0
+                    duration: 180
+                    easing.type: Easing.OutQuad
+                  }
+                  // Stage 2: Expand vertical height into full screen
                   ParallelAnimation {
                     NumberAnimation {
                       target: lockContentWrapper
-                      property: "animProgress"
-                      from: 0.0
+                      property: "scaleYVal"
+                      from: 0.01
                       to: 1.0
-                      duration: 350
-                      easing.type: Easing.OutExpo
+                      duration: 240
+                      easing.type: Easing.OutCubic
                     }
                     NumberAnimation {
                       target: lockContentWrapper
                       property: "crtFlashOpacity"
-                      from: 0.8
+                      from: 0.9
                       to: 0.0
-                      duration: 400
+                      duration: 320
                       easing.type: Easing.OutQuad
                     }
                   }
                 }
 
-                // Standard Exit Animation
-                ParallelAnimation {
-                  id: standardExitAnim
-                  NumberAnimation {
-                    target: lockContentWrapper
-                    property: "animProgress"
-                    from: 1.0
-                    to: 0.0
-                    duration: lockContentWrapper.isBounce ? 350 : 350
-                    easing.type: lockContentWrapper.isBounce ? Easing.InBack : Easing.InCubic
-                  }
-                  NumberAnimation {
-                    target: lockContentWrapper
-                    property: "slideYOffset"
-                    from: 0.0
-                    to: 300.0
-                    duration: 350
-                    easing.type: Easing.InCubic
-                  }
-                  onFinished: {
-                    lockSession.locked = false;
-                    root.active = false;
-                    lockContentWrapper.isClosing = false;
-                  }
-                }
-
-                // CRT-TV Exit Animation
+                // CRT-TV Exit Animation (Turn OFF)
                 SequentialAnimation {
                   id: crtExitAnim
+                  // Stage 1: Collapse vertical height into a thin beam
                   ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleYVal"
+                      from: 1.0
+                      to: 0.01
+                      duration: 180
+                      easing.type: Easing.InCubic
+                    }
                     NumberAnimation {
                       target: lockContentWrapper
                       property: "crtFlashOpacity"
                       from: 0.0
-                      to: 0.6
-                      duration: 120
+                      to: 0.85
+                      duration: 160
+                      easing.type: Easing.InQuad
+                    }
+                  }
+                  // Stage 2: Collapse horizontal beam into a dot & fade out
+                  ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleXVal"
+                      from: 1.0
+                      to: 0.0
+                      duration: 140
                       easing.type: Easing.InQuad
                     }
                     NumberAnimation {
                       target: lockContentWrapper
-                      property: "animProgress"
-                      from: 1.0
+                      property: "crtFlashOpacity"
+                      from: 0.85
                       to: 0.0
-                      duration: 250
-                      easing.type: Easing.InExpo
+                      duration: 140
+                      easing.type: Easing.InQuad
                     }
                   }
-                  onFinished: {
-                    lockSession.locked = false;
-                    root.active = false;
-                    lockContentWrapper.isClosing = false;
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.0 }
+                  ScriptAction {
+                    script: {
+                      lockSession.locked = false;
+                      root.active = false;
+                      lockContentWrapper.isClosing = false;
+                    }
                   }
                 }
 
                 Component.onCompleted: {
                   lockContainer.activeContentWrapper = this;
-                  if (isCrt) {
-                    crtEnterAnim.start();
-                  } else {
-                    standardEnterAnim.start();
-                  }
+                  crtEnterAnim.start();
                 }
 
                 function startUnlock() {
                   isClosing = true;
-                  if (isCrt) {
-                    crtExitAnim.start();
-                  } else {
-                    standardExitAnim.start();
-                  }
+                  crtExitAnim.start();
                 }
 
                 // Mouse area to trigger focus on cursor movement
