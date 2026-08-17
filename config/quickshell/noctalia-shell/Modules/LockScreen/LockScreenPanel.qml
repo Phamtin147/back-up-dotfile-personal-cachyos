@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Services.Compositor
 import qs.Services.Hardware
@@ -21,9 +22,9 @@ Item {
   required property var keyboardLayout
   required property TextInput passwordInput
 
-  readonly property bool animationsEnabled: Settings.data.general.lockScreenAnimations || false
+  readonly property bool animationsEnabled: Settings.data.general.lockScreenAnimations !== undefined ? Settings.data.general.lockScreenAnimations : true
 
-  // Session timer properties for notification compatibility
+  // Notification properties compatibility
   property bool timerActive: false
   property string pendingAction: ""
   property int timeRemaining: 0
@@ -33,6 +34,7 @@ Item {
   readonly property string spectrumComponentId: "lockscreen:audiovisualizer"
   Component.onCompleted: {
     SpectrumService.registerComponent(root.spectrumComponentId);
+    systemInfoProcess.running = true;
   }
   Component.onDestruction: {
     SpectrumService.unregisterComponent(root.spectrumComponentId);
@@ -44,7 +46,7 @@ Item {
   Item {
     id: visualizerContainer
     anchors.horizontalCenter: parent.horizontalCenter
-    anchors.bottom: passwordBox.top
+    anchors.bottom: passwordInputContainer.top
     anchors.bottomMargin: 10
     width: 550
     height: 28
@@ -68,74 +70,304 @@ Item {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 2. Password Input Field (Exact 550 x 55 Omarchy Flat Box)
+  // 2. Password Input Field (Noctalia Full Input Engine + 550x55 Style)
   // ─────────────────────────────────────────────────────────────
   Rectangle {
-    id: passwordBox
+    id: passwordInputContainer
     anchors.centerIn: parent
     width: 550
     height: 55
-    color: Color.mSurfaceVariant
     radius: 0
+    color: Color.mSurfaceVariant
 
     border.color: {
-      if (lockControl.showFailure) return Color.mError;
-      if (lockControl.unlockInProgress) return Color.mTertiary;
-      return Color.mPrimary;
+      if (lockControl && lockControl.showFailure) return Color.mError;
+      if (lockControl && lockControl.unlockInProgress) return Color.mTertiary;
+      return passwordInput.activeFocus ? Color.mPrimary : Qt.alpha(Color.mOutline, 0.4);
     }
     border.width: 4
 
+    property bool passwordVisible: false
+
     Behavior on border.color {
-      ColorAnimation {
-        duration: 180
-      }
+      ColorAnimation { duration: 180 }
     }
 
-    // Click on box to focus input
-    MouseArea {
-      anchors.fill: parent
-      cursorShape: Qt.IBeamCursor
-      onClicked: passwordInput.forceActiveFocus()
+    // Shortcut: Ctrl + A to select all
+    Shortcut {
+      sequence: StandardKey.SelectAll
+      enabled: passwordInput.activeFocus
+      onActivated: passwordInput.selectAll()
     }
 
-    // Placeholder text ("Enter Password" or Error text)
-    NText {
-      anchors.centerIn: parent
-      visible: passwordInput.text.length === 0
-      text: {
-        if (lockControl.showFailure) {
-          return "<i>" + (lockControl.errorMessage || "Authentication failed") + "</i>";
-        }
-        if (lockControl.unlockInProgress) {
-          return "<i>Authenticating...</i>";
-        }
-        return "Enter Password";
-      }
-      color: lockControl.showFailure ? Color.mError : Qt.alpha(Color.mOnSurface, 0.45)
-      pointSize: 13
-      font.family: Settings.data.ui.fontDefault || "Sans"
-      textFormat: Text.RichText
+    // Shortcut: Esc to deselect
+    Shortcut {
+      sequences: [StandardKey.Cancel]
+      enabled: passwordInput.activeFocus && passwordInput.selectionStart !== passwordInput.selectionEnd
+      onActivated: passwordInput.deselect()
     }
 
-    // Password Dots (Centered)
     Row {
-      anchors.centerIn: parent
-      spacing: 12
-      visible: passwordInput.text.length > 0
+      anchors.left: parent.left
+      anchors.leftMargin: 18
+      anchors.verticalCenter: parent.verticalCenter
+      spacing: Style.marginL
 
-      Repeater {
-        model: Math.min(passwordInput.text.length, 32)
+      // Lock / Login Icon
+      NIcon {
+        icon: "login-2"
+        pointSize: Style.fontSizeL
+        color: passwordInput.activeFocus ? Color.mPrimary : Color.mOnSurfaceVariant
+        anchors.verticalCenter: parent.verticalCenter
+      }
+
+      Row {
+        spacing: 0
+        anchors.verticalCenter: parent.verticalCenter
+
+        // Blinking Caret when empty
         Rectangle {
-          width: 9
-          height: 9
-          radius: width / 2
-          color: Color.mOnSurface
+          width: 2
+          height: 22
+          color: Color.mPrimary
+          visible: passwordInput.activeFocus && passwordInput.text.length === 0
+          anchors.verticalCenter: parent.verticalCenter
 
-          Behavior on scale {
-            NumberAnimation {
-              duration: 120
-              easing.type: Easing.OutBack
+          SequentialAnimation on opacity {
+            loops: Animation.Infinite
+            running: root.animationsEnabled && passwordInput.activeFocus && passwordInput.text.length === 0
+            NumberAnimation { to: 0; duration: 530 }
+            NumberAnimation { to: 1; duration: 530 }
+          }
+        }
+
+        // Placeholder Text when empty
+        NText {
+          text: (lockControl && lockControl.showFailure) ? (lockControl.errorMessage || "Authentication failed") : "Enter Password"
+          color: (lockControl && lockControl.showFailure) ? Color.mError : Qt.alpha(Color.mOnSurface, 0.45)
+          pointSize: 13
+          font.family: Settings.data.ui.fontDefault || "Sans"
+          visible: passwordInput.text.length === 0
+          anchors.verticalCenter: parent.verticalCenter
+          anchors.leftMargin: 4
+        }
+
+        // Password Visual Host (Dots / Plain Text)
+        Item {
+          id: passwordVisualHost
+          height: 22
+          width: passwordInputContainer.passwordVisible ? Math.min(visiblePasswordPlainText.implicitWidth, 400) : Math.min(passwordDisplayContent.width, 400)
+          anchors.verticalCenter: parent.verticalCenter
+
+          readonly property real caretVisualX: {
+            const len = passwordInput.text.length;
+            if (len <= 0) return 0;
+            if (passwordInputContainer.passwordVisible) {
+              const adv = passwordCaretFontMetrics.advanceWidth(passwordInput.text.substring(0, passwordInput.cursorPosition));
+              return Math.max(0, Math.min(adv, width));
             }
+            const w = passwordDisplayContent.width;
+            if (w <= 0) return 0;
+            return Math.max(0, Math.min((passwordInput.cursorPosition / len) * w, width));
+          }
+
+          // Animated Password Dots
+          Item {
+            width: Math.min(passwordDisplayContent.width, 400)
+            height: 22
+            visible: passwordInput.text.length > 0 && !passwordInputContainer.passwordVisible
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            clip: true
+
+            // Selection highlight
+            Rectangle {
+              id: selectionHighlight
+              visible: passwordInput.selectionStart !== passwordInput.selectionEnd && passwordInput.text.length > 0
+              color: Qt.alpha(Color.mPrimary, 0.8)
+              height: parent.height
+              anchors.verticalCenter: parent.verticalCenter
+              x: (passwordInput.selectionStart / passwordInput.text.length) * passwordDisplayContent.width
+              width: ((passwordInput.selectionEnd - passwordInput.selectionStart) / passwordInput.text.length) * passwordDisplayContent.width
+            }
+
+            Row {
+              id: passwordDisplayContent
+              spacing: 6
+              anchors.verticalCenter: parent.verticalCenter
+
+              Repeater {
+                id: iconRepeater
+                model: ScriptModel {
+                  values: Array(passwordInput.text.length)
+                }
+
+                NIcon {
+                  id: icon
+                  required property int index
+                  property bool isSelected: index >= 0 && passwordInput.selectionStart !== passwordInput.selectionEnd && index >= passwordInput.selectionStart && index < passwordInput.selectionEnd
+
+                  icon: "circle-filled"
+                  pointSize: 10
+                  color: isSelected ? Color.mOnPrimary : Color.mPrimary
+                  opacity: 1.0
+                  scale: animationsEnabled ? 0.5 : 1
+
+                  ParallelAnimation {
+                    id: iconAnim
+                    NumberAnimation {
+                      target: icon
+                      properties: "scale"
+                      to: 1
+                      duration: Style.animationFast
+                      easing.type: Easing.OutBack
+                    }
+                  }
+
+                  Component.onCompleted: {
+                    if (animationsEnabled) iconAnim.start();
+                  }
+                }
+              }
+            }
+
+            // Mouse Area for drag & select
+            MouseArea {
+              anchors.fill: parent
+              cursorShape: Qt.IBeamCursor
+              onPressed: function(mouse) {
+                passwordInput.forceActiveFocus();
+                var charWidth = passwordDisplayContent.width / Math.max(1, passwordInput.text.length);
+                passwordInput.cursorPosition = Math.max(0, Math.min(passwordInput.text.length, Math.floor(mouse.x / charWidth)));
+              }
+            }
+          }
+
+          // Plain text when eye toggle is ON
+          NText {
+            id: visiblePasswordPlainText
+            text: passwordInput.text
+            color: Color.mPrimary
+            pointSize: Style.fontSizeM
+            visible: passwordInput.text.length > 0 && passwordInputContainer.passwordVisible
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            elide: Text.ElideRight
+            width: Math.min(implicitWidth, 400)
+          }
+
+          FontMetrics {
+            id: passwordCaretFontMetrics
+            font: visiblePasswordPlainText.font
+          }
+
+          // Blinking Caret while typing
+          Rectangle {
+            width: 2
+            height: 22
+            x: passwordVisualHost.caretVisualX
+            color: Color.mPrimary
+            visible: passwordInput.activeFocus && passwordInput.text.length > 0 && passwordInput.selectionStart === passwordInput.selectionEnd
+            anchors.verticalCenter: parent.verticalCenter
+
+            SequentialAnimation on opacity {
+              loops: Animation.Infinite
+              running: root.animationsEnabled && passwordInput.activeFocus && passwordInput.text.length > 0 && passwordInput.selectionStart === passwordInput.selectionEnd
+              NumberAnimation { to: 0; duration: 530 }
+              NumberAnimation { to: 1; duration: 530 }
+            }
+          }
+        }
+      }
+    }
+
+    // Right Action Buttons Row (Caps lock + Clear + Eye + Submit)
+    RowLayout {
+      anchors.right: parent.right
+      anchors.rightMargin: 12
+      anchors.verticalCenter: parent.verticalCenter
+      spacing: 6
+
+      // Caps Lock Warning Icon
+      NIcon {
+        icon: "lock"
+        pointSize: Style.fontSizeM
+        color: Color.mPrimary
+        visible: LockKeysService.capsLockOn
+      }
+
+      // Clear Button
+      Rectangle {
+        width: 32
+        height: 32
+        radius: width / 2
+        color: clearMouse.containsMouse ? Qt.alpha(Color.mPrimary, 0.2) : "transparent"
+        visible: passwordInput.text.length > 0
+
+        NIcon {
+          anchors.centerIn: parent
+          icon: "x"
+          pointSize: Style.fontSizeM
+          color: Color.mOnSurfaceVariant
+        }
+
+        MouseArea {
+          id: clearMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            passwordInput.text = "";
+            passwordInput.forceActiveFocus();
+          }
+        }
+      }
+
+      // Eye Visibility Toggle Button
+      Rectangle {
+        width: 32
+        height: 32
+        radius: width / 2
+        color: eyeMouse.containsMouse ? Qt.alpha(Color.mPrimary, 0.2) : "transparent"
+        visible: passwordInput.text.length > 0
+
+        NIcon {
+          anchors.centerIn: parent
+          icon: passwordInputContainer.passwordVisible ? "eye-off" : "eye"
+          pointSize: Style.fontSizeM
+          color: Color.mOnSurfaceVariant
+        }
+
+        MouseArea {
+          id: eyeMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: passwordInputContainer.passwordVisible = !passwordInputContainer.passwordVisible
+        }
+      }
+
+      // Submit Arrow Button
+      Rectangle {
+        width: 36
+        height: 36
+        radius: 4
+        color: submitMouse.containsMouse ? Color.mPrimary : Qt.alpha(Color.mPrimary, 0.2)
+
+        NIcon {
+          anchors.centerIn: parent
+          icon: "arrow-right"
+          pointSize: Style.fontSizeM
+          color: submitMouse.containsMouse ? Color.mOnPrimary : Color.mPrimary
+        }
+
+        MouseArea {
+          id: submitMouse
+          anchors.fill: parent
+          hoverEnabled: true
+          cursorShape: Qt.PointingHandCursor
+          onClicked: {
+            if (lockControl) lockControl.tryUnlock();
           }
         }
       }
@@ -148,7 +380,7 @@ Item {
   Item {
     id: mediaHUD
     anchors.horizontalCenter: parent.horizontalCenter
-    anchors.top: passwordBox.bottom
+    anchors.top: passwordInputContainer.bottom
     anchors.topMargin: 20
     width: 550
     height: 95
@@ -316,20 +548,37 @@ Item {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 4. System Info Line (Bottom Center)
+  // 4. Exact Hyprlock System Info Line (Bottom Center)
   // ─────────────────────────────────────────────────────────────
-  RowLayout {
+  property string systemInfoOutput: ""
+
+  Process {
+    id: systemInfoProcess
+    command: ["/home/amtia/.local/bin/hyprlock-system-info"]
+    stdout: SplitParser {
+      onRead: data => {
+        if (data && data.trim().length > 0) {
+          root.systemInfoOutput = data.trim();
+        }
+      }
+    }
+  }
+
+  Timer {
+    interval: 30000
+    running: true
+    repeat: true
+    onTriggered: systemInfoProcess.running = true
+  }
+
+  Text {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
-    anchors.bottomMargin: 35
-    spacing: 16
-
-    NText {
-      text: "HOST: " + (SystemService.data.hostname || "Linux") + "  //  UPTIME: " + (SystemService.data.uptime || "Online")
-      color: Color.mOnSurfaceVariant
-      pointSize: 10
-      font.family: Settings.data.ui.fontDefault || "Sans"
-      opacity: 0.75
-    }
+    anchors.bottomMargin: 40
+    text: root.systemInfoOutput.length > 0 ? root.systemInfoOutput : ("User: " + SystemService.data.username + " | Host: " + SystemService.data.hostname + " | Uptime: " + SystemService.data.uptime)
+    textFormat: Text.RichText
+    font.pixelSize: 13
+    font.family: Settings.data.ui.fontDefault || "Sans"
+    color: Color.mOnSurface
   }
 }
