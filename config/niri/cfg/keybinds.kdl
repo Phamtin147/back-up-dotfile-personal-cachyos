@@ -18,8 +18,8 @@ binds {
     MOD+B { 
         spawn "bash" "-c" "pgrep -x zen-browser || zen-browser" 
     }   
-    // MOD+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "qs -c noctalia-shell ipc call lockScreen lock"; }
-    MOD+ALT+L                           hotkey-overlay-title="Lock Screen: hyprlock" { spawn "hyprlock"; }
+    MOD+ALT+L                           hotkey-overlay-title="Lock Screen: noctalia lock" { spawn-sh "qs -c noctalia-shell ipc call lockScreen lock"; }
+    // MOD+ALT+L                           hotkey-overlay-title="Lock Screen: hyprlock" { spawn "hyprlock"; }
     MOD+SHIFT+D                         hotkey-overlay-title="Wallpaper: noctalia wallpaper" { spawn-sh "qs -c noctalia-shell ipc call wallpaper toggle"; }
     MOD+SHIFT+B                         hotkey-overlay-title="Toggle Bar: noctalia bar" { spawn-sh "qs -c noctalia-shell ipc call bar toggle"; }
     Alt+Shift+Q                          hotkey-overlay-title="Session Menu: noctalia session" { spawn-sh "qs -c noctalia-shell ipc call sessionMenu toggle"; }
