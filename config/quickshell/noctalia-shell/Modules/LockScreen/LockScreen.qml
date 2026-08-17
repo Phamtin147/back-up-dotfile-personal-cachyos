@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pam
 import Quickshell.Wayland
 import qs.Commons
@@ -16,10 +17,30 @@ Loader {
   id: root
   active: false
 
+  // Synced Niri window shader state
+  property string currentEffect: "ink-splash"
+  property int animDuration: 500
+
+  Process {
+    id: shaderStateProbe
+    command: ["sh", "-c", "cat /tmp/niri-shader-state 2>/dev/null || cat $HOME/shaders/.current 2>/dev/null || echo 'fade'"]
+    running: root.active
+    stdout: StdioCollector {
+      onTextChanged: {
+        if (text && text.trim().length > 0) {
+          root.currentEffect = text.trim();
+        }
+      }
+    }
+  }
+
   // Track if the visualizer should be shown (lockscreen active + media playing + non-compact mode)
   readonly property bool needsSpectrum: root.active && !Settings.data.general.compactLockScreen && Settings.data.audio.visualizerType !== "" && Settings.data.audio.visualizerType !== "none"
 
   onActiveChanged: {
+    if (root.active) {
+      shaderStateProbe.running = true;
+    }
     if (root.active && root.needsSpectrum) {
       SpectrumService.registerComponent("lockscreen");
     } else {
@@ -66,11 +87,17 @@ Loader {
     Item {
       id: lockContainer
 
+      property var activeContentWrapper: null
+
       LockContext {
         id: lockContext
         onUnlocked: {
-          lockSession.locked = false;
-          root.scheduleUnloadAfterUnlock();
+          if (lockContainer.activeContentWrapper) {
+            lockContainer.activeContentWrapper.startUnlock();
+          } else {
+            lockSession.locked = false;
+            root.scheduleUnloadAfterUnlock();
+          }
           lockContext.currentText = "";
         }
         onFailed: {
@@ -103,6 +130,59 @@ Loader {
             id: fullLockScreenComponent
 
             Item {
+              id: lockContentWrapper
+              anchors.fill: parent
+
+              property real animProgress: 0.0
+              property bool isClosing: false
+
+              opacity: animProgress
+              scale: {
+                if (root.currentEffect === "bounce") {
+                  return isClosing ? (0.85 + 0.15 * animProgress) : (0.88 + 0.12 * animProgress);
+                }
+                if (root.currentEffect === "circle" || root.currentEffect === "zoom") {
+                  return isClosing ? (1.0 + 0.08 * (1.0 - animProgress)) : (0.92 + 0.08 * animProgress);
+                }
+                // Default / ink-splash / crosshatch
+                return isClosing ? (1.0 + 0.06 * (1.0 - animProgress)) : (0.94 + 0.06 * animProgress);
+              }
+
+              NumberAnimation {
+                id: enterAnim
+                target: lockContentWrapper
+                property: "animProgress"
+                from: 0.0
+                to: 1.0
+                duration: (root.currentEffect === "ink-splash" || root.currentEffect === "crosshatch") ? 650 : 450
+                easing.type: Easing.OutCubic
+              }
+
+              NumberAnimation {
+                id: exitAnim
+                target: lockContentWrapper
+                property: "animProgress"
+                from: 1.0
+                to: 0.0
+                duration: 380
+                easing.type: Easing.OutCubic
+                onFinished: {
+                  lockSession.locked = false;
+                  root.active = false;
+                  lockContentWrapper.isClosing = false;
+                }
+              }
+
+              Component.onCompleted: {
+                lockContainer.activeContentWrapper = this;
+                enterAnim.start();
+              }
+
+              function startUnlock() {
+                isClosing = true;
+                exitAnim.start();
+              }
+
               Item {
                 id: batteryIndicator
 
