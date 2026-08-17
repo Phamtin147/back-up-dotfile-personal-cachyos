@@ -17,8 +17,13 @@ Loader {
   id: root
   active: false
 
-  // Synced Niri window shader state via reactive Settings.data
-  readonly property string currentEffect: (Settings.data.general && Settings.data.general.activeLockShader) ? Settings.data.general.activeLockShader : "ink-splash"
+  // Live file watcher for Niri shader state - 0ms latency
+  FileView {
+    id: shaderStateFile
+    path: "/tmp/niri-shader-state"
+  }
+
+  readonly property string currentEffect: String(shaderStateFile.text || "").trim() || "crt-tv"
   property int animDuration: 500
 
   // Track if the visualizer should be shown (lockscreen active + media playing + non-compact mode)
@@ -116,10 +121,6 @@ Loader {
             Item {
               anchors.fill: parent
 
-              LockAnimationConfig {
-                id: animConfig
-              }
-
               // 1. Permanent pitch black base layer - eliminates any white flash
               Rectangle {
                 anchors.fill: parent
@@ -158,27 +159,41 @@ Loader {
                 transformOrigin: Item.Center
 
                 property real animProgress: 0.0
-                property real crtYProgress: 1.0
-                property real crtXProgress: 1.0
                 property real slideYOffset: 0.0
+                property real crtFlashOpacity: 0.0
                 property bool isClosing: false
 
                 // Category checks for active shader
-                readonly property string activeEff: animConfig.effect || (Settings.data.general && Settings.data.general.activeLockShader) || "ink-splash"
+                readonly property string activeEff: root.currentEffect
                 readonly property bool isCrt: activeEff === "crt-tv"
                 readonly property bool isBounce: activeEff === "bounce" || activeEff === "snap"
                 readonly property bool isCircle: activeEff === "circle" || activeEff === "ink-splash" || activeEff === "inkwell-drop" || activeEff === "ripple"
                 readonly property bool isSlide: activeEff === "directional" || activeEff === "directional-wipe" || activeEff === "crosshatch" || activeEff === "crosswarp"
-                readonly property bool isGlitch: activeEff === "glitch" || activeEff === "pixelate" || activeEff === "voronoi-shatter"
 
-                opacity: isCrt ? (crtXProgress > 0.05 ? 1.0 : 0.0) : animProgress
+                opacity: animProgress
                 y: isSlide ? slideYOffset : 0
 
                 scale: {
-                  if (lockContentWrapper.isCrt) return lockContentWrapper.crtXProgress;
-                  if (lockContentWrapper.isBounce) return lockContentWrapper.isClosing ? (0.3 + 0.7 * lockContentWrapper.animProgress) : (0.4 + 0.6 * lockContentWrapper.animProgress);
-                  if (lockContentWrapper.isCircle) return lockContentWrapper.isClosing ? (1.0 + 0.3 * (1.0 - lockContentWrapper.animProgress)) : (0.75 + 0.25 * lockContentWrapper.animProgress);
-                  return lockContentWrapper.isClosing ? (1.0 + 0.08 * (1.0 - lockContentWrapper.animProgress)) : (0.92 + 0.08 * lockContentWrapper.animProgress);
+                  if (lockContentWrapper.isBounce) {
+                    return isClosing ? (0.2 + 0.8 * lockContentWrapper.animProgress) : (0.15 + 0.85 * lockContentWrapper.animProgress);
+                  }
+                  if (lockContentWrapper.isCircle) {
+                    return isClosing ? (1.0 + 0.5 * (1.0 - lockContentWrapper.animProgress)) : (0.25 + 0.75 * lockContentWrapper.animProgress);
+                  }
+                  if (lockContentWrapper.isCrt) {
+                    return isClosing ? (0.05 + 0.95 * lockContentWrapper.animProgress) : (0.05 + 0.95 * lockContentWrapper.animProgress);
+                  }
+                  // Default / smooth scale
+                  return isClosing ? (1.0 + 0.08 * (1.0 - lockContentWrapper.animProgress)) : (0.92 + 0.08 * lockContentWrapper.animProgress);
+                }
+
+                // CRT Phosphor Flash Overlay
+                Rectangle {
+                  anchors.fill: parent
+                  color: "#ffffff"
+                  opacity: lockContentWrapper.crtFlashOpacity
+                  visible: opacity > 0.01
+                  z: 999
                 }
 
                 // Standard Entrance Animation
@@ -189,15 +204,15 @@ Loader {
                     property: "animProgress"
                     from: 0.0
                     to: 1.0
-                    duration: lockContentWrapper.isBounce ? 550 : 400
-                    easing.type: lockContentWrapper.isBounce ? Easing.OutBack : Easing.OutCubic
+                    duration: lockContentWrapper.isBounce ? 600 : (lockContentWrapper.isCircle ? 500 : 400)
+                    easing.type: lockContentWrapper.isBounce ? Easing.OutBack : (lockContentWrapper.isCircle ? Easing.OutExpo : Easing.OutCubic)
                   }
                   NumberAnimation {
                     target: lockContentWrapper
                     property: "slideYOffset"
-                    from: -120.0
+                    from: -300.0
                     to: 0.0
-                    duration: 450
+                    duration: 500
                     easing.type: Easing.OutCubic
                   }
                 }
@@ -205,23 +220,23 @@ Loader {
                 // CRT-TV Entrance Animation
                 SequentialAnimation {
                   id: crtEnterAnim
-                  PropertyAction { target: lockContentWrapper; property: "animProgress"; value: 1.0 }
-                  PropertyAction { target: lockContentWrapper; property: "crtYProgress"; value: 0.02 }
-                  NumberAnimation {
-                    target: lockContentWrapper
-                    property: "crtXProgress"
-                    from: 0.01
-                    to: 1.0
-                    duration: 160
-                    easing.type: Easing.OutQuad
-                  }
-                  NumberAnimation {
-                    target: lockContentWrapper
-                    property: "crtYProgress"
-                    from: 0.02
-                    to: 1.0
-                    duration: 220
-                    easing.type: Easing.OutCubic
+                  ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "animProgress"
+                      from: 0.0
+                      to: 1.0
+                      duration: 350
+                      easing.type: Easing.OutExpo
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "crtFlashOpacity"
+                      from: 0.8
+                      to: 0.0
+                      duration: 400
+                      easing.type: Easing.OutQuad
+                    }
                   }
                 }
 
@@ -233,14 +248,14 @@ Loader {
                     property: "animProgress"
                     from: 1.0
                     to: 0.0
-                    duration: lockContentWrapper.isBounce ? 320 : 350
-                    easing.type: lockContentWrapper.isBounce ? Easing.InBack : Easing.OutCubic
+                    duration: lockContentWrapper.isBounce ? 350 : 350
+                    easing.type: lockContentWrapper.isBounce ? Easing.InBack : Easing.InCubic
                   }
                   NumberAnimation {
                     target: lockContentWrapper
                     property: "slideYOffset"
                     from: 0.0
-                    to: 140.0
+                    to: 300.0
                     duration: 350
                     easing.type: Easing.InCubic
                   }
@@ -254,21 +269,23 @@ Loader {
                 // CRT-TV Exit Animation
                 SequentialAnimation {
                   id: crtExitAnim
-                  NumberAnimation {
-                    target: lockContentWrapper
-                    property: "crtYProgress"
-                    from: 1.0
-                    to: 0.02
-                    duration: 180
-                    easing.type: Easing.InCubic
-                  }
-                  NumberAnimation {
-                    target: lockContentWrapper
-                    property: "crtXProgress"
-                    from: 1.0
-                    to: 0.0
-                    duration: 140
-                    easing.type: Easing.InQuad
+                  ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "crtFlashOpacity"
+                      from: 0.0
+                      to: 0.6
+                      duration: 120
+                      easing.type: Easing.InQuad
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "animProgress"
+                      from: 1.0
+                      to: 0.0
+                      duration: 250
+                      easing.type: Easing.InExpo
+                    }
                   }
                   onFinished: {
                     lockSession.locked = false;

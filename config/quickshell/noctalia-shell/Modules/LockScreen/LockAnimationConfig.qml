@@ -1,6 +1,6 @@
 import QtQuick
 
 QtObject {
-  property string effect: "circle"
+  property string effect: "crosswarp"
   property int duration: 500
 }
