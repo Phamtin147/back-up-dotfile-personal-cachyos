@@ -85,7 +85,7 @@ Item {
       if (lockControl && lockControl.unlockInProgress) return Color.mTertiary;
       return passwordInput.activeFocus ? Color.mPrimary : Qt.alpha(Color.mOutline, 0.4);
     }
-    border.width: 4
+    border.width: passwordInput.activeFocus ? 2 : 1
 
     property bool passwordVisible: false
 
