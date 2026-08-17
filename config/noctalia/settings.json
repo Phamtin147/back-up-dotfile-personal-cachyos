@@ -102,6 +102,37 @@
             ],
             "left": [
                 {
+                    "defaultSettings": {
+                        "aurCmd": "paru -Qua 2>/dev/null",
+                        "aurHomepageCmd": "LC_ALL=C paru -Si {id} 2>/dev/null | awk '/^URL/ {print $3}'",
+                        "boldText": true,
+                        "boldVer": true,
+                        "boldVerDesktop": true,
+                        "boldVerPanel": true,
+                        "closeButton": true,
+                        "closeOnSettings": false,
+                        "customIconPath": "",
+                        "desktopTip": true,
+                        "enableColorization": false,
+                        "flatpak": true,
+                        "hideOnEmpty": false,
+                        "hoverTip": true,
+                        "iconColor": "none",
+                        "iconName": "arrow-big-down-lines",
+                        "noctalia": true,
+                        "panelContext": true,
+                        "panelTooltip": true,
+                        "refreshInterval": 120,
+                        "refreshTimer": true,
+                        "systemCmd": "checkupdates 2>/dev/null",
+                        "toast": true,
+                        "tooltip": true,
+                        "updateCmd": "alacritty -e bash -c 'echo \"Updating System...\";paru; flatpak update; read -n 1 -p \"Press any key to exit...\"'",
+                        "useDistroLogo": false
+                    },
+                    "id": "plugin:arch-updater"
+                },
+                {
                     "characterCount": 2,
                     "colorizeIcons": false,
                     "emptyColor": "secondary",
@@ -471,7 +502,7 @@
         "language": "",
         "lockOnSuspend": true,
         "lockScreenAnimations": true,
-        "lockScreenBlur": 0,
+        "lockScreenBlur": 0.85,
         "lockScreenCountdownDuration": 5000,
         "lockScreenMonitors": [
             "eDP-1",
@@ -509,7 +540,7 @@
     },
     "idle": {
         "customCommands": "[]",
-        "enabled": true,
+        "enabled": false,
         "fadeDuration": 5,
         "lockCommand": "",
         "lockTimeout": 660,
@@ -759,7 +790,7 @@
         ],
         "fillColor": "#000000",
         "fillMode": "crop",
-        "hideWallpaperFilenames": false,
+        "hideWallpaperFilenames": true,
         "linkLightAndDarkWallpapers": true,
         "monitorDirectories": [
         ],

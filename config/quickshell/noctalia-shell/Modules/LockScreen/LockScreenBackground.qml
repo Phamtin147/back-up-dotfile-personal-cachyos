@@ -120,19 +120,20 @@ Item {
     mipmap: false
     antialiasing: true
 
-    layer.enabled: Settings.data.general.lockScreenBlur > 0 && !PowerProfileService.noctaliaPerformanceMode
-    layer.smooth: false
+    layer.enabled: !PowerProfileService.noctaliaPerformanceMode
+    layer.smooth: true
     layer.effect: MultiEffect {
       blurEnabled: true
-      blur: Settings.data.general.lockScreenBlur
-      blurMax: 48
+      blur: (Settings.data.general.lockScreenBlur > 0) ? Settings.data.general.lockScreenBlur : 0.85
+      blurMax: 64
+      blurMultiplier: 2.0
     }
 
-    // Tint overlay
+    // Tint overlay (dimming layer)
     Rectangle {
       anchors.fill: parent
       color: root.tintColor
-      opacity: Settings.data.general.lockScreenTint
+      opacity: (Settings.data.general.lockScreenTint !== undefined) ? Settings.data.general.lockScreenTint : 0.35
     }
   }
 
