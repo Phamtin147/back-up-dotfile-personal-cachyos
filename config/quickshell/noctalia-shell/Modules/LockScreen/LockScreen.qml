@@ -17,42 +17,14 @@ Loader {
   id: root
   active: false
 
-  // Synced Niri window shader state
-  property string currentEffect: "ink-splash"
+  // Synced Niri window shader state via reactive Settings.data
+  readonly property string currentEffect: (Settings.data.general && Settings.data.general.activeLockShader) ? Settings.data.general.activeLockShader : "ink-splash"
   property int animDuration: 500
-
-  function queryShaderState() {
-    shaderStateProbe.running = false;
-    shaderStateProbe.running = true;
-  }
-
-  Process {
-    id: shaderStateProbe
-    command: ["sh", "-c", "cat /tmp/niri-shader-state 2>/dev/null || cat $HOME/shaders/.current 2>/dev/null || echo 'fade'"]
-    onExited: code => {
-      let val = String(stdout.text || "").trim();
-      if (val.length > 0) {
-        root.currentEffect = val;
-      }
-    }
-    stdout: StdioCollector {}
-  }
-
-  // Continuously track shader state so changes with MOD+SHIFT+S take effect immediately
-  Timer {
-    interval: 800
-    running: true
-    repeat: true
-    onTriggered: root.queryShaderState()
-  }
 
   // Track if the visualizer should be shown (lockscreen active + media playing + non-compact mode)
   readonly property bool needsSpectrum: root.active && !Settings.data.general.compactLockScreen && Settings.data.audio.visualizerType !== "" && Settings.data.audio.visualizerType !== "none"
 
   onActiveChanged: {
-    if (root.active) {
-      root.queryShaderState();
-    }
     if (root.active && root.needsSpectrum) {
       SpectrumService.registerComponent("lockscreen");
     } else {
@@ -77,7 +49,6 @@ Loader {
   Component.onCompleted: {
     // Register with panel service
     PanelService.lockScreen = this;
-    root.queryShaderState();
   }
 
   Component.onDestruction: {
