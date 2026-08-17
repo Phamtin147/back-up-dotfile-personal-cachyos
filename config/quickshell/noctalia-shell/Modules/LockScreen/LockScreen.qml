@@ -116,6 +116,10 @@ Loader {
             Item {
               anchors.fill: parent
 
+              LockAnimationConfig {
+                id: animConfig
+              }
+
               // 1. Permanent pitch black base layer - eliminates any white flash
               Rectangle {
                 anchors.fill: parent
@@ -151,6 +155,7 @@ Loader {
                 id: lockContentWrapper
                 anchors.fill: parent
                 z: 10
+                transformOrigin: Item.Center
 
                 property real animProgress: 0.0
                 property real crtYProgress: 1.0
@@ -159,33 +164,22 @@ Loader {
                 property bool isClosing: false
 
                 // Category checks for active shader
-                readonly property bool isCrt: root.currentEffect === "crt-tv"
-                readonly property bool isBounce: root.currentEffect === "bounce" || root.currentEffect === "snap"
-                readonly property bool isCircle: root.currentEffect === "circle" || root.currentEffect === "ink-splash" || root.currentEffect === "inkwell-drop" || root.currentEffect === "ripple"
-                readonly property bool isSlide: root.currentEffect === "directional" || root.currentEffect === "directional-wipe" || root.currentEffect === "crosshatch" || root.currentEffect === "crosswarp"
-                readonly property bool isGlitch: root.currentEffect === "glitch" || root.currentEffect === "pixelate" || root.currentEffect === "voronoi-shatter"
+                readonly property string activeEff: animConfig.effect || (Settings.data.general && Settings.data.general.activeLockShader) || "ink-splash"
+                readonly property bool isCrt: activeEff === "crt-tv"
+                readonly property bool isBounce: activeEff === "bounce" || activeEff === "snap"
+                readonly property bool isCircle: activeEff === "circle" || activeEff === "ink-splash" || activeEff === "inkwell-drop" || activeEff === "ripple"
+                readonly property bool isSlide: activeEff === "directional" || activeEff === "directional-wipe" || activeEff === "crosshatch" || activeEff === "crosswarp"
+                readonly property bool isGlitch: activeEff === "glitch" || activeEff === "pixelate" || activeEff === "voronoi-shatter"
 
                 opacity: isCrt ? (crtXProgress > 0.05 ? 1.0 : 0.0) : animProgress
                 y: isSlide ? slideYOffset : 0
 
-                transform: [
-                  Scale {
-                    origin.x: lockContentWrapper.width / 2
-                    origin.y: lockContentWrapper.height / 2
-                    xScale: {
-                      if (lockContentWrapper.isCrt) return lockContentWrapper.crtXProgress;
-                      if (lockContentWrapper.isBounce) return lockContentWrapper.isClosing ? (0.3 + 0.7 * lockContentWrapper.animProgress) : (0.5 + 0.5 * lockContentWrapper.animProgress);
-                      if (lockContentWrapper.isCircle) return lockContentWrapper.isClosing ? (1.0 + 0.25 * (1.0 - lockContentWrapper.animProgress)) : (0.85 + 0.15 * lockContentWrapper.animProgress);
-                      return lockContentWrapper.isClosing ? (1.0 + 0.06 * (1.0 - lockContentWrapper.animProgress)) : (0.94 + 0.06 * lockContentWrapper.animProgress);
-                    }
-                    yScale: {
-                      if (lockContentWrapper.isCrt) return lockContentWrapper.crtYProgress;
-                      if (lockContentWrapper.isBounce) return lockContentWrapper.isClosing ? (0.3 + 0.7 * lockContentWrapper.animProgress) : (0.5 + 0.5 * lockContentWrapper.animProgress);
-                      if (lockContentWrapper.isCircle) return lockContentWrapper.isClosing ? (1.0 + 0.25 * (1.0 - lockContentWrapper.animProgress)) : (0.85 + 0.15 * lockContentWrapper.animProgress);
-                      return lockContentWrapper.isClosing ? (1.0 + 0.06 * (1.0 - lockContentWrapper.animProgress)) : (0.94 + 0.06 * lockContentWrapper.animProgress);
-                    }
-                  }
-                ]
+                scale: {
+                  if (lockContentWrapper.isCrt) return lockContentWrapper.crtXProgress;
+                  if (lockContentWrapper.isBounce) return lockContentWrapper.isClosing ? (0.3 + 0.7 * lockContentWrapper.animProgress) : (0.4 + 0.6 * lockContentWrapper.animProgress);
+                  if (lockContentWrapper.isCircle) return lockContentWrapper.isClosing ? (1.0 + 0.3 * (1.0 - lockContentWrapper.animProgress)) : (0.75 + 0.25 * lockContentWrapper.animProgress);
+                  return lockContentWrapper.isClosing ? (1.0 + 0.08 * (1.0 - lockContentWrapper.animProgress)) : (0.92 + 0.08 * lockContentWrapper.animProgress);
+                }
 
                 // Standard Entrance Animation
                 ParallelAnimation {
