@@ -60,10 +60,10 @@ Item {
 
     NMirroredSpectrum {
       anchors.fill: parent
+      values: SpectrumService.values
       fillColor: Color.mPrimary
-      peakColor: Color.mTertiary
-      smoothing: 0.6
-      active: MediaService.isPlaying
+      showMinimumSignal: true
+      mirrored: true
     }
   }
 
