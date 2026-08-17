@@ -17,22 +17,6 @@ Loader {
   id: root
   active: false
 
-  // Live file watcher for Niri shader state - 0ms latency
-  FileView {
-    id: shaderStateFile
-    path: "/tmp/niri-shader-state"
-    watchChanges: true
-    onLoaded: {
-      const txt = String(shaderStateFile.text() || "").trim();
-      if (txt.length > 0) {
-        root.currentEffect = txt;
-      }
-    }
-  }
-
-  property string currentEffect: "bounce"
-  property int animDuration: 500
-
   // Track if the visualizer should be shown (lockscreen active + media playing + non-compact mode)
   readonly property bool needsSpectrum: root.active && !Settings.data.general.compactLockScreen && Settings.data.audio.visualizerType !== "" && Settings.data.audio.visualizerType !== "none"
 
