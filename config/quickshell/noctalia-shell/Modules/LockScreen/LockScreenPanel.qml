@@ -552,31 +552,26 @@ Item {
   // ─────────────────────────────────────────────────────────────
   // 4. Exact Hyprlock System Info Line (Bottom Center)
   // ─────────────────────────────────────────────────────────────
-  property string systemInfoOutput: ""
-
-  function formatSystemInfo(raw) {
-    if (!raw || raw.trim().length === 0) {
-      return "<span style='opacity:0.56;'>User: </span><b>" + SystemService.data.username + "</b>   <span style='opacity:0.56;'>Host: </span><b>" + SystemService.data.hostname + "</b>   <span style='opacity:0.56;'>OS: </span><b>CachyOS</b>   <span style='opacity:0.56;'>Uptime: </span><b>" + SystemService.data.uptime + "</b>";
-    }
-    let formatted = raw
-      .replace(/<span alpha="(\d+)%">/g, (match, p1) => {
-        let op = (parseInt(p1) / 100).toFixed(2);
-        return `<span style="opacity: ${op};">`;
-      })
-      .replace(/<span weight="bold" alpha="(\d+)%">/g, (match, p1) => {
-        let op = (parseInt(p1) / 100).toFixed(2);
-        return `<b style="opacity: ${op};">`;
-      });
-    return formatted;
-  }
+  property string sysUser: ""
+  property string sysHost: ""
+  property string sysOs: "CachyOS"
+  property string sysKernel: ""
+  property string sysUptime: ""
 
   Process {
     id: systemInfoProcess
-    command: ["/home/amtia/.local/bin/hyprlock-system-info"]
-    stdout: SplitParser {
-      onRead: data => {
-        if (data && data.trim().length > 0) {
-          root.systemInfoOutput = data.trim();
+    command: ["sh", "-c", "echo \"$(whoami)|$(hostname)|$(uname -r | sed 's/-.*$//')|$(awk '{if ($1<86400) print int($1/3600)\\\" hours\\\"; else print int($1/86400)\\\" days\\\"}' /proc/uptime)\""]
+    running: true
+    stdout: StdioCollector {
+      onTextChanged: {
+        if (text && text.trim().length > 0) {
+          let parts = text.trim().split("|");
+          if (parts.length >= 4) {
+            root.sysUser = parts[0];
+            root.sysHost = parts[1];
+            root.sysKernel = parts[2];
+            root.sysUptime = parts[3];
+          }
         }
       }
     }
@@ -589,14 +584,110 @@ Item {
     onTriggered: systemInfoProcess.running = true
   }
 
-  Text {
+  RowLayout {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 50
-    text: formatSystemInfo(root.systemInfoOutput)
-    textFormat: Text.RichText
-    font.pixelSize: 13
-    font.family: Settings.data.ui.fontDefault || "Sans"
-    color: Color.mOnSurface
+    spacing: 28
+
+    // User
+    Row {
+      spacing: 4
+      NText {
+        text: "User: "
+        pointSize: 10
+        color: Color.mOnSurfaceVariant
+        opacity: 0.56
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+      NText {
+        text: root.sysUser || HostService.username || "amtia"
+        pointSize: 10
+        color: Color.mOnSurface
+        font.weight: Style.fontWeightBold
+        opacity: 0.85
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+    }
+
+    // Host
+    Row {
+      spacing: 4
+      NText {
+        text: "Host: "
+        pointSize: 10
+        color: Color.mOnSurfaceVariant
+        opacity: 0.56
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+      NText {
+        text: root.sysHost || HostService.hostName || "legion5pro"
+        pointSize: 10
+        color: Color.mOnSurface
+        font.weight: Style.fontWeightBold
+        opacity: 0.85
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+    }
+
+    // OS
+    Row {
+      spacing: 4
+      NText {
+        text: "OS: "
+        pointSize: 10
+        color: Color.mOnSurfaceVariant
+        opacity: 0.56
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+      NText {
+        text: root.sysOs || "CachyOS"
+        pointSize: 10
+        color: Color.mOnSurface
+        font.weight: Style.fontWeightBold
+        opacity: 0.85
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+    }
+
+    // Kernel
+    Row {
+      spacing: 4
+      NText {
+        text: "Kernel: "
+        pointSize: 10
+        color: Color.mOnSurfaceVariant
+        opacity: 0.56
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+      NText {
+        text: root.sysKernel || "6.18.42"
+        pointSize: 10
+        color: Color.mOnSurface
+        font.weight: Style.fontWeightBold
+        opacity: 0.85
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+    }
+
+    // Uptime
+    Row {
+      spacing: 4
+      NText {
+        text: "Uptime: "
+        pointSize: 10
+        color: Color.mOnSurfaceVariant
+        opacity: 0.56
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+      NText {
+        text: root.sysUptime || SystemService.data.uptime || "8 hours"
+        pointSize: 10
+        color: Color.mOnSurface
+        font.weight: Style.fontWeightBold
+        opacity: 0.85
+        font.family: Settings.data.ui.fontDefault || "Sans"
+      }
+    }
   }
 }
