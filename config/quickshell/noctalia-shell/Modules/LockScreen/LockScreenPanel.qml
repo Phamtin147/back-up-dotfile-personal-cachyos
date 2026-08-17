@@ -560,7 +560,7 @@ Item {
 
   Process {
     id: systemInfoProcess
-    command: ["sh", "-c", "echo \"$(whoami)|$(hostname)|$(uname -r | sed 's/-.*$//')|$(awk '{if ($1<86400) print int($1/3600)\\\" hours\\\"; else print int($1/86400)\\\" days\\\"}' /proc/uptime)\""]
+    command: ["sh", "-c", "printf '%s|%s|%s|%s' \"$(whoami)\" \"$(hostname)\" \"$(uname -r | cut -d- -f1)\" \"$(awk '{if ($1<86400) print int($1/3600)\" hours\"; else print int($1/86400)\" days\"}' /proc/uptime)\""]
     running: true
     stdout: StdioCollector {
       onTextChanged: {
