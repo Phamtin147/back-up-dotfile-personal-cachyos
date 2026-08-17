@@ -48,8 +48,9 @@ else
     icon="󰏤"
 fi
 
-# Futuristic Sci-Fi HUD - Now Playing Badge
+# Futuristic Sci-Fi HUD - Now Playing Badge (To rõ, sắc nét)
 cat << HTML
-<span size="8pt" color="$TERTIARY" alpha="55%">─── ⟨ <span color="$state_color">$icon</span> NOW PLAYING // $mode_text ⟩ ───</span>
-<span size="10.5pt" color="$TEXT_COLOR"><b>$title</b></span>  <span size="9pt" color="$SECONDARY" alpha="85%">◈ $artist</span>
+<span size="11pt" color="$TERTIARY" alpha="60%">─── ⟨ <span color="$state_color">$icon</span> NOW PLAYING // $mode_text ⟩ ───</span>
+<span size="16pt" color="$TEXT_COLOR"><b>$title</b></span>  <span size="13.5pt" color="$SECONDARY" alpha="85%">◈ $artist</span>
 HTML
+
