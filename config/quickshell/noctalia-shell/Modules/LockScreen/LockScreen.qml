@@ -21,10 +21,14 @@ Loader {
   property string currentEffect: "ink-splash"
   property int animDuration: 500
 
+  function queryShaderState() {
+    shaderStateProbe.running = false;
+    shaderStateProbe.running = true;
+  }
+
   Process {
     id: shaderStateProbe
     command: ["sh", "-c", "cat /tmp/niri-shader-state 2>/dev/null || cat $HOME/shaders/.current 2>/dev/null || echo 'fade'"]
-    running: root.active
     stdout: StdioCollector {
       onTextChanged: {
         if (text && text.trim().length > 0) {
@@ -34,12 +38,20 @@ Loader {
     }
   }
 
+  // Continuously track shader state so changes with MOD+SHIFT+S take effect immediately
+  Timer {
+    interval: 800
+    running: true
+    repeat: true
+    onTriggered: root.queryShaderState()
+  }
+
   // Track if the visualizer should be shown (lockscreen active + media playing + non-compact mode)
   readonly property bool needsSpectrum: root.active && !Settings.data.general.compactLockScreen && Settings.data.audio.visualizerType !== "" && Settings.data.audio.visualizerType !== "none"
 
   onActiveChanged: {
     if (root.active) {
-      shaderStateProbe.running = true;
+      root.queryShaderState();
     }
     if (root.active && root.needsSpectrum) {
       SpectrumService.registerComponent("lockscreen");
@@ -65,6 +77,7 @@ Loader {
   Component.onCompleted: {
     // Register with panel service
     PanelService.lockScreen = this;
+    root.queryShaderState();
   }
 
   Component.onDestruction: {
@@ -162,45 +175,136 @@ Loader {
                 z: -50
               }
 
-              // 3. Animated Widgets Wrapper (Top Bar, Password, Media HUD, System Info)
+              // 3. Animated Widgets Wrapper with Multi-Profile Transitions
               Item {
                 id: lockContentWrapper
                 anchors.fill: parent
                 z: 10
 
                 property real animProgress: 0.0
+                property real crtYProgress: 1.0
+                property real crtXProgress: 1.0
+                property real slideYOffset: 0.0
                 property bool isClosing: false
 
-                opacity: animProgress
-                scale: {
-                  if (root.currentEffect === "bounce") {
-                    return isClosing ? (0.88 + 0.12 * animProgress) : (0.88 + 0.12 * animProgress);
+                // Category checks for active shader
+                readonly property bool isCrt: root.currentEffect === "crt-tv"
+                readonly property bool isBounce: root.currentEffect === "bounce" || root.currentEffect === "snap"
+                readonly property bool isCircle: root.currentEffect === "circle" || root.currentEffect === "ink-splash" || root.currentEffect === "inkwell-drop" || root.currentEffect === "ripple"
+                readonly property bool isSlide: root.currentEffect === "directional" || root.currentEffect === "directional-wipe" || root.currentEffect === "crosshatch" || root.currentEffect === "crosswarp"
+                readonly property bool isGlitch: root.currentEffect === "glitch" || root.currentEffect === "pixelate" || root.currentEffect === "voronoi-shatter"
+
+                opacity: isCrt ? (crtXProgress > 0.05 ? 1.0 : 0.0) : animProgress
+                y: isSlide ? slideYOffset : 0
+
+                transform: [
+                  Scale {
+                    origin.x: lockContentWrapper.width / 2
+                    origin.y: lockContentWrapper.height / 2
+                    xScale: {
+                      if (lockContentWrapper.isCrt) return lockContentWrapper.crtXProgress;
+                      if (lockContentWrapper.isBounce) return lockContentWrapper.isClosing ? (0.3 + 0.7 * lockContentWrapper.animProgress) : (0.5 + 0.5 * lockContentWrapper.animProgress);
+                      if (lockContentWrapper.isCircle) return lockContentWrapper.isClosing ? (1.0 + 0.25 * (1.0 - lockContentWrapper.animProgress)) : (0.85 + 0.15 * lockContentWrapper.animProgress);
+                      return lockContentWrapper.isClosing ? (1.0 + 0.06 * (1.0 - lockContentWrapper.animProgress)) : (0.94 + 0.06 * lockContentWrapper.animProgress);
+                    }
+                    yScale: {
+                      if (lockContentWrapper.isCrt) return lockContentWrapper.crtYProgress;
+                      if (lockContentWrapper.isBounce) return lockContentWrapper.isClosing ? (0.3 + 0.7 * lockContentWrapper.animProgress) : (0.5 + 0.5 * lockContentWrapper.animProgress);
+                      if (lockContentWrapper.isCircle) return lockContentWrapper.isClosing ? (1.0 + 0.25 * (1.0 - lockContentWrapper.animProgress)) : (0.85 + 0.15 * lockContentWrapper.animProgress);
+                      return lockContentWrapper.isClosing ? (1.0 + 0.06 * (1.0 - lockContentWrapper.animProgress)) : (0.94 + 0.06 * lockContentWrapper.animProgress);
+                    }
                   }
-                  if (root.currentEffect === "circle" || root.currentEffect === "zoom") {
-                    return isClosing ? (1.0 + 0.08 * (1.0 - animProgress)) : (0.92 + 0.08 * animProgress);
+                ]
+
+                // Standard Entrance Animation
+                ParallelAnimation {
+                  id: standardEnterAnim
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "animProgress"
+                    from: 0.0
+                    to: 1.0
+                    duration: lockContentWrapper.isBounce ? 550 : 400
+                    easing.type: lockContentWrapper.isBounce ? Easing.OutBack : Easing.OutCubic
                   }
-                  // Default / ink-splash / crosshatch
-                  return isClosing ? (1.0 + 0.06 * (1.0 - animProgress)) : (0.94 + 0.06 * animProgress);
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "slideYOffset"
+                    from: -120.0
+                    to: 0.0
+                    duration: 450
+                    easing.type: Easing.OutCubic
+                  }
                 }
 
-                NumberAnimation {
-                  id: enterAnim
-                  target: lockContentWrapper
-                  property: "animProgress"
-                  from: 0.0
-                  to: 1.0
-                  duration: (root.currentEffect === "ink-splash" || root.currentEffect === "crosshatch") ? 600 : 400
-                  easing.type: Easing.OutCubic
+                // CRT-TV Entrance Animation
+                SequentialAnimation {
+                  id: crtEnterAnim
+                  PropertyAction { target: lockContentWrapper; property: "animProgress"; value: 1.0 }
+                  PropertyAction { target: lockContentWrapper; property: "crtYProgress"; value: 0.02 }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "crtXProgress"
+                    from: 0.01
+                    to: 1.0
+                    duration: 160
+                    easing.type: Easing.OutQuad
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "crtYProgress"
+                    from: 0.02
+                    to: 1.0
+                    duration: 220
+                    easing.type: Easing.OutCubic
+                  }
                 }
 
-                NumberAnimation {
-                  id: exitAnim
-                  target: lockContentWrapper
-                  property: "animProgress"
-                  from: 1.0
-                  to: 0.0
-                  duration: 350
-                  easing.type: Easing.OutCubic
+                // Standard Exit Animation
+                ParallelAnimation {
+                  id: standardExitAnim
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "animProgress"
+                    from: 1.0
+                    to: 0.0
+                    duration: lockContentWrapper.isBounce ? 320 : 350
+                    easing.type: lockContentWrapper.isBounce ? Easing.InBack : Easing.OutCubic
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "slideYOffset"
+                    from: 0.0
+                    to: 140.0
+                    duration: 350
+                    easing.type: Easing.InCubic
+                  }
+                  onFinished: {
+                    lockSession.locked = false;
+                    root.active = false;
+                    lockContentWrapper.isClosing = false;
+                  }
+                }
+
+                // CRT-TV Exit Animation
+                SequentialAnimation {
+                  id: crtExitAnim
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "crtYProgress"
+                    from: 1.0
+                    to: 0.02
+                    duration: 180
+                    easing.type: Easing.InCubic
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "crtXProgress"
+                    from: 1.0
+                    to: 0.0
+                    duration: 140
+                    easing.type: Easing.InQuad
+                  }
                   onFinished: {
                     lockSession.locked = false;
                     root.active = false;
@@ -210,12 +314,20 @@ Loader {
 
                 Component.onCompleted: {
                   lockContainer.activeContentWrapper = this;
-                  enterAnim.start();
+                  if (isCrt) {
+                    crtEnterAnim.start();
+                  } else {
+                    standardEnterAnim.start();
+                  }
                 }
 
                 function startUnlock() {
                   isClosing = true;
-                  exitAnim.start();
+                  if (isCrt) {
+                    crtExitAnim.start();
+                  } else {
+                    standardExitAnim.start();
+                  }
                 }
 
                 // Mouse area to trigger focus on cursor movement
