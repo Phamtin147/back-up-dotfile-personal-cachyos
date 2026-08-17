@@ -6,7 +6,7 @@ binds {
     // ─── noctalia-shell keybinds ───
     // https://docs.noctalia.dev/getting-started/keybinds/
 
-    MOD+SHIFT+ESCAPE                     { show-hotkey-overlay; }
+    MOD+SHIFT+SLASH                     { show-hotkey-overlay; }
     MOD+CTRL+R                          hotkey-overlay-title="Reload Niri Config" { spawn "niri" "msg" "action" "reload-config"; }
 
     // ─── Shader Effects ───

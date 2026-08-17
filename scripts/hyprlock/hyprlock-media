@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+# Đọc trạng thái phát nhạc từ playerctl
+status=$(playerctl status 2>/dev/null)
+if [ -z "$status" ] || [ "$status" = "Stopped" ]; then
+    echo ""
+    exit 0
+fi
+
+# Đọc màu hệ thống Noctalia tự động từ colors.json
+COLORS_FILE="$HOME/.config/noctalia/colors.json"
+if [ -f "$COLORS_FILE" ]; then
+    PRIMARY=$(jq -r '.mPrimary // "#67e48d"' "$COLORS_FILE" 2>/dev/null)
+    TERTIARY=$(jq -r '.mTertiary // "#66adcc"' "$COLORS_FILE" 2>/dev/null)
+    SECONDARY=$(jq -r '.mSecondary // "#5cd6d6"' "$COLORS_FILE" 2>/dev/null)
+    TEXT_COLOR=$(jq -r '.mOnSurface // "#f2f3f2"' "$COLORS_FILE" 2>/dev/null)
+    DIM_COLOR=$(jq -r '.mOnSurfaceVariant // "#afb6b1"' "$COLORS_FILE" 2>/dev/null)
+else
+    PRIMARY="#67e48d"
+    TERTIARY="#66adcc"
+    SECONDARY="#5cd6d6"
+    TEXT_COLOR="#f2f3f2"
+    DIM_COLOR="#afb6b1"
+fi
+
+artist=$(playerctl metadata --format '{{xesam:artist}}' 2>/dev/null)
+title=$(playerctl metadata --format '{{xesam:title}}' 2>/dev/null)
+
+[ -z "$title" ] && title="Unknown Track"
+[ -z "$artist" ] && artist="Unknown Artist"
+
+# Rút gọn nếu tiêu đề quá dài
+if [ ${#title} -gt 35 ]; then
+    title="${title:0:32}..."
+fi
+if [ ${#artist} -gt 28 ]; then
+    artist="${artist:0:25}..."
+fi
+
+# Trạng thái phát nhạc
+if [ "$status" = "Playing" ]; then
+    mode_text="STREAMING"
+    state_color="$PRIMARY"
+    icon="󰎈"
+else
+    mode_text="PAUSED"
+    state_color="$DIM_COLOR"
+    icon="󰏤"
+fi
+
+# Futuristic Sci-Fi HUD - Now Playing Badge
+cat << HTML
+<span size="8pt" color="$TERTIARY" alpha="55%">─── ⟨ <span color="$state_color">$icon</span> NOW PLAYING // $mode_text ⟩ ───</span>
+<span size="10.5pt" color="$TEXT_COLOR"><b>$title</b></span>  <span size="9pt" color="$SECONDARY" alpha="85%">◈ $artist</span>
+HTML
