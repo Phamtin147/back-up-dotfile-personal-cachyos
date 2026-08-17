@@ -130,57 +130,13 @@ Loader {
             id: fullLockScreenComponent
 
             Item {
-              id: lockContentWrapper
               anchors.fill: parent
 
-              property real animProgress: 0.0
-              property bool isClosing: false
-
-              opacity: animProgress
-              scale: {
-                if (root.currentEffect === "bounce") {
-                  return isClosing ? (0.85 + 0.15 * animProgress) : (0.88 + 0.12 * animProgress);
-                }
-                if (root.currentEffect === "circle" || root.currentEffect === "zoom") {
-                  return isClosing ? (1.0 + 0.08 * (1.0 - animProgress)) : (0.92 + 0.08 * animProgress);
-                }
-                // Default / ink-splash / crosshatch
-                return isClosing ? (1.0 + 0.06 * (1.0 - animProgress)) : (0.94 + 0.06 * animProgress);
-              }
-
-              NumberAnimation {
-                id: enterAnim
-                target: lockContentWrapper
-                property: "animProgress"
-                from: 0.0
-                to: 1.0
-                duration: (root.currentEffect === "ink-splash" || root.currentEffect === "crosshatch") ? 650 : 450
-                easing.type: Easing.OutCubic
-              }
-
-              NumberAnimation {
-                id: exitAnim
-                target: lockContentWrapper
-                property: "animProgress"
-                from: 1.0
-                to: 0.0
-                duration: 380
-                easing.type: Easing.OutCubic
-                onFinished: {
-                  lockSession.locked = false;
-                  root.active = false;
-                  lockContentWrapper.isClosing = false;
-                }
-              }
-
-              Component.onCompleted: {
-                lockContainer.activeContentWrapper = this;
-                enterAnim.start();
-              }
-
-              function startUnlock() {
-                isClosing = true;
-                exitAnim.start();
+              // 1. Permanent pitch black base layer - eliminates any white flash
+              Rectangle {
+                anchors.fill: parent
+                color: "#000000"
+                z: -100
               }
 
               Item {
@@ -199,23 +155,75 @@ Loader {
                 property string currentLayout: KeyboardLayoutService.currentLayout
               }
 
-              // Background with wallpaper, gradient, and screen corners
+              // 2. Background with wallpaper, blur, gradient - always solid
               LockScreenBackground {
                 id: backgroundComponent
                 screen: lockSurface.screen
+                z: -50
               }
 
+              // 3. Animated Widgets Wrapper (Top Bar, Password, Media HUD, System Info)
               Item {
+                id: lockContentWrapper
                 anchors.fill: parent
+                z: 10
 
-                // Mouse area to trigger focus on cursor movement (workaround for Hyprland focus issues)
+                property real animProgress: 0.0
+                property bool isClosing: false
+
+                opacity: animProgress
+                scale: {
+                  if (root.currentEffect === "bounce") {
+                    return isClosing ? (0.88 + 0.12 * animProgress) : (0.88 + 0.12 * animProgress);
+                  }
+                  if (root.currentEffect === "circle" || root.currentEffect === "zoom") {
+                    return isClosing ? (1.0 + 0.08 * (1.0 - animProgress)) : (0.92 + 0.08 * animProgress);
+                  }
+                  // Default / ink-splash / crosshatch
+                  return isClosing ? (1.0 + 0.06 * (1.0 - animProgress)) : (0.94 + 0.06 * animProgress);
+                }
+
+                NumberAnimation {
+                  id: enterAnim
+                  target: lockContentWrapper
+                  property: "animProgress"
+                  from: 0.0
+                  to: 1.0
+                  duration: (root.currentEffect === "ink-splash" || root.currentEffect === "crosshatch") ? 600 : 400
+                  easing.type: Easing.OutCubic
+                }
+
+                NumberAnimation {
+                  id: exitAnim
+                  target: lockContentWrapper
+                  property: "animProgress"
+                  from: 1.0
+                  to: 0.0
+                  duration: 350
+                  easing.type: Easing.OutCubic
+                  onFinished: {
+                    lockSession.locked = false;
+                    root.active = false;
+                    lockContentWrapper.isClosing = false;
+                  }
+                }
+
+                Component.onCompleted: {
+                  lockContainer.activeContentWrapper = this;
+                  enterAnim.start();
+                }
+
+                function startUnlock() {
+                  isClosing = true;
+                  exitAnim.start();
+                }
+
+                // Mouse area to trigger focus on cursor movement
                 MouseArea {
                   anchors.fill: parent
                   hoverEnabled: true
                   acceptedButtons: Qt.NoButton
                   onEntered: {
-                    // Avoid repeatedly forcing focus on every mouse move.
-                    // This can churn text-input surface state during monitor/suspend transitions.
                     if (passwordInput && !passwordInput.activeFocus) {
                       passwordInput.forceActiveFocus();
                     }
