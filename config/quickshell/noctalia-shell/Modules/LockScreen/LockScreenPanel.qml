@@ -202,13 +202,15 @@ Item {
                   values: Array(passwordInput.text.length)
                 }
 
+                readonly property var passwordChars: ["circle-filled", "pentagon-filled", "michelin-star-filled", "square-rounded-filled", "guitar-pick-filled", "blob-filled", "triangle-filled"]
+
                 NIcon {
                   id: icon
                   required property int index
                   property bool isSelected: index >= 0 && passwordInput.selectionStart !== passwordInput.selectionEnd && index >= passwordInput.selectionStart && index < passwordInput.selectionEnd
 
-                  icon: "circle-filled"
-                  pointSize: 10
+                  icon: iconRepeater.passwordChars[index % iconRepeater.passwordChars.length]
+                  pointSize: Style.fontSizeL
                   color: isSelected ? Color.mOnPrimary : Color.mPrimary
                   opacity: 1.0
                   scale: animationsEnabled ? 0.5 : 1
@@ -552,6 +554,22 @@ Item {
   // ─────────────────────────────────────────────────────────────
   property string systemInfoOutput: ""
 
+  function formatSystemInfo(raw) {
+    if (!raw || raw.trim().length === 0) {
+      return "<span style='opacity:0.56;'>User: </span><b>" + SystemService.data.username + "</b>   <span style='opacity:0.56;'>Host: </span><b>" + SystemService.data.hostname + "</b>   <span style='opacity:0.56;'>OS: </span><b>CachyOS</b>   <span style='opacity:0.56;'>Uptime: </span><b>" + SystemService.data.uptime + "</b>";
+    }
+    let formatted = raw
+      .replace(/<span alpha="(\d+)%">/g, (match, p1) => {
+        let op = (parseInt(p1) / 100).toFixed(2);
+        return `<span style="opacity: ${op};">`;
+      })
+      .replace(/<span weight="bold" alpha="(\d+)%">/g, (match, p1) => {
+        let op = (parseInt(p1) / 100).toFixed(2);
+        return `<b style="opacity: ${op};">`;
+      });
+    return formatted;
+  }
+
   Process {
     id: systemInfoProcess
     command: ["/home/amtia/.local/bin/hyprlock-system-info"]
@@ -574,8 +592,8 @@ Item {
   Text {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
-    anchors.bottomMargin: 40
-    text: root.systemInfoOutput.length > 0 ? root.systemInfoOutput : ("User: " + SystemService.data.username + " | Host: " + SystemService.data.hostname + " | Uptime: " + SystemService.data.uptime)
+    anchors.bottomMargin: 50
+    text: formatSystemInfo(root.systemInfoOutput)
     textFormat: Text.RichText
     font.pixelSize: 13
     font.family: Settings.data.ui.fontDefault || "Sans"
