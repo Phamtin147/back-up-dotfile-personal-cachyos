@@ -1,6 +1,6 @@
 import QtQuick
 
 QtObject {
-  property string effect: "crosswarp"
-  property int duration: 500
+  property string effect: "crt-tv"
+  property int duration: 400
 }

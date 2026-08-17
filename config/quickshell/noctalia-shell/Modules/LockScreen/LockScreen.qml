@@ -21,9 +21,16 @@ Loader {
   FileView {
     id: shaderStateFile
     path: "/tmp/niri-shader-state"
+    watchChanges: true
+    onLoaded: {
+      const txt = String(shaderStateFile.text() || "").trim();
+      if (txt.length > 0) {
+        root.currentEffect = txt;
+      }
+    }
   }
 
-  readonly property string currentEffect: String(shaderStateFile.text || "").trim() || "crt-tv"
+  property string currentEffect: "bounce"
   property int animDuration: 500
 
   // Track if the visualizer should be shown (lockscreen active + media playing + non-compact mode)
