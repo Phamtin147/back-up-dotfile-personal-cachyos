@@ -29,13 +29,13 @@ Loader {
   Process {
     id: shaderStateProbe
     command: ["sh", "-c", "cat /tmp/niri-shader-state 2>/dev/null || cat $HOME/shaders/.current 2>/dev/null || echo 'fade'"]
-    stdout: StdioCollector {
-      onTextChanged: {
-        if (text && text.trim().length > 0) {
-          root.currentEffect = text.trim();
-        }
+    onExited: code => {
+      let val = String(stdout.text || "").trim();
+      if (val.length > 0) {
+        root.currentEffect = val;
       }
     }
+    stdout: StdioCollector {}
   }
 
   // Continuously track shader state so changes with MOD+SHIFT+S take effect immediately
