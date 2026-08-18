@@ -60,13 +60,16 @@ Item {
       }
     }
 
-    NMirroredSpectrum {
+    NLinearSpectrum {
       anchors.fill: parent
       values: SpectrumService.values
       fillColor: Color.mPrimary
       showMinimumSignal: true
+      minimumSignalValue: 0.08
       mirrored: true
     }
+
+
   }
 
   // ─────────────────────────────────────────────────────────────
