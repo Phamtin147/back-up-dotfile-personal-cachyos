@@ -200,23 +200,23 @@ Loader {
                   PropertyAction { target: lockContentWrapper; property: "scaleYVal"; value: 0.01 }
                   PropertyAction { target: lockContentWrapper; property: "crtFlashOpacity"; value: 0.9 }
 
-                  // Stage 1: Expand horizontal ray
+                  // Stage 1: Expand horizontal ray (300ms)
                   NumberAnimation {
                     target: lockContentWrapper
                     property: "scaleXVal"
                     from: 0.005
                     to: 1.0
-                    duration: 180
+                    duration: 300
                     easing.type: Easing.OutQuad
                   }
-                  // Stage 2: Expand vertical height into full screen
+                  // Stage 2: Expand vertical height into full screen (420ms)
                   ParallelAnimation {
                     NumberAnimation {
                       target: lockContentWrapper
                       property: "scaleYVal"
                       from: 0.01
                       to: 1.0
-                      duration: 240
+                      duration: 420
                       easing.type: Easing.OutCubic
                     }
                     NumberAnimation {
@@ -224,7 +224,7 @@ Loader {
                       property: "crtFlashOpacity"
                       from: 0.9
                       to: 0.0
-                      duration: 320
+                      duration: 500
                       easing.type: Easing.OutQuad
                     }
                   }
@@ -233,14 +233,14 @@ Loader {
                 // CRT-TV Exit Animation (Turn OFF)
                 SequentialAnimation {
                   id: crtExitAnim
-                  // Stage 1: Collapse vertical height into a thin beam
+                  // Stage 1: Collapse vertical height into a thin beam (320ms)
                   ParallelAnimation {
                     NumberAnimation {
                       target: lockContentWrapper
                       property: "scaleYVal"
                       from: 1.0
                       to: 0.01
-                      duration: 180
+                      duration: 320
                       easing.type: Easing.InCubic
                     }
                     NumberAnimation {
@@ -248,18 +248,18 @@ Loader {
                       property: "crtFlashOpacity"
                       from: 0.0
                       to: 0.85
-                      duration: 160
+                      duration: 260
                       easing.type: Easing.InQuad
                     }
                   }
-                  // Stage 2: Collapse horizontal beam into a dot & fade out
+                  // Stage 2: Collapse horizontal beam into a dot & fade out (250ms)
                   ParallelAnimation {
                     NumberAnimation {
                       target: lockContentWrapper
                       property: "scaleXVal"
                       from: 1.0
                       to: 0.0
-                      duration: 140
+                      duration: 250
                       easing.type: Easing.InQuad
                     }
                     NumberAnimation {
@@ -267,7 +267,7 @@ Loader {
                       property: "crtFlashOpacity"
                       from: 0.85
                       to: 0.0
-                      duration: 140
+                      duration: 250
                       easing.type: Easing.InQuad
                     }
                   }
