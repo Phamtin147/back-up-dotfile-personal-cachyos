@@ -66,14 +66,20 @@ Loader {
   sourceComponent: Component {
     Item {
       id: lockContainer
-
-      property var activeContentWrapper: null
+      property var activeWrappers: []
+      property bool unlockInProgress: false
 
       LockContext {
         id: lockContext
         onUnlocked: {
-          if (lockContainer.activeContentWrapper) {
-            lockContainer.activeContentWrapper.startUnlock();
+          lockContainer.unlockInProgress = true;
+          if (lockContainer.activeWrappers && lockContainer.activeWrappers.length > 0) {
+            for (let i = 0; i < lockContainer.activeWrappers.length; i++) {
+              const w = lockContainer.activeWrappers[i];
+              if (w && typeof w.startUnlock === "function") {
+                w.startUnlock();
+              }
+            }
           } else {
             lockSession.locked = false;
             root.scheduleUnloadAfterUnlock();
@@ -276,8 +282,19 @@ Loader {
                 }
 
                 Component.onCompleted: {
-                  lockContainer.activeContentWrapper = this;
+                  if (lockContainer.activeWrappers) {
+                    lockContainer.activeWrappers.push(this);
+                  }
                   crtEnterAnim.start();
+                }
+
+                Component.onDestruction: {
+                  if (lockContainer.activeWrappers) {
+                    const idx = lockContainer.activeWrappers.indexOf(this);
+                    if (idx !== -1) {
+                      lockContainer.activeWrappers.splice(idx, 1);
+                    }
+                  }
                 }
 
                 function startUnlock() {
