@@ -1,13 +1,19 @@
 #!/usr/bin/env bash
-# niri-shader [effect-name|next] - swap window open/close shader effect
+# niri-shader [effect-name|next|prev|list] - swap window open/close shader effect
 set -euo pipefail
 
 SHADERS_DIR="$HOME/shaders"
 CONFIG_FILE="$HOME/.config/niri/cfg/animation.kdl"
-STATE_FILE="/tmp/niri-shader-state"
+STATE_FILE="$SHADERS_DIR/.current"
+TMP_STATE="/tmp/niri-shader-state"
 
 # Get sorted list of effects
-mapfile -t EFFECTS < <(find "$SHADERS_DIR" -maxdepth 1 -type d ! -name ".*" -printf '%f\n' | sort)
+mapfile -t EFFECTS < <(find "$SHADERS_DIR" -mindepth 1 -maxdepth 1 -type d ! -name ".*" -printf '%f\n' | sort)
+
+if [ ${#EFFECTS[@]} -eq 0 ]; then
+    echo "Error: No shaders found in $SHADERS_DIR" >&2
+    exit 1
+fi
 
 apply_effect() {
     local EFFECT="$1"
@@ -15,6 +21,16 @@ apply_effect() {
     local OPEN_FILE="$EFFECT_DIR/open.glsl"
     local CLOSE_FILE="$EFFECT_DIR/close.glsl"
     local CONFIG_FILE_SRC="$EFFECT_DIR/config"
+
+    if [ ! -f "$OPEN_FILE" ] && [ -f "$EFFECT_DIR/$EFFECT.glsl" ]; then
+        cp "$EFFECT_DIR/$EFFECT.glsl" "$OPEN_FILE"
+        cp "$EFFECT_DIR/$EFFECT.glsl" "$CLOSE_FILE"
+    fi
+
+    if [ ! -f "$OPEN_FILE" ] || [ ! -f "$CLOSE_FILE" ]; then
+        echo "Warning: Missing open.glsl or close.glsl for $EFFECT" >&2
+        return 1
+    fi
 
     OPEN=$(cat "$OPEN_FILE")
     CLOSE=$(cat "$CLOSE_FILE")
@@ -32,19 +48,6 @@ apply_effect() {
 
     cat > "$CONFIG_FILE" << ANIMEOF
 animations {
-        // workspace-switch cũ (giữ lại để tham khảo)
-        // workspace-switch {
-        //     spring damping-ratio=0.8 stiffness=1000 epsilon=0.0001
-        // }
-        // Tắt animation chuyển workspace (chuyển ngay lập tức)
-        // workspace-switch {
-        //     off
-        // }
-        // Tắt animation di chuyển ngang - vuốt nhảy luôn
-        // horizontal-view-movement {
-        //     off
-        // }
-
         // $EFFECT effect khi mở cửa sổ
         window-open {
             custom-shader r"
@@ -79,66 +82,83 @@ $CLOSE
             duration-ms 200
             curve "ease-out-quad"
         }
-        // Chế độ xem tổng quan (Overview) - Cần mượt và bay bổng
+        // Chế độ xem tổng quan (Overview)
         overview-open-close {
             spring damping-ratio=0.85 stiffness=700 epsilon=0.0001
         }
     }
 ANIMEOF
 
-    niri msg action load-config-file
+    niri msg action load-config-file 2>/dev/null || true
+    echo "$EFFECT" > "$STATE_FILE"
+    echo "$EFFECT" > "$TMP_STATE" 2>/dev/null || true
     echo "Current: $EFFECT"
+}
+
+get_current() {
+    if [ -f "$STATE_FILE" ]; then
+        cat "$STATE_FILE"
+    elif [ -f "$TMP_STATE" ]; then
+        cat "$TMP_STATE"
+    else
+        echo ""
+    fi
 }
 
 case "${1:-}" in
     next)
-        CURRENT=""
-        if [ -f "$STATE_FILE" ]; then
-            CURRENT=$(cat "$STATE_FILE")
-        fi
+        CURRENT=$(get_current)
+        IDX=-1
 
-        if [ -z "$CURRENT" ]; then
-            NEXT="${EFFECTS[0]}"
-        else
-            IDX=0
+        if [ -n "$CURRENT" ]; then
             for i in "${!EFFECTS[@]}"; do
                 if [ "${EFFECTS[$i]}" = "$CURRENT" ]; then
-                    IDX=$(( (i + 1) % ${#EFFECTS[@]} ))
+                    IDX=$i
                     break
                 fi
             done
-            NEXT="${EFFECTS[$IDX]}"
         fi
 
-        echo "$NEXT" > "$STATE_FILE"
+        if [ "$IDX" -eq -1 ]; then
+            NEXT="${EFFECTS[0]}"
+        else
+            NEXT_IDX=$(( (IDX + 1) % ${#EFFECTS[@]} ))
+            NEXT="${EFFECTS[$NEXT_IDX]}"
+        fi
+
         apply_effect "$NEXT"
         ;;
     prev)
-        CURRENT=""
-        if [ -f "$STATE_FILE" ]; then
-            CURRENT=$(cat "$STATE_FILE")
-        fi
+        CURRENT=$(get_current)
+        IDX=-1
 
-        if [ -z "$CURRENT" ]; then
-            NEXT="${EFFECTS[-1]}"
-        else
-            IDX=0
+        if [ -n "$CURRENT" ]; then
             for i in "${!EFFECTS[@]}"; do
                 if [ "${EFFECTS[$i]}" = "$CURRENT" ]; then
-                    IDX=$(( (i - 1 + ${#EFFECTS[@]}) % ${#EFFECTS[@]} ))
+                    IDX=$i
                     break
                 fi
             done
-            NEXT="${EFFECTS[$IDX]}"
         fi
 
-        echo "$NEXT" > "$STATE_FILE"
+        if [ "$IDX" -eq -1 ]; then
+            NEXT="${EFFECTS[-1]}"
+        else
+            PREV_IDX=$(( (IDX - 1 + ${#EFFECTS[@]}) % ${#EFFECTS[@]} ))
+            NEXT="${EFFECTS[$PREV_IDX]}"
+        fi
+
         apply_effect "$NEXT"
         ;;
     list)
-        echo "Available effects:"
+        echo "Available effects (${#EFFECTS[@]} total):"
+        CURRENT=$(get_current)
         for e in "${EFFECTS[@]}"; do
-            echo "  $e"
+            if [ "$e" = "$CURRENT" ]; then
+                echo "  * $e (active)"
+            else
+                echo "    $e"
+            fi
         done
         ;;
     *)
@@ -154,7 +174,7 @@ case "${1:-}" in
 
         EFFECT="$1"
         if [ ! -d "$SHADERS_DIR/$EFFECT" ]; then
-            echo "Error: effect '$EFFECT' not found"
+            echo "Error: effect '$EFFECT' not found" >&2
             echo "Available:"
             for e in "${EFFECTS[@]}"; do
                 echo "  $e"
@@ -162,7 +182,6 @@ case "${1:-}" in
             exit 1
         fi
 
-        echo "$EFFECT" > "$STATE_FILE"
         apply_effect "$EFFECT"
         ;;
 esac
