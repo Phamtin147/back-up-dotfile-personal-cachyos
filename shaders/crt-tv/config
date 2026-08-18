@@ -1,2 +1,2 @@
-duration-ms 450
-curve "ease-out-quad"
+duration-ms 400
+curve "ease-out-cubic"
