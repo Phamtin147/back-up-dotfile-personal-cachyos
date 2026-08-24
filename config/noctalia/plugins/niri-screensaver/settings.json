@@ -15,6 +15,7 @@
   "nowPlayingDuration": 3,
   "logoPath": "",
   "cursorHide": true,
+  "cursorWarp": false,
   "dismissOnKey": true,
   "randomLogo": false,
   "logoDir": "",

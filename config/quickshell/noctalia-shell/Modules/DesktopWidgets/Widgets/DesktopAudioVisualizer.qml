@@ -23,9 +23,10 @@ DraggableDesktopWidget {
 
   readonly property color fillColor: Color.resolveColorKey(colorName)
 
-  readonly property bool shouldShow: visualizerType !== "" && visualizerType !== "none" && (!hideWhenIdle || MediaService.isPlaying)
+  readonly property bool isVisualizerConfigured: visualizerType !== "" && visualizerType !== "none"
+  readonly property bool shouldShow: isVisualizerConfigured && (!hideWhenIdle || !SpectrumService.isIdle || MediaService.isPlaying)
   readonly property bool isHidden: !shouldShow
-  readonly property bool shouldRegisterSpectrum: shouldShow
+  readonly property bool shouldRegisterSpectrum: isVisualizerConfigured
 
   // Keep widget visible in edit mode so users can move/configure it
   visible: !root.isHidden || DesktopWidgetRegistry.editMode

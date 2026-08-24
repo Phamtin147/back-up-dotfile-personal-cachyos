@@ -17,17 +17,15 @@
 # Antigravity IDE - đồng bộ màu tự động (cùng input code.json như VSCode)
 [templates.antigravity]
 input_path = "/etc/xdg/quickshell/noctalia-shell/Assets/Templates/code.json"
-output_path = "~/.antigravity/extensions/noctalia.noctaliatheme-0.0.5-universal/themes/NoctaliaTheme-color-theme.json"
-post_hook = "~/.local/bin/noctalia-sync-antigravity.sh"
+output_path = "/home/amtia/.antigravity/extensions/noctalia.noctaliatheme-0.0.5-universal/themes/NoctaliaTheme-color-theme.json"
+post_hook = "/home/amtia/.local/bin/noctalia-sync-antigravity.sh"
 
 [templates.antigravity_ide]
 input_path = "/etc/xdg/quickshell/noctalia-shell/Assets/Templates/code.json"
-output_path = "~/.antigravity-ide/extensions/noctalia.noctaliatheme-0.0.5-universal/themes/NoctaliaTheme-color-theme.json"
-post_hook = "~/.local/bin/noctalia-sync-antigravity.sh"
+output_path = "/home/amtia/.antigravity-ide/extensions/noctalia.noctaliatheme-0.0.5-universal/themes/NoctaliaTheme-color-theme.json"
+post_hook = "/home/amtia/.local/bin/noctalia-sync-antigravity.sh"
 
 [templates.hyprlock]
 input_path = "~/.config/noctalia/templates/hyprlock.conf"
 output_path = "~/.config/hypr/hyprlock.conf"
 post_hook = "systemctl --user restart hyprlock-cava.service"
-
-

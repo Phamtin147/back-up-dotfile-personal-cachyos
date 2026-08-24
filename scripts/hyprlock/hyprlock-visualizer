@@ -5,9 +5,7 @@ if ! pgrep -f "hyprlock-cava-daemon" >/dev/null 2>&1; then
     /home/amtia/.local/bin/hyprlock-cava-daemon >/dev/null 2>&1 &
 fi
 
-STATUS=$(playerctl status 2>/dev/null || echo "")
-
-if [ "$STATUS" = "Playing" ] && [ -s /tmp/cava-hyprlock.txt ]; then
+if [ -s /tmp/cava-hyprlock.txt ]; then
     cat /tmp/cava-hyprlock.txt
 else
     echo ""

@@ -1,18 +1,18 @@
 binds {
 
-    // ────────────── Keybindings ──────────────
+    // -------------- Keybindings --------------
     // https://github.com/YaLTeR/niri/wiki/Configuration:-Key-Bindings
 
-    // ─── noctalia-shell keybinds ───
+    // --- noctalia-shell keybinds ---
     // https://docs.noctalia.dev/getting-started/keybinds/
 
     MOD+SHIFT+SLASH                     { show-hotkey-overlay; }
     MOD+CTRL+R                          hotkey-overlay-title="Reload Niri Config" { spawn "niri" "msg" "action" "reload-config"; }
 
-    // ─── Shader Effects ───
+    // --- Shader Effects ---
     MOD+SHIFT+S                         hotkey-overlay-title="Next Window Shader" { spawn-sh "niri-shader next"; }
 
-    // ─── Applications ───
+    // --- Applications ---
     MOD+RETURN                          hotkey-overlay-title="Open Terminal: Alacritty" { spawn "alacritty"; }
     MOD+SPACE                            hotkey-overlay-title="Open App Launcher: noctalia launcher" { spawn-sh "qs -c noctalia-shell ipc call launcher toggle"; }
     MOD+B { 
@@ -29,7 +29,7 @@ binds {
     MOD+A                           hotkey-overlay-title="antigravity: antigravity" { spawn "antigravity-ide"; }
     MOD+I                           hotkey-overlay-title="Visual Studio: vs" { spawn "code"; }
 
-    // ─── Audio & Media Controls ───
+    // --- Audio & Media Controls ---
     XF86AUDIORAISEVOLUME                allow-when-locked=true { spawn-sh "qs -c noctalia-shell ipc call volume increase"; }
     XF86AUDIOLOWERVOLUME                allow-when-locked=true { spawn-sh "qs -c noctalia-shell ipc call volume decrease"; }
     XF86AUDIOMUTE                       allow-when-locked=true { spawn-sh "qs -c noctalia-shell ipc call volume muteOutput"; }
@@ -38,7 +38,7 @@ binds {
     XF86AUDIONEXT                       allow-when-locked=true { spawn "playerctl" "next"; }
     XF86AUDIOPREV                       allow-when-locked=true { spawn "playerctl" "previous"; }
 
-    // ─── Window Movement and Focus ───
+    // --- Window Movement and Focus ---
     MOD+Q                               { close-window; }
 
     MOD+LEFT                            { focus-column-left; }
@@ -71,7 +71,7 @@ binds {
     MOD+SHIFT+CTRL+UP                   { move-column-to-monitor-up; }
     MOD+SHIFT+CTRL+DOWN                 { move-column-to-monitor-down; }
 
-    // ─── Workspace Switching ───
+    // --- Workspace Switching ---
     MOD+WHEELSCROLLDOWN                 cooldown-ms=150 { focus-workspace-down; }
     MOD+DOWN                            cooldown-ms=150 { focus-workspace-down; }
     MOD+J                               cooldown-ms=150 { focus-workspace-down; }
@@ -113,7 +113,7 @@ binds {
 
     MOD+TAB                             { focus-workspace-previous; }
 
-    // ─── Layout Controls ───
+    // --- Layout Controls ---
     MOD+CTRL+F                          { expand-column-to-available-width; }
     MOD+C                               { center-column; }
     MOD+CTRL+C                          { center-visible-columns; }
@@ -122,15 +122,16 @@ binds {
     MOD+SHIFT+MINUS                     { set-window-height "-10%"; }
     MOD+SHIFT+EQUAL                     { set-window-height "+10%"; }
 
-    // ─── Modes ───
+    // --- Modes ---
     MOD+T                               { toggle-window-floating; }
     MOD+G                               hotkey-overlay-title="Toggle Sticky Window" { spawn "niri-float-sticky" "-ipc" "toggle_sticky"; }
     MOD+SHIFT+F                         { fullscreen-window; }
     MOD+F                               { maximize-column; }
     MOD+W                               { toggle-column-tabbed-display; }
 
-    // ─── Screenshots ───
+    // --- Screenshots ---
     Print                               { screenshot; }
+    MOD+S                               { screenshot; }
     CTRL+SHIFT+2                        { screenshot-screen; }
     CTRL+SHIFT+3                        { screenshot-window; }
 
@@ -138,20 +139,20 @@ binds {
     MOD+M                               hotkey-overlay-title="Duplicate Screen" { spawn "sh" "-c" "wl-mirror $(niri msg --json focused-output | jq -r .name)"; }
 
 
-    // ─── Emergency Escape Key ───
+    // --- Emergency Escape Key ---
     // Use this when a fullscreen app blocks your keybinds.
     // It disables any active keyboard shortcut inhibitor, restoring control.
     MOD+SHIFT+ESCAPE                    allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
 
-    // ─── Exit / Power ───
+    // --- Exit / Power ---
     // CTRL+ALT+DELETE                     { quit; } // Also quits Niri
     MOD+SHIFT+P                         { power-off-monitors; } // Turn off screens (useful for OLED or privacy)
     MOD+O                               repeat=false { toggle-overview; }
 
-    // ─── Lockscreen Power Shortcuts (Hyprlock bottom label bindings) ───
-    MOD+ESCAPE                          allow-when-locked=true allow-inhibiting=false { spawn "niri" "msg" "action" "power-off-monitors"; }
-    MOD+S                               allow-when-locked=true allow-inhibiting=false { spawn "systemctl" "suspend"; }
-    MOD+R                               allow-when-locked=true allow-inhibiting=false { spawn "systemctl" "reboot"; }
-    MOD+P                               allow-when-locked=true allow-inhibiting=false { spawn "systemctl" "poweroff"; }
+    // // --- Lockscreen Power Shortcuts (Hyprlock bottom label bindings) ---
+    // MOD+ESCAPE                          allow-when-locked=true allow-inhibiting=false { spawn "niri" "msg" "action" "power-off-monitors"; }
+    // MOD+S                               allow-when-locked=true allow-inhibiting=false { spawn "systemctl" "suspend"; }
+    // MOD+R                               allow-when-locked=true allow-inhibiting=false { spawn "systemctl" "reboot"; }
+    // MOD+P                               allow-when-locked=true allow-inhibiting=false { spawn "systemctl" "poweroff"; }
 
 }

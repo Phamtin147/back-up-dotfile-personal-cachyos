@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# noctalia-shutdown: Power off system safely
+set -euo pipefail
+
+# Execute poweroff
+systemctl poweroff
