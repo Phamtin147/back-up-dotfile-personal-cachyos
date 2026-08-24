@@ -206,3 +206,10 @@ find "$DOTFILES_DIR/scripts" -type f -exec chmod +x {} +
 chmod +x "$DOTFILES_DIR/install.sh" "$DOTFILES_DIR/backup.sh" 2>/dev/null || true
 
 echo "==> [9/9] Đã hoàn tất Full Backup 100%!"
+
+# 10. Sao lưu cấu hình Ly Display Manager (/etc/ly)
+echo "==> [10/10] Sao lưu cấu hình Ly Display Manager (/etc/ly)..."
+mkdir -p "$DOTFILES_DIR/system/etc/ly"
+if [ -d "/etc/ly" ]; then
+    cp -afr /etc/ly/* "$DOTFILES_DIR/system/etc/ly/" 2>/dev/null || true
+fi
