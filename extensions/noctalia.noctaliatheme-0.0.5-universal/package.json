@@ -1,0 +1,12 @@
+{
+  "name": "noctaliatheme",
+  "displayName": "NoctaliaTheme",
+  "publisher": "noctalia",
+  "version": "0.0.5",
+  "engines": { "vscode": ">=1.50.0" },
+  "contributes": {
+    "themes": [
+      { "label": "NoctaliaTheme", "uiTheme": "vs-dark", "path": "./themes/NoctaliaTheme-color-theme.json" }
+    ]
+  }
+}

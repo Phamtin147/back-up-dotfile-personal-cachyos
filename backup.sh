@@ -12,7 +12,7 @@ rm -rf "$DOTFILES_DIR/.config"
 rm -f "$DOTFILES_DIR/config/antigravity-css-preload.js\""
 
 # 2. Xuất danh sách phần mềm (Packages)
-echo "==> [1/8] Xuất danh sách gói phần mềm..."
+echo "==> [1/9] Xuất danh sách gói phần mềm..."
 mkdir -p "$DOTFILES_DIR/system/packages"
 if command -v pacman >/dev/null 2>&1; then
     pacman -Qqen > "$DOTFILES_DIR/system/packages/pacman-explicit.txt" || true
@@ -23,14 +23,14 @@ if command -v flatpak >/dev/null 2>&1; then
 fi
 
 # 3. Xuất dconf / GSettings
-echo "==> [2/8] Xuất thiết lập hệ thống dconf..."
+echo "==> [2/9] Xuất thiết lập hệ thống dconf..."
 mkdir -p "$DOTFILES_DIR/system/dconf"
 if command -v dconf >/dev/null 2>&1; then
     dconf dump / > "$DOTFILES_DIR/system/dconf/dconf-settings.ini" || true
 fi
 
 # 4. Sao lưu Dotfiles trong $HOME
-echo "==> [3/8] Sao lưu dotfiles trong $HOME..."
+echo "==> [3/9] Sao lưu dotfiles trong $HOME..."
 mkdir -p "$DOTFILES_DIR/home"
 for file in .zshrc .p10k.zsh .zprofile .gitconfig .npmrc cachyos-config.zsh; do
     if [ -f "$HOME/$file" ]; then
@@ -39,7 +39,7 @@ for file in .zshrc .p10k.zsh .zprofile .gitconfig .npmrc cachyos-config.zsh; do
 done
 
 # 5. Sao lưu ~/.config (Bao gồm Noctalia, Quickshell shell, Niri, Hypr, v.v.)
-echo "==> [4/8] Sao lưu cấu hình ~/.config..."
+echo "==> [4/9] Sao lưu cấu hình ~/.config..."
 mkdir -p "$DOTFILES_DIR/config"
 
 CONFIG_ITEMS=(
@@ -102,21 +102,30 @@ if [ -f "$HOME/.config/Code/User/settings.json" ]; then
 fi
 
 # Sao lưu CSS tùy biến
-if [ -f "$HOME/.config/vscode-custom.css" ]; then
+if [ -f "$HOME/vscode-custom.css" ]; then
+    cp -af "$HOME/vscode-custom.css" "$DOTFILES_DIR/vscode-custom.css"
+elif [ -f "$HOME/.config/vscode-custom.css" ]; then
     cp -af "$HOME/.config/vscode-custom.css" "$DOTFILES_DIR/vscode-custom.css"
-elif [ -f "$DOTFILES_DIR/vscode-custom.css" ]; then
-    :
 fi
 
 # 6. Sao lưu Noctalia Runtime & Widget State (~/.local/state/noctalia)
-echo "==> [5/8] Sao lưu Noctalia State & Widget UI (~/.local/state/noctalia)..."
+echo "==> [5/9] Sao lưu Noctalia State & Widget UI (~/.local/state/noctalia)..."
 mkdir -p "$DOTFILES_DIR/state"
 if [ -d "$HOME/.local/state/noctalia" ]; then
     rsync -a --delete "$HOME/.local/state/noctalia/" "$DOTFILES_DIR/state/noctalia/"
 fi
 
-# 7. Sao lưu Scripts ~/.local/bin
-echo "==> [6/8] Sao lưu các scripts trong ~/.local/bin..."
+# 7. Sao lưu VSCode / Antigravity Extensions (Noctalia theme extension)
+echo "==> [6/9] Sao lưu Extensions cần thiết..."
+mkdir -p "$DOTFILES_DIR/extensions"
+for ext_dir in "$HOME/.vscode/extensions" "$HOME/.antigravity/extensions"; do
+    if [ -d "$ext_dir" ]; then
+        find "$ext_dir" -maxdepth 1 -name "*noctaliatheme*" -type d -exec cp -afr {} "$DOTFILES_DIR/extensions/" \; 2>/dev/null || true
+    fi
+done
+
+# 8. Sao lưu Scripts ~/.local/bin
+echo "==> [7/9] Sao lưu các scripts trong ~/.local/bin..."
 mkdir -p "$DOTFILES_DIR/scripts/hyprlock" \
          "$DOTFILES_DIR/scripts/noctalia" \
          "$DOTFILES_DIR/scripts/niri" \
@@ -154,8 +163,8 @@ if [ -f "$HOME/.local/bin/legion-startup.sh" ]; then
     cp -af "$HOME/.local/bin/legion-startup.sh" "$DOTFILES_DIR/scripts/system/"
 fi
 
-# 8. Sao lưu Fonts, Icons, Themes, Wallpapers, Desktop files, Shaders
-echo "==> [7/8] Sao lưu Fonts, Icons, Themes, Wallpapers, Desktop files, Shaders..."
+# 9. Sao lưu Fonts, Icons, Themes, Wallpapers, Desktop files, Shaders
+echo "==> [8/9] Sao lưu Fonts, Icons, Themes, Wallpapers, Desktop files, Shaders..."
 mkdir -p "$DOTFILES_DIR/fonts" "$DOTFILES_DIR/icons" "$DOTFILES_DIR/themes" "$DOTFILES_DIR/desktop" "$DOTFILES_DIR/wallpapers" "$DOTFILES_DIR/shaders"
 
 # Fonts
@@ -183,11 +192,11 @@ if [ -d "$HOME/shaders" ]; then
     rsync -a --delete "$HOME/shaders/" "$DOTFILES_DIR/shaders/"
 fi
 
+# Xóa các thư mục .git lồng nhau để đảm bảo toàn bộ file được track đầy đủ
+find "$DOTFILES_DIR/icons" "$DOTFILES_DIR/themes" "$DOTFILES_DIR/state" "$DOTFILES_DIR/extensions" -name ".git" -type d -prune -exec rm -rf {} + 2>/dev/null || true
+
 # Wallpapers
 if [ -d "$HOME/Pictures/Wallpapers" ]; then
-# Xóa các thư mục .git lồng nhau để đảm bảo toàn bộ file được track đầy đủ
-find "$DOTFILES_DIR/icons" "$DOTFILES_DIR/themes" "$DOTFILES_DIR/state" -name ".git" -type d -prune -exec rm -rf {} + 2>/dev/null || true
-
     echo "    Đang sao lưu kho hình nền (~1.3GB)..."
     rsync -a --delete "$HOME/Pictures/Wallpapers/" "$DOTFILES_DIR/wallpapers/"
 fi
@@ -196,4 +205,4 @@ fi
 find "$DOTFILES_DIR/scripts" -type f -exec chmod +x {} +
 chmod +x "$DOTFILES_DIR/install.sh" "$DOTFILES_DIR/backup.sh" 2>/dev/null || true
 
-echo "==> [8/8] Đã hoàn tất Full Backup 100% (Bao gồm đầy đủ Noctalia UI & State)!"
+echo "==> [9/9] Đã hoàn tất Full Backup 100%!"

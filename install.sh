@@ -67,7 +67,7 @@ copy_entry() {
 }
 
 install_packages() {
-    echo "==> [1/10] Cài đặt các gói phần mềm..."
+    echo "==> [1/11] Cài đặt các gói phần mềm..."
     if $DRY_RUN; then
         echo "  (Mô phỏng) Chạy $DOTFILES_DIR/system/packages/install-packages.sh"
     else
@@ -76,7 +76,7 @@ install_packages() {
 }
 
 install_home() {
-    echo "==> [2/10] Cài đặt các dotfile trong $HOME..."
+    echo "==> [2/11] Cài đặt các dotfile trong $HOME..."
     shopt -s dotglob nullglob
     for entry in "$DOTFILES_DIR"/home/*; do
         [ -e "$entry" ] || continue
@@ -91,7 +91,7 @@ install_home() {
 }
 
 install_config() {
-    echo "==> [3/10] Cài đặt cấu hình vào $CONFIG_TARGET..."
+    echo "==> [3/11] Cài đặt cấu hình vào $CONFIG_TARGET..."
     mkdir -p "$CONFIG_TARGET"
     shopt -s nullglob
     for entry in "$DOTFILES_DIR"/config/*; do
@@ -103,20 +103,34 @@ install_config() {
     shopt -u nullglob
 
     if [ -f "$DOTFILES_DIR/vscode-custom.css" ]; then
+        link_entry "$DOTFILES_DIR/vscode-custom.css" "$HOME/vscode-custom.css"
         link_entry "$DOTFILES_DIR/vscode-custom.css" "$CONFIG_TARGET/vscode-custom.css"
     fi
 }
 
 install_state() {
-    echo "==> [4/10] Cài đặt Noctalia Runtime & State vào $HOME/.local/state/noctalia..."
+    echo "==> [4/11] Cài đặt Noctalia Runtime & State vào $HOME/.local/state/noctalia..."
     if [ -d "$DOTFILES_DIR/state/noctalia" ]; then
         mkdir -p "$HOME/.local/state/noctalia"
         copy_entry "$DOTFILES_DIR/state/noctalia" "$HOME/.local/state/noctalia"
     fi
 }
 
+install_extensions() {
+    echo "==> [5/11] Cài đặt Extensions (Noctalia Theme) cho VSCode / Antigravity..."
+    if [ -d "$DOTFILES_DIR/extensions" ]; then
+        for target_dir in "$HOME/.vscode/extensions" "$HOME/.antigravity/extensions"; do
+            mkdir -p "$target_dir"
+            for ext in "$DOTFILES_DIR"/extensions/*; do
+                [ -e "$ext" ] || continue
+                copy_entry "$ext" "$target_dir/$(basename "$ext")"
+            done
+        done
+    fi
+}
+
 install_bin() {
-    echo "==> [5/10] Cài đặt toàn bộ scripts vào $HOME/.local/bin..."
+    echo "==> [6/11] Cài đặt toàn bộ scripts vào $HOME/.local/bin..."
     local bin_dir="$HOME/.local/bin"
     mkdir -p "$bin_dir"
     
@@ -129,7 +143,7 @@ install_bin() {
 }
 
 install_assets() {
-    echo "==> [6/10] Cài đặt Fonts, Icons, Themes, Desktop files..."
+    echo "==> [7/11] Cài đặt Fonts, Icons, Themes, Desktop files..."
     
     # Fonts
     if [ -d "$DOTFILES_DIR/fonts" ]; then
@@ -166,7 +180,7 @@ install_assets() {
 }
 
 install_wallpapers() {
-    echo "==> [7/10] Cài đặt kho hình nền vào $HOME/Pictures/Wallpapers..."
+    echo "==> [8/11] Cài đặt kho hình nền vào $HOME/Pictures/Wallpapers..."
     if [ -d "$DOTFILES_DIR/wallpapers" ]; then
         mkdir -p "$HOME/Pictures/Wallpapers"
         copy_entry "$DOTFILES_DIR/wallpapers" "$HOME/Pictures/Wallpapers"
@@ -174,7 +188,7 @@ install_wallpapers() {
 }
 
 install_shaders() {
-    echo "==> [8/10] Cài đặt Shaders vào $HOME/shaders..."
+    echo "==> [9/11] Cài đặt Shaders vào $HOME/shaders..."
     if [ -d "$DOTFILES_DIR/shaders" ]; then
         mkdir -p "$HOME/shaders"
         copy_entry "$DOTFILES_DIR/shaders" "$HOME/shaders"
@@ -182,7 +196,7 @@ install_shaders() {
 }
 
 install_dconf() {
-    echo "==> [9/10] Khôi phục thiết lập dconf & User Services..."
+    echo "==> [10/11] Khôi phục thiết lập dconf & User Services..."
     local dconf_file="$DOTFILES_DIR/system/dconf/dconf-settings.ini"
     if [ -f "$dconf_file" ] && command -v dconf >/dev/null 2>&1; then
         if ! $DRY_RUN; then
@@ -203,7 +217,7 @@ install_dconf() {
 }
 
 install_system() {
-    echo "==> [10/10] Cài đặt cấu hình hệ thống (/etc)..."
+    echo "==> [11/11] Cài đặt cấu hình hệ thống (/etc)..."
     if ! $DRY_RUN; then
         sudo -v || { echo "Lỗi: Cần quyền sudo để cài cấu hình hệ thống"; exit 1; }
     fi
@@ -226,6 +240,7 @@ fi
 install_home
 install_config
 install_state
+install_extensions
 install_bin
 install_assets
 install_wallpapers

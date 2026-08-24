@@ -1,0 +1,33 @@
+{
+	"name": "noctaliatheme",
+	"displayName": "NoctaliaTheme",
+	"description": "Noctalia Matugen theme for VS Code, originally forked from Hyprluna's VS Code theme.",
+	"icon": "noctalialogo.png",
+	"version": "0.0.5",
+	"publisher": "Noctalia",
+	"repository": {
+		"url": "https://github.com/tuibird/noctalia-vscode-theme"
+	},
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.106.1"
+	},
+	"categories": [
+		"Themes"
+	],
+	"contributes": {
+		"themes": [
+			{
+				"label": "NoctaliaTheme",
+				"uiTheme": "vs-dark",
+				"path": "./themes/NoctaliaTheme-color-theme.json",
+				"_watch": true
+			}
+		]
+	},
+	"__metadata": {
+		"installedTimestamp": 1785729796490,
+		"targetPlatform": "undefined",
+		"size": 119586
+	}
+}
