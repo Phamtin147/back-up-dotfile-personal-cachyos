@@ -1,75 +1,73 @@
-# Dotfiles — CachyOS (Phamtin147)
+# 🚀 Full Backup CachyOS Dotfiles (Personal Setup)
 
-Dotfiles cá nhân cho CachyOS (Arch-based), window manager **niri** + **Noctalia shell** (CachyOS desktop), GPU passthrough qua **QEMU/libvirt** (VM AutoVirt).
+Bản sao lưu **100% đầy đủ** toàn bộ môi trường làm việc cá nhân trên CachyOS / Arch Linux:
+- **Giao diện & Compositor:** Niri, Hyprlock, Noctalia (Material You Dynamic Theming), Cava, QuickShell
+- **Terminal & Shell:** Alacritty, Ghostty, Kitty, Zsh + Powerlevel10k, Yazi, Btop
+- **Giao diện & Assets:** Fonts (MesloLGS NF), Icon theme (Delight-2), Cursor (Skyrim-cursors), GTK Themes, 1.3GB Wallpapers
+- **Ứng dụng & Cấu hình:** Antigravity IDE, VSCode, Fcitx5, OBS Studio, qBittorrent, Vial, v.v.
+- **Tự động hóa:** Bộ script tùy biến cho Hyprlock, Visualizer, Niri shader, Noctalia sync, Wallpaper switcher (`vwall`).
 
-Repo này là backup **toàn diện** để chuyển máy: cài lại theo repo là máy mới y hệt máy cũ (loại trừ data/cache).
+---
 
-## Cấu trúc
+## ⚡ 1. Hướng dẫn Khôi phục trên Máy mới (1-Click Restore)
 
-```
-dotfiles/
-├── home/          # Các dotfile trong $HOME (.zshrc, .p10k.zsh, .gitconfig, Vial.conf, fix-usb-optional.sh...)
-├── config/        # Nội dung ~/.config (niri, noctalia, alacritty, yazi, btop, ghostty, kitty, cava, Vial, obs-studio, qBittorrent...)
-├── system/        # Cấu hình hệ thống /etc
-│   ├── etc/       #   grub, mkinitcpio, modprobe.d (VFIO), udev (Vial), libvirt/qemu/AutoVirt.xml, legion_linux, fstab, pacman.conf...
-│   └── packages/  #   Danh sách package + script cài lại (pacman explicit 255, AUR 33, flatpak)
-├── patches/       # Patch QML cho Noctalia video wallpaper
-└── install.sh     # Script cài đặt (symlink)
-```
-
-## Chuyển máy (restore từ đầu)
-
+### Bước 1: Clone repo về máy mới
 ```bash
-# 0. Cài CachyOS/Arch base + clone repo
-git clone https://github.com/Phamtin147/back-up-dotfile-personal-cachyos.git ~/dotfiles
-cd ~/dotfiles
-
-# 1. Cài toàn bộ package (pacman + AUR + flatpak) — cần paru/yay
-./system/packages/install-packages.sh
-
-# 2. Symlink dotfiles vào $HOME và ~/.config
-./install.sh
-
-# 3. Cài cấu hình hệ thống (/etc, cần sudo)
-sudo ./install.sh --with-system
-
-# 4. Build lại initramfs + grub (kernel params IOMMU/VFIO)
-sudo mkinitcpio -P
-sudo grub-mkconfig -o /boot/grub/grub.cfg
-
-# 5. Khôi phục VM AutoVirt (GPU passthrough)
-sudo virsh define system/etc/libvirt/qemu/AutoVirt.xml
+git clone https://github.com/Phamtin147/back-up-dotfile-personal-cachyos.git ~/back-up-dotfile-personal-cachyos
+cd ~/back-up-dotfile-personal-cachyos
 ```
 
-## Cài đặt (máy đang dùng)
+### Bước 2: Cài đặt và khôi phục toàn bộ
 
+#### Cách 1: Khôi phục tất cả (Bao gồm tự động cài Packages từ Pacman, AUR, Flatpak)
 ```bash
-# Xem trước các thao tác
-./install.sh --dry-run
+./install.sh --with-packages
+```
 
-# Cài đặt vào $HOME
+#### Cách 2: Chỉ khôi phục Config, Fonts, Icons, Wallpapers, Scripts (Nếu máy đã có đủ phần mềm)
+```bash
 ./install.sh
+```
 
-# Cài cả cấu hình hệ thống (/etc, cần sudo)
+#### Cài đặt thêm cấu hình hệ thống (`/etc` - GRUB, VFIO, udev rules... cần sudo):
+```bash
 ./install.sh --with-system
+# hoặc kết hợp tất cả:
+./install.sh --all
 ```
 
-Cách hoạt động: install.sh tạo **symlink** từ repo vào `$HOME` và `~/.config`.
-File/dir đã tồn tại sẽ được backup thành `*.bak` trước khi link.
+---
 
-## Yêu cầu
+## 🔄 2. Cập nhật và Sao lưu thêm trong tương lai (1-Click Backup)
 
-- CachyOS / Arch Linux (cấu hình `/etc` dành riêng cho CachyOS)
-- zsh + Powerlevel10k
-- niri (Wayland compositor)
-- Noctalia shell (CachyOS)
-- paru/yay (cài package AUR)
+Mỗi khi bạn cài thêm phần mềm mới, sửa đổi cấu hình hoặc thêm hình nền/script trên máy, chỉ cần chạy:
 
-## Ghi chú
+```bash
+cd ~/back-up-dotfile-personal-cachyos
+./backup.sh
+git add -A
+git commit -m "feat(backup): sync latest configs, packages and assets"
+git push
+```
 
-- **VM AutoVirt**: chỉ backup file XML định nghĩa VM (trong `system/etc/libvirt/qemu/`). Disk image + ISO (~4.6G trong `~/.local/share/libvirt`) là data, backup riêng ngoài repo.
-- **AutoVirt tool**: dự án upstream riêng (github.com/Scrut1ny/AutoVirt), clone riêng, không nằm trong repo này.
-- `.zshrc` tham chiếu `$HOME/cachyos-config.zsh` (nằm trong `home/`)
-- Patch wallpaper: `./home/apply-wallpaper-patch.sh` (cần sudo, copy patches vào `/etc/xdg/quickshell/noctalia-shell`)
-- Một số config chứa đường dẫn riêng của máy (VD: `WLR_DRM_DEVICES` trong `.zprofile`, `/etc/fstab`) — chỉnh lại nếu dùng máy khác
-- **Không** đưa vào repo (secret/data/cache): `~/.config/opencode` (API key), `~/.config/gh` (token), browser profiles (Chrome/Brave/zen), `Code`/`Antigravity`/`unityhub` caches, `spicetify`, torrent data (`qBittorrent-data.conf`), `darktable` DB, VM disk images
+---
+
+## 📂 3. Cấu trúc thư mục
+
+```
+├── backup.sh                # Script tự động quét và sao lưu 100% máy hiện tại
+├── install.sh               # Script tự động khôi phục và liên kết vào máy mới
+├── home/                    # Các file trong $HOME (.zshrc, .p10k.zsh, .gitconfig...)
+├── config/                  # Cấu hình ~/.config (noctalia, niri, hypr, alacritty, yazi...)
+├── scripts/                 # Toàn bộ script trong ~/.local/bin
+├── fonts/                   # Phông chữ hệ thống (~/.local/share/fonts)
+├── icons/                   # Bộ icon & cursor (~/.icons)
+├── themes/                  # Giao diện GTK (~/.themes)
+├── wallpapers/              # Kho hình nền động tạo màu cho Noctalia (~/Pictures/Wallpapers)
+├── shaders/                 # GLSL Shaders (~/shaders)
+├── desktop/                 # Custom .desktop launchers (~/.local/share/applications)
+└── system/
+    ├── dconf/               # Bản sao lưu cấu hình GNOME/GTK dconf
+    ├── packages/            # Danh sách gói phần mềm (Pacman, AUR, Flatpak)
+    └── etc/                 # Cấu hình hệ thống /etc
+```

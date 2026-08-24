@@ -31,5 +31,18 @@
     "window.decorations": "enabled",
     "vscode_custom_css.imports": [
         "file:///home/amtia/vscode-custom.css"
+    ],
+    "custom-ui-style.external.imports": [
+        "file:///home/amtia/vscode-custom.css"
+    ],
+    "custom-ui-style.external.loadStrategy": "refetch",
+    "extensions.verifySignature": false,
+    "yaml.disableSchemaDetection": [
+        "**/.github/workflows/*.yml",
+        "**/.github/workflows/*.yaml",
+        "**/.gitea/workflows/*.yml",
+        "**/.gitea/workflows/*.yaml",
+        "**/.forgejo/workflows/*.yml",
+        "**/.forgejo/workflows/*.yaml"
     ]
 }

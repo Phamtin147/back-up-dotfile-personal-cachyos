@@ -1,34 +1,43 @@
-#!/bin/bash
-# Cài lại toàn bộ package để máy mới giống máy cũ.
-# Chạy trên CachyOS/Arch đã cài base, sau khi clone dotfiles repo.
+#!/usr/bin/env bash
+# ==============================================================================
+# Script Cài đặt toàn bộ Package (Pacman + AUR + Flatpak) cho máy mới
+# ==============================================================================
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo "==> 1. Cài package chính thức (pacman) — $(wc -l < "$DIR/pacman-explicit.txt") gói"
-sudo pacman -S --needed --noconfirm - < "$DIR/pacman-explicit.txt"
+echo "==> 1. Cài đặt các gói chính thức (Pacman)..."
+if [ -f "$DIR/pacman-explicit.txt" ]; then
+    echo "    Số lượng gói: $(wc -l < "$DIR/pacman-explicit.txt")"
+    sudo pacman -S --needed --noconfirm - < "$DIR/pacman-explicit.txt" || {
+        echo "⚠️ Có một số gói có thể thay đổi tên hoặc đã có sẵn, đang tiếp tục..."
+    }
+fi
 
+echo "==> 2. Cài đặt các gói AUR..."
 if command -v paru >/dev/null 2>&1; then
     AUR_HELPER=paru
 elif command -v yay >/dev/null 2>&1; then
     AUR_HELPER=yay
 else
-    echo "==> Chưa có paru/yay. Cài paru-bin trước rồi chạy lại script."
-    exit 1
+    echo "    Chưa có paru/yay. Đang tự động build paru-bin..."
+    sudo pacman -S --needed --noconfirm git base-devel
+    git clone https://aur.archlinux.org/paru-bin.git /tmp/paru-bin
+    (cd /tmp/paru-bin && makepkg -si --noconfirm)
+    rm -rf /tmp/paru-bin
+    AUR_HELPER=paru
 fi
 
-echo "==> 2. Cài package AUR ($AUR_HELPER) — $(wc -l < "$DIR/pacman-aur.txt") gói"
-$AUR_HELPER -S --needed --noconfirm - < "$DIR/pacman-aur.txt"
+if [ -f "$DIR/pacman-aur.txt" ]; then
+    echo "    Dùng $AUR_HELPER cài đặt $(wc -l < "$DIR/pacman-aur.txt") gói AUR..."
+    $AUR_HELPER -S --needed --noconfirm - < "$DIR/pacman-aur.txt" || true
+fi
 
-echo "==> 3. Cài Flatpak apps — $(wc -l < "$DIR/flatpak.txt") app"
-while IFS= read -r app; do
-    [ -n "$app" ] && flatpak install -y --noninteractive flathub "$app"
-done < "$DIR/flatpak.txt"
+echo "==> 3. Cài đặt các ứng dụng Flatpak..."
+if [ -f "$DIR/flatpak.txt" ] && command -v flatpak >/dev/null 2>&1; then
+    while IFS= read -r app; do
+        [ -n "$app" ] && flatpak install -y --noninteractive flathub "$app" || true
+    done < "$DIR/flatpak.txt"
+fi
 
-echo ""
-echo "Xong! Tiếp theo:"
-echo "  ./install.sh            # symlink dotfiles vào \$HOME và ~/.config"
-echo "  sudo ./install.sh --with-system   # cấu hình /etc (grub, VFIO, libvirt...)"
-echo "  sudo mkinitcpio -P     # rebuild initramfs (nếu đổi modprobe/mkinitcpio)"
-echo "  sudo grub-mkconfig -o /boot/grub/grub.cfg   # nếu đổi kernel params"
-echo "  sudo virsh define system/etc/libvirt/qemu/AutoVirt.xml   # khôi phục VM"
+echo "==> Hoàn tất cài đặt toàn bộ gói phần mềm!"

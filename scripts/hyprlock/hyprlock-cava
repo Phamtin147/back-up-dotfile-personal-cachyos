@@ -1,21 +1,12 @@
 #!/usr/bin/env bash
-# hyprlock-cava: Read cava output and print one-line unicode visualizer
+# hyprlock-cava: Instant reader of CAVA spectrum for hyprlock
 
-pipe="/tmp/cava-hyprlock.fifo"
-
-if [ ! -p "$pipe" ]; then
-    mkfifo "$pipe"
+if ! pgrep -f "hyprlock-cava-daemon" >/dev/null 2>&1; then
+    /home/amtia/.local/bin/hyprlock-cava-daemon >/dev/null 2>&1 &
 fi
 
-# Run cava in background writing to fifo if not running
-if ! pgrep -f "cava -p $HOME/.config/cava/config-hyprlock" >/dev/null 2>&1; then
-    cava -p "$HOME/.config/cava/config-hyprlock" > "$pipe" 2>/dev/null &
-fi
-
-# Read latest line from fifo with 1s timeout
-if read -r -t 1 line < "$pipe" 2>/dev/null; then
-    # Convert ascii numbers 0-7 to unicode bars  ▂▃▄▅▆▇█
-    echo "$line" | sed 'y/01234567/ ▂▃▄▅▆▇█/'
+if [ -s /tmp/cava-hyprlock.txt ]; then
+    cat /tmp/cava-hyprlock.txt
 else
     echo " ▂▃▄▅▆▇█▇▆▅▄▃▂ "
 fi

@@ -1,0 +1,682 @@
+#!/bin/bash
+# niri-screensaver - Terminal-based screensaver inner driver
+# Forked from cosmic-order's cosmic-screensaver.sh; trimmed for Niri + Noctalia.
+#
+# Renders TTE (TerminalTextEffects) animations in the current terminal.
+# Designed to be spawned inside an alacritty window that niri places fullscreen
+# via window-rule. Idle/lock/DPMS are handled by Noctalia, not this script.
+#
+# Dependencies: terminaltexteffects (tte), figlet (optional, for clock).
+# SPDX-License-Identifier: GPL-3.0-only
+
+set -uo pipefail
+
+SCREENSAVER_DIR="${SCREENSAVER_DIR:-$HOME/.config/niri-screensaver}"
+CONFIG_FILE="${CONFIG_FILE:-${SCREENSAVER_DIR}/config}"
+LOGO_FILE="${LOGO_FILE:-${SCREENSAVER_DIR}/logo.txt}"
+
+# Search path for the default logo: installed share dir, then sibling share dir
+# relative to the script (when running from a checkout).
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+# Our own program name, used to find sibling driver instances on other monitors
+# when the user dismisses (see dismiss_all / terminate_sibling_drivers).
+SELF_NAME="$(basename "$0")"
+DEFAULT_LOGO_CANDIDATES=(
+    "${NIRI_SCREENSAVER_DATA:-/usr/share/niri-screensaver}/logos/niri-name-with-icon.txt"
+    "$HOME/.local/share/niri-screensaver/logos/niri-name-with-icon.txt"
+    "${SCRIPT_DIR}/../share/logos/niri-name-with-icon.txt"
+)
+
+FRAME_RATE="${FRAME_RATE:-60}"
+INCLUDE_EFFECTS="${INCLUDE_EFFECTS:-}"
+EXCLUDE_EFFECTS="${EXCLUDE_EFFECTS:-dev_worm}"
+FADE_IN_EFFECT="${FADE_IN_EFFECT:-}"
+FADE_OUT_EFFECT="${FADE_OUT_EFFECT:-}"
+SHOW_CLOCK="${SHOW_CLOCK:-false}"
+CLOCK_DURATION="${CLOCK_DURATION:-3}"
+CLOCK_FORMAT="${CLOCK_FORMAT:-%H:%M}"
+CLOCK_FONT="${CLOCK_FONT:-}"
+SHOW_NOW_PLAYING="${SHOW_NOW_PLAYING:-false}"
+NOW_PLAYING_DURATION="${NOW_PLAYING_DURATION:-3}"
+CURSOR_HIDE="${CURSOR_HIDE:-true}"
+DISMISS_ON_KEY="${DISMISS_ON_KEY:-true}"
+RANDOM_LOGO="${RANDOM_LOGO:-false}"
+LOGO_DIR="${LOGO_DIR:-}"
+
+# Base seed for tte's RNG. Empty = independent (each run randomizes on its own,
+# the default). When set (the launcher passes one shared value to every monitor
+# in "mirror" multi-monitor mode), each effect window uses BASE_SEED + window,
+# where window = wall-clock-seconds / MIRROR_INTERVAL. Deriving the window from
+# the shared wall clock (rather than a per-process counter) is what keeps the
+# monitors picking the SAME effect at the same time — a local counter drifts
+# because the surfaces spawn at different moments and effects animate for
+# different durations. See --seed.
+SEED="${SEED:-}"
+
+# Mirror mode: seconds per effect window. All monitors switch to a new effect on
+# the same wall-clock boundary. Smaller = effects change faster (and replay less
+# within a window); larger = each effect lingers longer.
+MIRROR_INTERVAL="${MIRROR_INTERVAL:-8}"
+
+# Mirror mode: lock tte's canvas to a fixed cell box so the animated region is
+# the same grid on every output regardless of its resolution. tte's RNG is
+# deterministic, so an identical grid + shared seed renders byte-identical
+# animations even across mismatched-resolution monitors (issue #14); without it,
+# mirror plays the same effect but a different layout when resolutions differ.
+# Empty (the default) keeps the canvas tracking each terminal's full size — the
+# original full-screen behavior. Both must be positive integers to take effect,
+# and only in mirror mode (SEED set); the effect then plays in a centered box
+# (--anchor-canvas c is already passed at every tte call site).
+MIRROR_CANVAS_COLS="${MIRROR_CANVAS_COLS:-}"
+MIRROR_CANVAS_ROWS="${MIRROR_CANVAS_ROWS:-}"
+
+# Where the driver records this terminal's cell grid so the launcher can
+# auto-derive a fixed mirror canvas from the smallest output (#24). The launcher
+# can't measure cell metrics without a terminal, so when it asks (via
+# --measure-logical), the driver writes its output's logical pixel size paired
+# with its actual cell grid here; the launcher reads the ratio next launch. Lives
+# in the config dir so both sides resolve it identically.
+CELL_METRICS_FILE="${CELL_METRICS_FILE:-${SCREENSAVER_DIR}/.cell-metrics}"
+
+# Set from --measure-logical "WxH" (this output's logical pixel size, passed by
+# the launcher) to request a one-shot cell-metrics cache refresh on this run.
+# Empty = don't measure.
+MEASURE_LOGICAL=""
+
+# Seconds between the settle reads in write_cell_metrics. Each surface opens on
+# the focused output and is moved to its target a beat later (#11), resizing the
+# terminal; we wait for the grid to quiesce before recording it. Overridable so
+# the unit tests can drop it to 0.
+CELL_MEASURE_SETTLE_SECS="${CELL_MEASURE_SETTLE_SECS:-0.4}"
+
+# Cached by check_dependencies: "--no-restore-cursor" when the installed tte
+# supports it and we're hiding the cursor, else empty. tte otherwise re-shows
+# the cursor when an effect ends, flashing a white cursor block between effects.
+NO_RESTORE_CURSOR_ARG=""
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log_info()    { echo -e "${CYAN}[INFO]${NC} $*"; }
+log_success() { echo -e "${GREEN}[OK]${NC} $*"; }
+log_warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
+log_error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+
+load_config() {
+    if [[ -f "$CONFIG_FILE" ]]; then
+        # shellcheck source=/dev/null
+        source "$CONFIG_FILE"
+    fi
+    # Re-apply defaults for any keys the config left empty. The Noctalia plugin
+    # writes every key on every save, including blanks ("LOGO_FILE=\"\""), which
+    # would otherwise clobber the env defaults set above. Only LOGO_FILE has a
+    # path-shaped default that fails loudly when empty; the rest are restored
+    # for symmetry / future-proofing.
+    : "${LOGO_FILE:=${SCREENSAVER_DIR}/logo.txt}"
+    : "${FRAME_RATE:=60}"
+    : "${EXCLUDE_EFFECTS:=dev_worm}"
+    : "${SHOW_CLOCK:=false}"
+    : "${CLOCK_DURATION:=3}"
+    : "${CLOCK_FORMAT:=%H:%M}"
+    : "${SHOW_NOW_PLAYING:=false}"
+    : "${NOW_PLAYING_DURATION:=3}"
+    : "${CURSOR_HIDE:=true}"
+    : "${DISMISS_ON_KEY:=true}"
+    : "${RANDOM_LOGO:=false}"
+    : "${MIRROR_INTERVAL:=8}"
+    # Must be a positive integer — it's a divisor for the wall-clock window.
+    [[ "$MIRROR_INTERVAL" =~ ^[1-9][0-9]*$ ]] || MIRROR_INTERVAL=8
+    : "${MIRROR_CANVAS_COLS:=}"
+    : "${MIRROR_CANVAS_ROWS:=}"
+    # A fixed mirror canvas needs BOTH dims as positive integers. Blank (incl.
+    # the plugin writing empty) or garbage falls back to the full-screen canvas,
+    # so a half-set or invalid value can't hand tte a bad --canvas-width/height.
+    [[ "$MIRROR_CANVAS_COLS" =~ ^[1-9][0-9]*$ ]] || MIRROR_CANVAS_COLS=""
+    [[ "$MIRROR_CANVAS_ROWS" =~ ^[1-9][0-9]*$ ]] || MIRROR_CANVAS_ROWS=""
+    # LOGO_DIR is left empty by default; resolve_logo_dir() figures it out lazily.
+}
+
+resolve_default_logo() {
+    for candidate in "${DEFAULT_LOGO_CANDIDATES[@]}"; do
+        if [[ -f "$candidate" ]]; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+ensure_config_dir() {
+    mkdir -p "$SCREENSAVER_DIR"
+    if [[ ! -f "$LOGO_FILE" ]]; then
+        local default
+        if default="$(resolve_default_logo)"; then
+            cp "$default" "$LOGO_FILE"
+            log_info "Copied default logo to: $LOGO_FILE"
+        fi
+    fi
+}
+
+check_dependencies() {
+    if ! command -v tte &>/dev/null; then
+        log_error "TerminalTextEffects (tte) is not installed."
+        log_info "Install with: pipx install terminaltexteffects"
+        exit 1
+    fi
+    # tte re-shows the cursor when an effect ends; while we own cursor hiding
+    # that flashes a white cursor block between effects. Suppress it when the
+    # installed tte supports the flag (older versions don't) and CURSOR_HIDE is on.
+    if [[ "$CURSOR_HIDE" != "false" ]] && tte --help 2>&1 | grep -q -- '--no-restore-cursor'; then
+        NO_RESTORE_CURSOR_ARG="--no-restore-cursor"
+    fi
+}
+
+get_effects() {
+    # tte -h prints the {beams,...} choices block twice (usage line + positional
+    # args); -m1 takes only the first so effects aren't listed in duplicate.
+    tte -h 2>&1 | grep -m1 -oE '\{beams,[^}]+\}' | tr -d '{}' | tr ',' '\n'
+}
+
+prepare_terminal() {
+    clear
+    stty -echo
+    if [[ "$CURSOR_HIDE" != "false" ]]; then
+        tput civis
+    fi
+    printf '\033]11;rgb:00/00/00\007'
+}
+
+restore_terminal() {
+    printf '\e[?1003l' 2>/dev/null
+    tput cnorm 2>/dev/null
+    tput reset 2>/dev/null
+    stty echo 2>/dev/null
+}
+
+# Tear down THIS instance only: kill our tte, fade out, restore our terminal,
+# exit. Used by the signal traps (SIGTERM from a sibling's dismiss_all, or from
+# the launcher's kill) and as the final step of dismiss_all. Does NOT signal
+# siblings, so a broadcast SIGTERM can't trigger a signal storm.
+# shellcheck disable=SC2317
+exit_screensaver() {
+    trap - SIGINT SIGTERM SIGHUP SIGQUIT EXIT
+    pkill -P $$ -x tte 2>/dev/null
+    sleep 0.1
+    if [[ -n "${FADE_OUT_EFFECT:-}" ]] && [[ -n "${CURRENT_LOGO_FILE:-}" ]]; then
+        run_fade_out "$CURRENT_LOGO_FILE"
+    fi
+    restore_terminal
+    exit 0
+}
+
+# SIGTERM every other niri-screensaver driver process. On multi-monitor setups
+# each output runs its own driver in its own terminal, and a keypress only
+# reaches the focused one — so dismissing one screen must also wake the rest.
+# Each sibling's trap runs exit_screensaver (which closes its alacritty when the
+# driver exits) and does not re-broadcast. Iterate /proc rather than `pkill -f`
+# so we skip our own PID explicitly and don't self-match a wrapper.
+# shellcheck disable=SC2317
+terminate_sibling_drivers() {
+    local self=$$ pid cmd
+    for pid in /proc/[0-9]*; do
+        pid="${pid#/proc/}"
+        [[ "$pid" == "$self" ]] && continue
+        cmd="$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null)" || continue
+        [[ "$cmd" == *"${SELF_NAME} run "* ]] && kill -TERM "$pid" 2>/dev/null
+    done
+}
+
+# User dismissed on this monitor. Tear down the sibling instances on the other
+# monitors first, then exit ourselves.
+# shellcheck disable=SC2317
+dismiss_all() {
+    terminate_sibling_drivers
+    exit_screensaver
+}
+
+build_effect_args() {
+    if [[ -n "${INCLUDE_EFFECTS:-}" ]]; then
+        echo "--include-effects ${INCLUDE_EFFECTS//,/ }"
+    elif [[ -n "${EXCLUDE_EFFECTS:-}" ]]; then
+        echo "--exclude-effects ${EXCLUDE_EFFECTS//,/ }"
+    fi
+}
+
+# Echo the tte canvas-sizing flags. In mirror mode (SEED set) with both
+# MIRROR_CANVAS_COLS and MIRROR_CANVAS_ROWS set, lock the canvas to a fixed
+# centered cell box so the animated region is byte-identical on every output
+# regardless of its resolution (issue #14) — the --anchor-canvas c at each call
+# site centers that box. Otherwise the canvas tracks the terminal (full screen).
+mirror_canvas_args() {
+    if [[ -n "${SEED:-}" && -n "${MIRROR_CANVAS_COLS:-}" && -n "${MIRROR_CANVAS_ROWS:-}" ]]; then
+        echo "--canvas-width $MIRROR_CANVAS_COLS --canvas-height $MIRROR_CANVAS_ROWS"
+    else
+        echo "--canvas-width 0 --canvas-height 0"
+    fi
+}
+
+# Record this terminal's cell grid for the launcher's mirror auto-derive (#24).
+# Pairs the output's logical pixel size (arg "WxH", supplied by the launcher,
+# which is the only side that knows it) with the actual cell grid (tput) so the
+# launcher can recover cells-per-logical-pixel — a font-determined constant that
+# is the same on every output — and size the smallest output's grid next launch.
+# Written atomically (temp + mv) since every mirror surface may refresh it
+# concurrently; the ratio is identical across outputs, so last-writer-wins is
+# safe. Silently no-ops on any bad/unavailable value — it's a best-effort cache.
+write_cell_metrics() {
+    local spec="$1" lw lh cols rows c0 r0 tmp
+    lw="${spec%x*}"; lh="${spec#*x}"
+    [[ "$lw" =~ ^[1-9][0-9]*$ && "$lh" =~ ^[1-9][0-9]*$ ]] || return 1
+    # The surface opens fullscreen on the focused output, then the launcher moves
+    # it to its target output (#11), which resizes the terminal a beat later.
+    # Record this output's settled grid, not the transient focused-output size:
+    # wait for two reads CELL_MEASURE_SETTLE_SECS apart to agree (the gap is long
+    # enough that a pending move lands between them). Capped so a stuck resize
+    # can't stall startup — the last read is used regardless.
+    cols=$(tput cols 2>/dev/null); rows=$(tput lines 2>/dev/null)
+    for _ in $(seq 1 6); do
+        c0="$cols"; r0="$rows"
+        sleep "$CELL_MEASURE_SETTLE_SECS"
+        cols=$(tput cols 2>/dev/null); rows=$(tput lines 2>/dev/null)
+        [[ "$cols" == "$c0" && "$rows" == "$r0" ]] && break
+    done
+    [[ "$cols" =~ ^[1-9][0-9]*$ && "$rows" =~ ^[1-9][0-9]*$ ]] || return 1
+    tmp="${CELL_METRICS_FILE}.tmp.$$"
+    if {
+        echo "CELL_REF_LOGICAL_W=$lw"
+        echo "CELL_REF_COLS=$cols"
+        echo "CELL_REF_LOGICAL_H=$lh"
+        echo "CELL_REF_ROWS=$rows"
+    } > "$tmp" 2>/dev/null && mv -f "$tmp" "$CELL_METRICS_FILE" 2>/dev/null; then
+        return 0
+    fi
+    rm -f "$tmp" 2>/dev/null
+    return 1
+}
+
+run_fade_in() {
+    local logo_file="$1" effect="${FADE_IN_EFFECT:-}"
+    [[ -z "$effect" ]] && return 0
+    clear
+    local canvas; canvas=$(mirror_canvas_args)
+    # shellcheck disable=SC2086
+    tte -i "$logo_file" \
+        --frame-rate "$FRAME_RATE" \
+        $canvas \
+        --anchor-canvas c --anchor-text c \
+        $NO_RESTORE_CURSOR_ARG "$effect" 2>/dev/null
+    sleep 0.5
+}
+
+run_fade_out() {
+    local logo_file="$1" effect="${FADE_OUT_EFFECT:-}"
+    [[ -z "$effect" ]] && return 0
+    clear
+    local canvas; canvas=$(mirror_canvas_args)
+    # shellcheck disable=SC2086
+    tte -i "$logo_file" \
+        --frame-rate "$FRAME_RATE" \
+        $canvas \
+        --anchor-canvas c --anchor-text c \
+        $NO_RESTORE_CURSOR_ARG "$effect" 2>/dev/null
+}
+
+# Render a string centered on the terminal. Uses figlet with CLOCK_FONT when
+# available; falls back to a plain centered single-line print. Shared by
+# display_clock and display_now_playing.
+render_centered_text() {
+    local text="$1"
+    local term_lines term_cols
+    term_lines=$(tput lines)
+    term_cols=$(tput cols)
+
+    if command -v figlet &>/dev/null; then
+        local figlet_output font_arg=""
+        [[ -n "${CLOCK_FONT:-}" ]] && font_arg="-f $CLOCK_FONT"
+        # shellcheck disable=SC2086
+        figlet_output=$(figlet $font_arg "$text" 2>/dev/null)
+        if [[ -n "$figlet_output" ]]; then
+            local fig_lines fig_width
+            fig_lines=$(echo "$figlet_output" | wc -l)
+            fig_width=$(echo "$figlet_output" | head -1 | wc -c)
+            local start_row=$(( (term_lines - fig_lines) / 2 ))
+            local start_col=$(( (term_cols - fig_width) / 2 ))
+            [[ $start_row -lt 0 ]] && start_row=0
+            [[ $start_col -lt 0 ]] && start_col=0
+
+            tput cup "$start_row" 0
+            echo "$figlet_output" | while IFS= read -r line; do
+                printf "%*s%s\n" "$start_col" "" "$line"
+            done
+            return 0
+        fi
+    fi
+
+    local center_row=$(( term_lines / 2 ))
+    local center_col=$(( (term_cols - ${#text}) / 2 ))
+    [[ $center_col -lt 0 ]] && center_col=0
+    tput cup "$center_row" "$center_col"
+    printf '\033[1;37m%s\033[0m' "$text"
+}
+
+display_clock() {
+    [[ "$SHOW_CLOCK" != "true" ]] && return 0
+    local time_str
+    time_str=$(date +"${CLOCK_FORMAT:-%H:%M}")
+    clear
+    render_centered_text "$time_str"
+    sleep "${CLOCK_DURATION:-3}"
+}
+
+# Brief between-effects display of the currently-playing track, if playerctl
+# is installed and a player reports Playing status. Silently no-ops when
+# playerctl is missing, no player is active, or the player isn't Playing.
+display_now_playing() {
+    [[ "$SHOW_NOW_PLAYING" != "true" ]] && return 0
+    command -v playerctl &>/dev/null || return 0
+    local status
+    status=$(playerctl status 2>/dev/null) || return 0
+    [[ "$status" != "Playing" ]] && return 0
+    local artist title text
+    artist=$(playerctl metadata artist 2>/dev/null)
+    title=$(playerctl metadata title 2>/dev/null)
+    if [[ -n "$artist" && -n "$title" ]]; then
+        text="$artist — $title"
+    elif [[ -n "$title" ]]; then
+        text="$title"
+    elif [[ -n "$artist" ]]; then
+        text="$artist"
+    else
+        return 0
+    fi
+    clear
+    render_centered_text "$text"
+    sleep "${NOW_PLAYING_DURATION:-3}"
+}
+
+# Resolve the directory we'll pick random logos from. Order:
+#   1. $LOGO_DIR if explicitly set and exists.
+#   2. The first DEFAULT_LOGO_CANDIDATES dir (system data, user data, dev checkout).
+#   3. Directory of $LOGO_FILE.
+resolve_logo_dir() {
+    if [[ -n "${LOGO_DIR:-}" && -d "$LOGO_DIR" ]]; then
+        echo "$LOGO_DIR"; return 0
+    fi
+    for cand in \
+        "${NIRI_SCREENSAVER_DATA:-/usr/share/niri-screensaver}/logos" \
+        "$HOME/.local/share/niri-screensaver/logos" \
+        "${SCRIPT_DIR}/../share/logos"; do
+        if [[ -d "$cand" ]]; then echo "$cand"; return 0; fi
+    done
+    if [[ -n "${LOGO_FILE:-}" ]]; then
+        local dir
+        dir="$(dirname "$LOGO_FILE")"
+        [[ -d "$dir" ]] && echo "$dir" && return 0
+    fi
+    return 1
+}
+
+# Print a random *.txt path from the resolved logo dir, or empty string.
+pick_random_logo() {
+    local dir
+    dir="$(resolve_logo_dir)" || return 1
+    local files=()
+    while IFS= read -r -d '' f; do files+=("$f"); done \
+        < <(find "$dir" -maxdepth 1 -type f -name '*.txt' -print0 2>/dev/null)
+    [[ ${#files[@]} -eq 0 ]] && return 1
+    echo "${files[RANDOM % ${#files[@]}]}"
+}
+
+run_screensaver() {
+    local logo_file="${1:-$LOGO_FILE}"
+    if [[ ! -f "$logo_file" ]]; then
+        log_error "Logo file not found: $logo_file"
+        exit 1
+    fi
+    CURRENT_LOGO_FILE="$logo_file"
+
+    trap exit_screensaver SIGINT SIGTERM SIGHUP SIGQUIT EXIT
+
+    prepare_terminal
+    run_fade_in "$logo_file"
+
+    local effect_args
+    effect_args=$(build_effect_args)
+
+    # Refresh the cell-metrics cache when the launcher asked (mirror auto-derive,
+    # #24). Measured here — after the terminal has settled at its fullscreen size,
+    # the same grid tte renders into — so the cached cols/rows pair correctly with
+    # the launcher-supplied fullscreen logical size. Best-effort and side-effect-
+    # free for this run (it only informs the next launch's sizing), so failure is
+    # ignored.
+    if [[ -n "$MEASURE_LOGICAL" ]]; then
+        write_cell_metrics "$MEASURE_LOGICAL" || true
+    fi
+
+    while true; do
+        # Re-roll the logo per effect cycle when RANDOM_LOGO is on. Falls back
+        # silently to the configured logo_file if the directory has no .txt files.
+        # Skipped in mirror mode (SEED set): all monitors must show one shared
+        # logo, which the launcher passes via --logo.
+        if [[ "$RANDOM_LOGO" == "true" && -z "$SEED" ]]; then
+            local picked
+            picked="$(pick_random_logo)" && [[ -f "$picked" ]] && logo_file="$picked"
+            CURRENT_LOGO_FILE="$logo_file"
+        fi
+
+        # Mirror mode: seed tte's RNG from a wall-clock window so every monitor
+        # picks the same effect at the same time, regardless of when each surface
+        # started or how long its effects ran. Independent mode (no SEED): omit
+        # the flag so each monitor randomizes on its own.
+        local seed_arg=""
+        if [[ -n "$SEED" ]]; then
+            local window=$(( $(date +%s) / MIRROR_INTERVAL ))
+            seed_arg="--seed $(( SEED + window ))"
+        fi
+        local canvas; canvas=$(mirror_canvas_args)
+
+        display_clock
+        display_now_playing
+
+        clear
+        if [[ "$CURSOR_HIDE" != "false" ]]; then
+            tput civis 2>/dev/null
+        fi
+
+        # shellcheck disable=SC2086
+        tte -i "$logo_file" \
+            --random-effect $effect_args $seed_arg $NO_RESTORE_CURSOR_ARG \
+            --frame-rate "$FRAME_RATE" \
+            $canvas \
+            --anchor-canvas c --anchor-text c \
+            </dev/null 2>/dev/null &
+
+        local tte_pid=$!
+
+        sleep 0.1
+        if ! kill -0 "$tte_pid" 2>/dev/null; then
+            wait "$tte_pid" 2>/dev/null
+            continue
+        fi
+
+        # Drain buffered stdin before enabling mouse tracking
+        while read -r -s -n1 -t 0.01 2>/dev/null; do :; done
+        printf '\e[?1003h'
+
+        # Alacritty (and most terminals) answer OSC/DA queries asynchronously
+        # — the first byte of those replies is \e, and the read loop below
+        # treats lone \e as the user pressing Escape. Wait for replies to
+        # arrive, then drain them, before listening for real keypresses.
+        sleep 0.3
+        while read -r -s -n1 -t 0.05 2>/dev/null; do :; done
+
+        while kill -0 "$tte_pid" 2>/dev/null; do
+            if read -r -s -n1 -t 0.5 key 2>/dev/null; then
+                if [[ "$key" == $'\e' ]]; then
+                    read -r -s -n5 -t 0.01 2>/dev/null || true
+                    dismiss_all
+                elif [[ "$DISMISS_ON_KEY" != "false" ]]; then
+                    dismiss_all
+                fi
+            fi
+        done
+
+        wait "$tte_pid" 2>/dev/null
+    done
+}
+
+run_single_effect() {
+    local effect="${1:-}"
+    local logo_file="${2:-$LOGO_FILE}"
+
+    if [[ ! -f "$logo_file" ]]; then
+        log_error "Logo file not found: $logo_file"
+        exit 1
+    fi
+
+    trap exit_screensaver SIGINT SIGTERM SIGHUP SIGQUIT EXIT
+    prepare_terminal
+
+    local effect_args
+    effect_args=$(build_effect_args)
+    local canvas; canvas=$(mirror_canvas_args)
+
+    if [[ -n "$effect" ]]; then
+        # shellcheck disable=SC2086
+        tte -i "$logo_file" \
+            --frame-rate "$FRAME_RATE" \
+            $canvas \
+            --anchor-canvas c --anchor-text c \
+            $NO_RESTORE_CURSOR_ARG "$effect" </dev/null
+    else
+        # shellcheck disable=SC2086
+        tte -i "$logo_file" \
+            --random-effect $effect_args $NO_RESTORE_CURSOR_ARG \
+            --frame-rate "$FRAME_RATE" \
+            $canvas \
+            --anchor-canvas c --anchor-text c </dev/null
+    fi
+
+    exit_screensaver
+}
+
+list_effects() {
+    log_info "Available TTE effects:"
+    echo
+    get_effects | sort | column
+}
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [COMMAND] [OPTIONS]
+
+Terminal-based screensaver for Niri + Noctalia using TerminalTextEffects.
+
+Commands:
+    run             Run the screensaver (default)
+    test [EFFECT]   Test a specific effect (random if not specified)
+    preview EFFECT  Preview a single named effect inline (effect name required)
+    effects         List available effects
+    setup           Create config directory and copy default logo
+    help            Show this help
+
+Options:
+    -l, --logo FILE     Use a specific logo file
+    -f, --fps NUMBER    Set frame rate (default: 60)
+    -s, --seed NUMBER   Base RNG seed for tte (mirror mode). When set, each
+                        effect cycle uses SEED+cycle, so monitors sharing the
+                        seed render identical animations. The launcher passes
+                        this in mirror multi-monitor mode; rarely set by hand.
+
+Environment Variables:
+    SCREENSAVER_DIR     Config directory (default: ~/.config/niri-screensaver)
+    FRAME_RATE          Animation frame rate (default: 60)
+    INCLUDE_EFFECTS     Comma-separated effects to include (takes precedence)
+    EXCLUDE_EFFECTS     Comma-separated effects to exclude
+    FADE_IN_EFFECT      Effect for startup transition (e.g., expand, slide)
+    FADE_OUT_EFFECT     Effect for exit transition (e.g., burn, crumble)
+    SHOW_CLOCK          Show time between effects (true/false)
+    CLOCK_DURATION      Seconds to display clock (default: 3)
+    CLOCK_FORMAT        strftime format for clock (default: %H:%M)
+    CLOCK_FONT          figlet font for clock and now-playing (empty = default)
+    SHOW_NOW_PLAYING    Show playerctl track title between effects (true/false)
+    NOW_PLAYING_DURATION Seconds to display now-playing (default: 3)
+
+Press any key to exit the screensaver.
+EOF
+}
+
+main() {
+    load_config
+
+    # Parse options in any position, collecting non-option words as positionals.
+    # The launcher invokes us as `run --seed N --logo X ...` — the command word
+    # first, options after — so a loop that stopped at the first positional would
+    # silently drop every flag (including --seed/--logo, which mirror mode needs).
+    # Gather options wherever they appear; the command is the first positional
+    # and any effect name the second.
+    local -a positionals=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -l|--logo) LOGO_FILE="$2"; shift 2 ;;
+            -f|--fps)  FRAME_RATE="$2"; shift 2 ;;
+            -s|--seed) SEED="$2"; shift 2 ;;
+            # Launcher-supplied in mirror auto-derive (#24); rarely set by hand.
+            # --mirror-canvas-* override config so an auto-derived box wins for a
+            # run without being persisted; both come from validated launcher math.
+            --mirror-canvas-cols) MIRROR_CANVAS_COLS="$2"; shift 2 ;;
+            --mirror-canvas-rows) MIRROR_CANVAS_ROWS="$2"; shift 2 ;;
+            --measure-logical)    MEASURE_LOGICAL="$2"; shift 2 ;;
+            -h|--help) usage; exit 0 ;;
+            -*)        log_error "Unknown option: $1"; usage; exit 1 ;;
+            *)         positionals+=("$1"); shift ;;
+        esac
+    done
+
+    local command="${positionals[0]:-run}"
+    local effect="${positionals[1]:-}"
+
+    case "$command" in
+        run)
+            check_dependencies
+            ensure_config_dir
+            run_screensaver "$LOGO_FILE"
+            ;;
+        test)
+            check_dependencies
+            ensure_config_dir
+            run_single_effect "$effect"
+            ;;
+        preview)
+            check_dependencies
+            ensure_config_dir
+            if [[ -z "$effect" ]]; then
+                log_error "preview requires an effect name (try '$(basename "$0") effects')"
+                exit 1
+            fi
+            run_single_effect "$effect"
+            ;;
+        effects|list)
+            check_dependencies
+            list_effects
+            ;;
+        setup)
+            ensure_config_dir
+            check_dependencies
+            log_success "Setup complete!"
+            log_info "Config directory: $SCREENSAVER_DIR"
+            log_info "Logo file: $LOGO_FILE"
+            ;;
+        help) usage ;;
+        *)    log_error "Unknown command: $command"; usage; exit 1 ;;
+    esac
+}
+
+# Run main only when executed directly, not when sourced (e.g. by the bats
+# test suite, which sources this file to unit-test individual functions).
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

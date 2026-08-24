@@ -1,0 +1,661 @@
+#!/bin/bash
+# niri-screensaver-launch - Spawn fullscreen Alacritty window(s) running the screensaver
+#
+# Spawns one alacritty per output with --class niri-screensaver. Niri's window-rule
+# (see docs/niri-window-rule.kdl) matches that app-id and applies open-fullscreen.
+# For multi-monitor setups, each surface is pinned to its target output by window id
+# (move-window-to-monitor --id), which is independent of pointer/keyboard focus. See
+# issue #11: focus-monitor-next cycling collapsed all surfaces onto the cursor's output
+# under focus-follows-mouse.
+# SPDX-License-Identifier: GPL-3.0-only
+
+set -uo pipefail
+
+CONFIG_DIR="${CONFIG_DIR:-$HOME/.config/niri-screensaver}"
+CONFIG_FILE="${CONFIG_FILE:-${CONFIG_DIR}/config}"
+PID_FILE="${CONFIG_DIR}/screensaver.pid"
+TOGGLE_FILE="${CONFIG_DIR}/disabled"
+LAUNCH_STAMP_FILE="${CONFIG_DIR}/launch.timestamp"
+# Cell-grid cache the inner driver writes (it's the only side with a terminal to
+# measure) and this launcher reads to auto-size the mirror canvas (#24). Same
+# path the driver derives from its config dir.
+CELL_METRICS_FILE="${CELL_METRICS_FILE:-${CONFIG_DIR}/.cell-metrics}"
+
+# Power-aware launch gating: skip auto-launch when on battery below this
+# percentage. 0 disables the check. Sourced from the same config file the
+# inner driver reads; the Noctalia plugin writes the key. See load_config.
+BATTERY_MIN_PERCENT="${BATTERY_MIN_PERCENT:-0}"
+
+# Multi-monitor content mode (sourced from config; the plugin writes it):
+#   independent - each output randomizes its own effect/logo (default).
+#   mirror      - all outputs show the same effect+logo: the launcher rolls one
+#                 seed and picks one logo, then passes them to every driver so
+#                 the surfaces render identical animations (best on matched
+#                 resolutions). See launch_screensaver.
+MULTI_MONITOR_MODE="${MULTI_MONITOR_MODE:-independent}"
+
+# Logo selection (mirror mode only): RANDOM_LOGO/LOGO_DIR/LOGO_FILE mirror the
+# inner driver's keys so the launcher can pre-pick the one shared logo. Defaults
+# re-applied in load_config since the plugin may write blanks.
+RANDOM_LOGO="${RANDOM_LOGO:-false}"
+LOGO_FILE="${LOGO_FILE:-}"
+LOGO_DIR="${LOGO_DIR:-}"
+
+# Post-launch pointer parking (config-file key; the plugin writes it). Off by
+# default: warping goes through wlr-virtual-pointer or uinput, and niri routes
+# both into process_input_event, which reports every pointer event to
+# ext-idle-notify-v1 as activity (niri src/input/mod.rs). One warp therefore
+# resets EVERY idle daemon timer, so stages after the screensaver (lock,
+# screen off) fire one screensaver-threshold late, and a cursor already
+# hidden by niri's hide-after-inactive-ms pops back up over the animation.
+# Prefer 'cursor { hide-after-inactive-ms 500 }' in the niri config; enable
+# this only if you cannot use that and no later idle stages matter to you.
+CURSOR_WARP="${CURSOR_WARP:-false}"
+
+# With CURSOR_WARP enabled, the warp's injected motion is real input to the
+# compositor: idle daemons see activity and fire their resumeCommand within
+# ~1s of launch, killing the screensaver before it renders. Drop kill
+# invocations that arrive within this window. (Issue #4 originally blamed a
+# focus/enter event from the window rule's open-focused; niri only notifies
+# idle activity for input events, so the warp was the actual trigger. The
+# debounce stays as a guard for warp-enabled setups and other compositors.)
+KILL_DEBOUNCE_SECS="${NIRI_SCREENSAVER_KILL_DEBOUNCE_SECS:-3}"
+
+# Resolve sibling assets: installed first, then dev-checkout fallback.
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+DATA_CANDIDATES=(
+    "${NIRI_SCREENSAVER_DATA:-/usr/share/niri-screensaver}"
+    "$HOME/.local/share/niri-screensaver"
+    "${SCRIPT_DIR}/../share"
+)
+
+resolve_data_dir() {
+    for d in "${DATA_CANDIDATES[@]}"; do
+        if [[ -f "$d/alacritty-screensaver.toml" ]]; then
+            echo "$d"
+            return 0
+        fi
+    done
+    return 1
+}
+
+DATA_DIR="$(resolve_data_dir || echo "${SCRIPT_DIR}/../share")"
+ALACRITTY_CONFIG="${ALACRITTY_CONFIG:-${DATA_DIR}/alacritty-screensaver.toml}"
+
+# The inner driver — installed alongside this launcher in the same bin dir.
+SCREENSAVER_BIN="${SCREENSAVER_BIN:-${SCRIPT_DIR}/niri-screensaver}"
+
+WINDOW_CLASS="niri-screensaver"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log_info()    { echo -e "${CYAN}[INFO]${NC} $*"; }
+log_success() { echo -e "${GREEN}[OK]${NC} $*"; }
+log_warn()    { echo -e "${YELLOW}[WARN]${NC} $*"; }
+log_error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; }
+
+# Read BATTERY_MIN_PERCENT (and any future launcher-relevant keys) from the
+# shared config file. The Noctalia plugin rewrites every key on each save,
+# including blanks, so re-apply the default when the sourced value is empty.
+load_config() {
+    if [[ -f "$CONFIG_FILE" ]]; then
+        # shellcheck source=/dev/null
+        source "$CONFIG_FILE"
+    fi
+    : "${BATTERY_MIN_PERCENT:=0}"
+    : "${MULTI_MONITOR_MODE:=independent}"
+    : "${RANDOM_LOGO:=false}"
+    : "${CURSOR_WARP:=false}"
+}
+
+is_disabled() { [[ -f "$TOGGLE_FILE" ]]; }
+
+is_running() {
+    if [[ -f "$PID_FILE" ]]; then
+        local pid
+        pid=$(cat "$PID_FILE" 2>/dev/null)
+        if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+            return 0
+        fi
+        rm -f "$PID_FILE"
+    fi
+    pgrep -f "alacritty .*--class[ =]${WINDOW_CLASS}" &>/dev/null
+}
+
+count_outputs() {
+    if command -v niri &>/dev/null && command -v jq &>/dev/null; then
+        niri msg --json outputs 2>/dev/null | jq -r 'keys | length' 2>/dev/null
+    else
+        echo 1
+    fi
+}
+
+# Echo the names of all connected outputs, one per line (sorted, stable order).
+output_names() {
+    niri msg --json outputs 2>/dev/null | jq -r 'keys[]' 2>/dev/null
+}
+
+# Echo "name<TAB>logical_width<TAB>logical_height" for every output that has a
+# logical geometry (i.e. is actually on), in the same sorted order as
+# output_names. Outputs with a null `logical` (disabled) are skipped. Logical
+# dims are floored to integers so fractional-scale outputs still parse as the
+# whole-cell grids downstream (a fractional value would be dropped by the integer
+# match in mirror_extent). Feeds the mirror auto-derive math; niri/jq-dependent,
+# so not unit-tested directly.
+output_geometry() {
+    niri msg --json outputs 2>/dev/null \
+        | jq -r 'to_entries | sort_by(.key) | .[].value
+                 | select(.logical != null)
+                 | "\(.name)\t\(.logical.width | floor)\t\(.logical.height | floor)"' 2>/dev/null
+}
+
+# Echo the ids of all currently-mapped screensaver windows, one per line.
+# Matches our spawn --class (Wayland app_id). niri's windows query has no
+# 'output' field, so placement is driven (spawn -> detect new id -> move),
+# not read back from here.
+screensaver_window_ids() {
+    niri msg --json windows 2>/dev/null \
+        | jq -r --arg cls "$WINDOW_CLASS" '.[] | select(.app_id == $cls) | .id' 2>/dev/null
+}
+
+# Resolve the directory of selectable logos for a mirror-mode random pick.
+# Mirrors the inner driver's resolve_logo_dir order: explicit LOGO_DIR, then the
+# installed/dev logos dir, then the directory of LOGO_FILE.
+mirror_logo_dir() {
+    if [[ -n "${LOGO_DIR:-}" && -d "$LOGO_DIR" ]]; then echo "$LOGO_DIR"; return 0; fi
+    [[ -d "$DATA_DIR/logos" ]] && { echo "$DATA_DIR/logos"; return 0; }
+    [[ -n "${LOGO_FILE:-}" && -f "$LOGO_FILE" ]] && { dirname "$LOGO_FILE"; return 0; }
+    return 1
+}
+
+# Echo one random *.txt logo path for mirror mode, or nothing if none found.
+pick_one_logo() {
+    local dir f files=()
+    dir="$(mirror_logo_dir)" || return 1
+    while IFS= read -r -d '' f; do files+=("$f"); done \
+        < <(find "$dir" -maxdepth 1 -type f -name '*.txt' -print0 2>/dev/null)
+    [[ ${#files[@]} -eq 0 ]] && return 1
+    echo "${files[RANDOM % ${#files[@]}]}"
+}
+
+# Populate DRIVER_ARGS for "mirror" multi-monitor mode: one shared RNG seed for
+# every driver (so all outputs render the same effect+motion each cycle) and, if
+# RANDOM_LOGO is on, one shared randomly-picked logo. No-op for "independent".
+# Only meaningful with >1 output; callers gate on that.
+setup_mirror_args() {
+    DRIVER_ARGS=()
+    [[ "$MULTI_MONITOR_MODE" == "mirror" ]] || return 0
+    local seed
+    seed=$(( RANDOM * 32768 + RANDOM ))
+    DRIVER_ARGS+=( --seed "$seed" )
+    local logo_note=""
+    if [[ "$RANDOM_LOGO" == "true" ]]; then
+        local logo
+        if logo="$(pick_one_logo)" && [[ -n "$logo" ]]; then
+            DRIVER_ARGS+=( --logo "$logo" )
+            logo_note=", logo $(basename "$logo")"
+        fi
+    fi
+    log_info "Mirror mode: shared seed ${seed}${logo_note}"
+}
+
+# Read "name<TAB>W<TAB>H" lines on stdin and echo "Wmin Hmin Wmax Hmax" across
+# all lines whose W and H are integers. Echoes nothing when no valid line is
+# seen. Pure (no niri/jq), so it's unit-tested against fixture lines.
+mirror_extent() {
+    awk -F'\t' '
+        $2 ~ /^[0-9]+$/ && $3 ~ /^[0-9]+$/ {
+            if (n == 0) { wmin = wmax = $2; hmin = hmax = $3 }
+            if ($2 < wmin) wmin = $2; if ($2 > wmax) wmax = $2
+            if ($3 < hmin) hmin = $3; if ($3 > hmax) hmax = $3
+            n++
+        }
+        END { if (n > 0) print wmin, hmin, wmax, hmax }
+    '
+}
+
+# Load the driver-written cell-grid cache into CELL_REF_* globals. Returns
+# non-zero (and leaves the globals unset) when the file is missing or any of the
+# four values isn't a positive integer, so a half-written or stale-blank cache
+# can't feed bad math into derive_mirror_canvas. Parsed line-by-line rather than
+# sourced — it's a generated file, but no reason to eval it.
+read_cell_metrics() {
+    [[ -r "$CELL_METRICS_FILE" ]] || return 1
+    CELL_REF_LOGICAL_W=""; CELL_REF_COLS=""; CELL_REF_LOGICAL_H=""; CELL_REF_ROWS=""
+    local key val
+    while IFS='=' read -r key val; do
+        case "$key" in
+            CELL_REF_LOGICAL_W) CELL_REF_LOGICAL_W="$val" ;;
+            CELL_REF_COLS)      CELL_REF_COLS="$val" ;;
+            CELL_REF_LOGICAL_H) CELL_REF_LOGICAL_H="$val" ;;
+            CELL_REF_ROWS)      CELL_REF_ROWS="$val" ;;
+        esac
+    done < "$CELL_METRICS_FILE"
+    [[ "$CELL_REF_LOGICAL_W" =~ ^[1-9][0-9]*$ && "$CELL_REF_COLS" =~ ^[1-9][0-9]*$ \
+       && "$CELL_REF_LOGICAL_H" =~ ^[1-9][0-9]*$ && "$CELL_REF_ROWS" =~ ^[1-9][0-9]*$ ]]
+}
+
+# Echo "COLS ROWS" — the smallest output's cell grid — for a fixed mirror canvas,
+# given the smallest logical width/height (args). The cached reference output
+# pins cells-per-logical-pixel (a font constant, equal on every output), so
+# COLS = Wmin * ref_cols / ref_logical_w with integer (floor) division lands
+# exactly on the smallest output's own grid. Returns non-zero when no usable
+# cache exists or the result would be empty.
+derive_mirror_canvas() {
+    local wmin="$1" hmin="$2" cols rows
+    read_cell_metrics || return 1
+    cols=$(( wmin * CELL_REF_COLS / CELL_REF_LOGICAL_W ))
+    rows=$(( hmin * CELL_REF_ROWS / CELL_REF_LOGICAL_H ))
+    (( cols > 0 && rows > 0 )) || return 1
+    echo "$cols $rows"
+}
+
+# Echo "COLS ROWS" = the widest line length and line count of a logo file, used
+# to warn when an auto-derived canvas would clip the shared logo. Returns
+# non-zero if the file is unreadable.
+logo_dimensions() {
+    local f="$1"
+    [[ -r "$f" ]] || return 1
+    awk '{ if (length > w) w = length; n++ } END { print (w + 0), (n + 0) }' "$f"
+}
+
+# Outputs picked by setup_mirror_canvas: the one surface that should refresh the
+# cell-metrics cache, and its "WxH" logical size. Empty = don't measure this run.
+MEASURE_OUTPUT=""
+MEASURE_GEOM=""
+
+# Auto-derive a fixed mirror canvas from the smallest output (#24) and append
+# --mirror-canvas-cols/rows to DRIVER_ARGS for every driver. No-op unless mirror
+# mode is on, there's real geometry, and the user hasn't set MIRROR_CANVAS_COLS/
+# ROWS explicitly (those still win — the driver reads them straight from config).
+# Skips matched-resolution setups, where a fixed box equals the full-screen
+# canvas anyway, so only mismatched outputs (the #14 case) change behavior. Also
+# nominates one surface to refresh the cache via --measure-logical so the next
+# launch is calibrated even when this one had no cache yet.
+setup_mirror_canvas() {
+    MEASURE_OUTPUT=""; MEASURE_GEOM=""
+    [[ "$MULTI_MONITOR_MODE" == "mirror" ]] || return 0
+    # Explicit override wins, but only when both are valid positive integers —
+    # blank, garbage, or half-set defers to the auto-fit (same rule the driver
+    # applies to config), so a typo can't silently disable the fit. The driver
+    # honors valid config-set dims on its own, so we just bow out here.
+    [[ "${MIRROR_CANVAS_COLS:-}" =~ ^[1-9][0-9]*$ && "${MIRROR_CANVAS_ROWS:-}" =~ ^[1-9][0-9]*$ ]] && return 0
+
+    local geo extent
+    geo="$(output_geometry)"
+    [[ -n "$geo" ]] || return 0
+    extent="$(mirror_extent <<< "$geo")"
+    [[ -n "$extent" ]] || return 0
+    local wmin hmin wmax hmax mw mh
+    read -r wmin hmin wmax hmax <<< "$extent"
+    # Matched outputs: a fixed box matches the per-monitor canvas, so leave the
+    # full-screen path untouched (zero risk, no cache dependency).
+    [[ "$wmin" == "$wmax" && "$hmin" == "$hmax" ]] && return 0
+
+    # Nominate the first output with geometry to refresh the cache regardless of
+    # whether we can derive a canvas this run — keeps the next launch calibrated.
+    IFS=$'\t' read -r MEASURE_OUTPUT mw mh <<< "$(head -1 <<< "$geo")"
+    MEASURE_GEOM="${mw}x${mh}"
+
+    local canvas cols rows
+    if canvas="$(derive_mirror_canvas "$wmin" "$hmin")"; then
+        read -r cols rows <<< "$canvas"
+        DRIVER_ARGS+=( --mirror-canvas-cols "$cols" --mirror-canvas-rows "$rows" )
+        log_info "Mirror canvas auto-fit to smallest output: ${cols}x${rows} cells"
+        warn_if_logo_clipped "$cols" "$rows"
+    else
+        log_info "Mirror: calibrating cell metrics this run; canvas auto-fit applies next launch."
+    fi
+}
+
+# Warn (but proceed) when the auto-derived canvas is smaller than the shared
+# mirror logo, which would clip it on the smallest output. The logo is whatever
+# the driver will display: the one setup_mirror_args pre-picked (--logo in
+# DRIVER_ARGS), else the configured LOGO_FILE, else the driver's default
+# logo.txt (the common case — the launcher never re-defaults LOGO_FILE).
+warn_if_logo_clipped() {
+    local cols="$1" rows="$2" logo="" i
+    for (( i = 0; i < ${#DRIVER_ARGS[@]} - 1; i++ )); do
+        [[ "${DRIVER_ARGS[i]}" == "--logo" ]] && { logo="${DRIVER_ARGS[i + 1]}"; break; }
+    done
+    [[ -z "$logo" ]] && logo="${LOGO_FILE:-}"
+    [[ -z "$logo" || ! -r "$logo" ]] && logo="${CONFIG_DIR}/logo.txt"
+    local dims lw lh
+    dims="$(logo_dimensions "$logo")" || return 0
+    read -r lw lh <<< "$dims"
+    if (( lw > cols || lh > rows )); then
+        log_warn "Auto-fit canvas ${cols}x${rows} is smaller than logo $(basename "$logo") (${lw}x${lh}); it may clip on the smallest output. Set MIRROR_CANVAS_COLS/ROWS to override."
+    fi
+}
+
+# Extra args appended to the inner driver's `run` command, set up per launch.
+# Used by mirror mode to pass `--seed`/`--logo`; empty in independent mode. niri
+# msg action spawn runs in the compositor's environment (not ours), so per-launch
+# choices must travel as argv, not exported env vars.
+DRIVER_ARGS=()
+
+# Spawn alacritty via niri so it inherits the compositor environment cleanly.
+# Any args are appended after DRIVER_ARGS as per-surface driver flags (e.g. the
+# mirror auto-derive cache-refresh --measure-logical for one nominated output).
+spawn_one() {
+    local extra=("$@")
+    if command -v niri &>/dev/null; then
+        niri msg action spawn -- alacritty \
+            --class "$WINDOW_CLASS" \
+            --config-file "$ALACRITTY_CONFIG" \
+            -e "$SCREENSAVER_BIN" run "${DRIVER_ARGS[@]}" "${extra[@]}"
+    else
+        alacritty \
+            --class "$WINDOW_CLASS" \
+            --config-file "$ALACRITTY_CONFIG" \
+            -e "$SCREENSAVER_BIN" run "${DRIVER_ARGS[@]}" "${extra[@]}" &
+    fi
+}
+
+# How long to wait for a freshly-spawned screensaver window to appear in
+# niri's window list before giving up on pinning it (seconds, in 0.1s steps).
+SPAWN_PIN_TIMEOUT_SECS="${NIRI_SCREENSAVER_SPAWN_PIN_TIMEOUT_SECS:-2}"
+
+# Spawn one surface and pin it to the given output by window id. Snapshots the
+# existing screensaver window ids, spawns, waits for the single new id to
+# appear, then move-window-to-monitor --id. This is focus-independent, so it
+# works under focus-follows-mouse where keyboard-focus cycling does not (#11).
+# Echoes nothing; logs a warning if the window never appears in time.
+spawn_and_pin() {
+    local output="$1"; shift
+    local extra=("$@")
+    local before after new_id="" steps
+    before="$(screensaver_window_ids | sort)"
+    spawn_one "${extra[@]}"
+    steps=$(( SPAWN_PIN_TIMEOUT_SECS * 10 ))
+    for _ in $(seq 1 "$steps"); do
+        sleep 0.1
+        after="$(screensaver_window_ids | sort)"
+        new_id="$(comm -13 <(echo "$before") <(echo "$after") | head -1)"
+        [[ -n "$new_id" ]] && break
+    done
+    if [[ -n "$new_id" ]]; then
+        niri msg action move-window-to-monitor --id "$new_id" "$output" 2>/dev/null || true
+    else
+        log_warn "Surface for output '$output' did not appear within ${SPAWN_PIN_TIMEOUT_SECS}s; not pinned."
+    fi
+}
+
+kill_screensaver() {
+    if [[ -f "$PID_FILE" ]]; then
+        rm -f "$PID_FILE"
+    fi
+    pkill -f "alacritty .*--class[ =]${WINDOW_CLASS}" 2>/dev/null
+    pkill -f "$(basename "$SCREENSAVER_BIN") run" 2>/dev/null
+    return 0
+}
+
+kill_too_soon_after_launch() {
+    [[ "$KILL_DEBOUNCE_SECS" -gt 0 ]] || return 1
+    [[ -f "$LAUNCH_STAMP_FILE" ]] || return 1
+    local stamp now
+    stamp=$(cat "$LAUNCH_STAMP_FILE" 2>/dev/null) || return 1
+    [[ "$stamp" =~ ^[0-9]+$ ]] || return 1
+    now=$(date +%s)
+    (( now - stamp < KILL_DEBOUNCE_SECS ))
+}
+
+# Park the pointer in the bottom-right corner so it doesn't sit visible on top
+# of the screensaver. Tries wlrctl (wlr-virtual-pointer) first since it's
+# daemonless under niri; falls back to ydotool. No-op + one-time hint if
+# neither is installed. The injected motion counts as user input and resets
+# compositor idle timers, so call sites must gate on CURSOR_WARP (issue #4).
+warp_cursor_away() {
+    if command -v wlrctl &>/dev/null; then
+        wlrctl pointer move 1000000 1000000 2>/dev/null && return 0
+    fi
+    if command -v ydotool &>/dev/null; then
+        ydotool mousemove --absolute 99999 99999 2>/dev/null && return 0
+    fi
+    log_info "Install wlrctl (or ydotool) to auto-park the pointer; or set 'cursor { hide-after-inactive-ms 500 }' in your niri config."
+    return 1
+}
+
+# CURSOR_WARP gate for warp_cursor_away, split out so the policy is
+# unit-testable. The 0.2s pause lets the last alacritty map before the warp,
+# and runs before the inner driver enables mouse tracking so the motion
+# doesn't falsely dismiss the screensaver.
+maybe_warp_cursor() {
+    [[ "$CURSOR_WARP" == "true" ]] || return 0
+    sleep 0.2
+    warp_cursor_away || true
+}
+
+# True (0) if any AC/Mains adapter reports online — i.e. the machine is plugged
+# in. Iterates power_supply class entries by their 'type' so it works regardless
+# of adapter naming (AC, ACAD, ADP1, ...). No power_supply dir (e.g. CI) → false.
+on_ac_power() {
+    local ps pstype online
+    for ps in /sys/class/power_supply/*; do
+        [[ -r "$ps/type" ]] || continue
+        pstype=$(cat "$ps/type" 2>/dev/null)
+        [[ "$pstype" == "Mains" ]] || continue
+        online=$(cat "$ps/online" 2>/dev/null)
+        [[ "$online" == "1" ]] && return 0
+    done
+    return 1
+}
+
+# Echo the lowest battery capacity (%) across all batteries, or nothing if no
+# battery is present (desktop). Multiple batteries → the most-drained one wins.
+lowest_battery_capacity() {
+    local ps pstype cap min=""
+    for ps in /sys/class/power_supply/*; do
+        [[ -r "$ps/type" ]] || continue
+        pstype=$(cat "$ps/type" 2>/dev/null)
+        [[ "$pstype" == "Battery" ]] || continue
+        cap=$(cat "$ps/capacity" 2>/dev/null)
+        [[ "$cap" =~ ^[0-9]+$ ]] || continue
+        if [[ -z "$min" || "$cap" -lt "$min" ]]; then
+            min=$cap
+        fi
+    done
+    [[ -n "$min" ]] && echo "$min"
+}
+
+# True (0) when auto-launch should be skipped to save power: threshold enabled,
+# running on battery, and capacity below the threshold. Plugged in or no battery
+# present → never skip.
+should_skip_for_battery() {
+    [[ "$BATTERY_MIN_PERCENT" =~ ^[0-9]+$ ]] || return 1
+    (( BATTERY_MIN_PERCENT > 0 )) || return 1
+    on_ac_power && return 1
+    local cap
+    cap=$(lowest_battery_capacity)
+    [[ -n "$cap" ]] || return 1
+    (( cap < BATTERY_MIN_PERCENT ))
+}
+
+launch_screensaver() {
+    local force=""
+    for arg in "$@"; do
+        case "$arg" in
+            force|-f|--force) force="force" ;;
+        esac
+    done
+
+    if [[ "$force" != "force" ]] && is_disabled; then
+        log_info "Screensaver disabled. Use 'niri-screensaver-ctl toggle' to enable."
+        exit 0
+    fi
+
+    if [[ "$force" != "force" ]] && should_skip_for_battery; then
+        local cap
+        cap=$(lowest_battery_capacity)
+        log_info "On battery (${cap}%), below ${BATTERY_MIN_PERCENT}% threshold — skipping launch to save power. Use 'launch force' to override."
+        exit 0
+    fi
+
+    if [[ ! -x "$SCREENSAVER_BIN" ]]; then
+        log_error "Inner driver not found or not executable: $SCREENSAVER_BIN"
+        exit 1
+    fi
+    if [[ ! -f "$ALACRITTY_CONFIG" ]]; then
+        log_error "Alacritty screensaver config not found: $ALACRITTY_CONFIG"
+        exit 1
+    fi
+
+    if is_running; then
+        kill_screensaver
+        sleep 0.5
+    fi
+
+    mkdir -p "$CONFIG_DIR"
+    echo $$ > "$PID_FILE"
+    date +%s > "$LAUNCH_STAMP_FILE"
+
+    # Enumerate outputs once, up front: covers N>2 monitors and avoids racing a
+    # hotplug that happens mid-launch. Pin each surface to its output by id so
+    # placement doesn't depend on pointer/keyboard focus (#11).
+    local outputs=()
+    if command -v niri &>/dev/null && command -v jq &>/dev/null; then
+        mapfile -t outputs < <(output_names)
+    fi
+
+    if [[ ${#outputs[@]} -gt 1 ]]; then
+        log_info "Launching screensaver on ${#outputs[@]} output(s)..."
+        # Mirror mode only matters across multiple outputs; on one it would just
+        # pin a single repeating seed, so it's gated here.
+        setup_mirror_args
+        # Auto-size the shared canvas to the smallest output (mirror only, #24).
+        setup_mirror_canvas
+        local output
+        local -a measure
+        for output in "${outputs[@]}"; do
+            # One surface refreshes the cell-metrics cache for the next launch.
+            measure=()
+            if [[ -n "$MEASURE_OUTPUT" && "$output" == "$MEASURE_OUTPUT" ]]; then
+                measure=( --measure-logical "$MEASURE_GEOM" )
+            fi
+            spawn_and_pin "$output" "${measure[@]}"
+        done
+    elif [[ ${#outputs[@]} -eq 1 ]]; then
+        # Single output: no pinning needed, the lone surface fills it.
+        log_info "Launching screensaver on 1 output..."
+        spawn_one
+    else
+        # niri/jq unavailable or enumeration failed: best-effort single spawn.
+        log_info "Launching screensaver..."
+        spawn_one
+    fi
+
+    # Opt-in pointer parking; a no-op unless CURSOR_WARP="true" because the
+    # warp's injected motion resets compositor idle timers (see the
+    # CURSOR_WARP default near the top of this file).
+    maybe_warp_cursor
+}
+
+toggle_screensaver() {
+    if is_disabled; then
+        rm -f "$TOGGLE_FILE"
+        log_success "Screensaver enabled"
+        notify-send "Screensaver" "Enabled" 2>/dev/null || true
+    else
+        mkdir -p "$(dirname "$TOGGLE_FILE")"
+        touch "$TOGGLE_FILE"
+        log_success "Screensaver disabled"
+        notify-send "Screensaver" "Disabled" 2>/dev/null || true
+    fi
+}
+
+show_status() {
+    echo
+    echo "niri-screensaver status"
+    echo "──────────────────────────────"
+    if is_running; then
+        echo -e "Running:    ${GREEN}yes${NC}"
+    else
+        echo -e "Running:    ${RED}no${NC}"
+    fi
+    if is_disabled; then
+        echo -e "Enabled:    ${RED}no${NC} (toggle file present)"
+    else
+        echo -e "Enabled:    ${GREEN}yes${NC}"
+    fi
+    echo -e "Outputs:    $(count_outputs)"
+    echo -e "Multi-mon:  ${MULTI_MONITOR_MODE} (mirror = same effect on every output)"
+    if [[ "$BATTERY_MIN_PERCENT" =~ ^[0-9]+$ ]] && (( BATTERY_MIN_PERCENT > 0 )); then
+        local cap ac
+        cap=$(lowest_battery_capacity)
+        on_ac_power && ac="yes" || ac="no"
+        echo -e "Battery:    skip-launch below ${BATTERY_MIN_PERCENT}% (now: ${cap:-n/a}%, on AC: ${ac})"
+    fi
+    echo -e "Driver:     $SCREENSAVER_BIN"
+    echo -e "Alacritty:  $ALACRITTY_CONFIG"
+    echo -e "Class:      $WINDOW_CLASS"
+    echo
+}
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [COMMAND]
+
+Spawn the niri-screensaver in fullscreen Alacritty windows.
+
+Commands:
+    launch [force]   Launch the screensaver (default; 'force' overrides toggle)
+    kill             Stop running screensaver
+    toggle           Toggle screensaver enabled/disabled
+    status           Show status
+    is-running       Exit 0 if the screensaver is running, 1 otherwise (quiet)
+    help             Show this help
+
+Environment:
+    CONFIG_DIR                          Config directory (default: ~/.config/niri-screensaver)
+    NIRI_SCREENSAVER_DATA               Override data dir (alacritty config + logos)
+    ALACRITTY_CONFIG                    Alacritty config file (default: <data>/alacritty-screensaver.toml)
+    SCREENSAVER_BIN                     Path to inner driver (default: sibling 'niri-screensaver')
+    NIRI_SCREENSAVER_KILL_DEBOUNCE_SECS Drop 'kill' invocations arriving within this many seconds of 'launch'
+                                        (default: 3; set to 0 to disable). Works around the Noctalia/niri
+                                        spawn-resume race documented in issue #4.
+    NIRI_SCREENSAVER_SPAWN_PIN_TIMEOUT_SECS
+                                        How long to wait for a freshly-spawned surface to appear before
+                                        giving up on pinning it to its output (default: 2). Raise on slow
+                                        machines if a monitor occasionally goes uncovered. See issue #11.
+    BATTERY_MIN_PERCENT                 Skip auto-launch when on battery below this percentage (default: 0
+                                        = disabled). Plugged in or no battery present never skips; 'launch
+                                        force' overrides. Also a config-file key, which takes precedence
+                                        (the plugin manages it); the env var is the pre-source default.
+    MULTI_MONITOR_MODE                  'independent' (default) = each output randomizes its own effect;
+                                        'mirror' = all outputs share one seed (and one logo when RANDOM_LOGO
+                                        is set) so they render the same effect. Config-file key (plugin
+                                        managed). Best coherence on matched-resolution monitors.
+EOF
+}
+
+main() {
+    local cmd="${1:-launch}"
+    shift 2>/dev/null || true
+    load_config
+    case "$cmd" in
+        launch|run|start) launch_screensaver "$@" ;;
+        kill|stop)
+            if kill_too_soon_after_launch; then
+                log_info "Ignoring kill within ${KILL_DEBOUNCE_SECS}s of launch (spawn/resume race — see issue #4)"
+                exit 0
+            fi
+            kill_screensaver
+            log_success "Screensaver stopped"
+            ;;
+        toggle)           toggle_screensaver ;;
+        status)           show_status ;;
+        is-running)       is_running ;;   # quiet: exit 0 if running, 1 if not
+        help|-h|--help)   usage ;;
+        *) log_error "Unknown command: $cmd"; usage; exit 1 ;;
+    esac
+}
+
+# Run main only when executed directly, not when sourced (e.g. by the bats
+# test suite, which sources this file to unit-test individual functions).
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

@@ -1,0 +1,15 @@
+[Unit]
+Description=DeskLink Host Daemon - Ultra-Low Latency USB Secondary Display
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/home/amtia/Projects/clone-spacedeck/desklink-daemon/target/release/desklink-daemon
+Restart=on-failure
+RestartSec=2s
+Environment=WAYLAND_DISPLAY=wayland-1
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=graphical-session.target

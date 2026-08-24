@@ -4,57 +4,57 @@
 */
 
 :root {
-    --accent-color: #e49767;
-    --accent-bg-color: #e49767; 
-    --accent-fg-color: #251d18;
+    --accent-color: #e7bb64;
+    --accent-bg-color: #e7bb64; 
+    --accent-fg-color: #252118;
 
     --destructive-bg-color: #fd4663;
-    --destructive-fg-color: #251d18;
+    --destructive-fg-color: #252118;
 
     --error-bg-color: #fd4663;
-    --error-fg-color: #251d18;
+    --error-fg-color: #252118;
     --error-color: #fd4663;
 
-    --window-bg-color: #261d18;
+    --window-bg-color: #292214;
     --window-fg-color: #f3f2f2;
 
-    --view-bg-color: #261d18;
+    --view-bg-color: #292214;
     --view-fg-color: #f3f2f2;
 
-    --headerbar-bg-color: #261d18;
+    --headerbar-bg-color: #292214;
     --headerbar-fg-color: #f3f2f2;
-    --headerbar-backdrop-color: #261d18;
+    --headerbar-backdrop-color: #292214;
 
-    --popover-bg-color: #3f3027;
+    --popover-bg-color: #453921;
     --popover-fg-color: #f3f2f2;
 
-    --card-bg-color: #3f3027;
+    --card-bg-color: #453921;
     --card-fg-color: #f3f2f2;
 
-    --dialog-bg-color: #261d18;
+    --dialog-bg-color: #292214;
     --dialog-fg-color: #f3f2f2;
 
-    --overview-bg-color: #3f3027;
+    --overview-bg-color: #453921;
     --overview-fg-color: #f3f2f2;
 
-    --sidebar-bg-color: #3f3027;
+    --sidebar-bg-color: #453921;
     --sidebar-fg-color: #f3f2f2;
-    --sidebar-backdrop-color: #261d18;
-    --sidebar-border-color: #261d18;
+    --sidebar-backdrop-color: #292214;
+    --sidebar-border-color: #292214;
 
-    --warning-bg-color: #4a6916;
-    --warning-fg-color: #e7ebe0;
-    --warning-color: #a5cc66;
+    --warning-bg-color: #2e7807;
+    --warning-fg-color: #dff8d3;
+    --warning-color: #81e44e;
 
-    --success-color: #d6c85c;
-    --success-bg-color: #6f6410;
-    --success-fg-color: #ebeae0;
+    --success-color: #cce44e;
+    --success-bg-color: #667807;
+    --success-fg-color: #f2f8d4;
     
     --shade-color: rgba(0, 0, 0, 0.36);
 }
 
 /* Libadwaita & Nautilus Explicit Styling Overrides */
-window, .background {
+window, .background, window.background {
     background-color: var(--window-bg-color);
     color: var(--window-fg-color);
 }

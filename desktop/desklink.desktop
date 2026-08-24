@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=DeskLink Control Center
+Comment=Ultra-Low Latency USB Secondary Display for Android
+Exec=/usr/bin/python3 /home/amtia/Projects/clone-spacedeck/desklink-gui/desklink_gui.py
+Icon=video-display
+Terminal=false
+Type=Application
+Categories=Utility;HardwareSettings;
+Keywords=display;monitor;screen;spacedeck;virtual;desklink;

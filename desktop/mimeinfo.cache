@@ -1,0 +1,5 @@
+[MIME Cache]
+application/msword=lowriter-3.desktop;
+application/vnd.oasis.opendocument.text=lowriter.desktop;
+application/vnd.openxmlformats-officedocument.wordprocessingml.document=lowriter-2.desktop;
+x-scheme-handler/jetbrains=jetbrainsd.desktop;

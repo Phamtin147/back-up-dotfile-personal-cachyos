@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# TUI Video Wallpaper Selector (mpvpaper + fzf)
+# Cách dùng:  vwall          → chọn video + output, tự ẩn ảnh nền Noctalia
+#             vwall stop     → tắt video wallpaper, khôi phục ảnh nền Noctalia
+#             vwall --help   → hướng dẫn
+
+set -euo pipefail
+
+VIDEO_DIR="${VWALL_DIR:-$HOME/Pictures/Wallpapers}"
+OUTPUTS=("eDP-1" "DP-1")
+PID_FILE="$HOME/.cache/vwall.pid"
+NOCT_SETTINGS="$HOME/.config/noctalia/settings.json"
+
+log() { printf '\033[1;34m[vwall]\033[0m %s\n' "$*"; }
+err() { printf '\033[1;31m[vwall]\033[0m %s\n' "$*" >&2; }
+
+hide_noctalia_wallpaper() {
+  python3 - "$NOCT_SETTINGS" <<'PYEOF' 2>/dev/null || true
+import json, sys
+p = sys.argv[1]
+d = json.load(open(p))
+d.setdefault("wallpaper", {})["useSolidColor"] = True
+d["wallpaper"]["solidColor"] = "#000000"
+d["wallpaper"]["enabled"] = False
+json.dump(d, open(p, "w"), indent=2)
+print("noctalia wallpaper -> hidden")
+PYEOF
+  pkill -f 'qs -c noctalia-shell' 2>/dev/null || true
+  sleep 1
+  niri msg action spawn-sh -- "qs -c noctalia-shell" 2>/dev/null || true
+}
+
+restore_noctalia_wallpaper() {
+  python3 - "$NOCT_SETTINGS" <<'PYEOF' 2>/dev/null || true
+import json, sys
+p = sys.argv[1]
+d = json.load(open(p))
+d.setdefault("wallpaper", {})["enabled"] = True
+d["wallpaper"]["useSolidColor"] = False
+json.dump(d, open(p, "w"), indent=2)
+print("noctalia wallpaper restored")
+PYEOF
+  pkill -f 'qs -c noctalia-shell' 2>/dev/null || true
+  sleep 1
+  niri msg action spawn-sh -- "qs -c noctalia-shell" 2>/dev/null || true
+}
+
+stop_video() {
+  if [ -f "$PID_FILE" ]; then
+    while IFS= read -r pid; do
+      [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+    done < "$PID_FILE"
+    rm -f "$PID_FILE"
+  fi
+  pkill -f mpvpaper 2>/dev/null || true
+  log "Đã tắt video wallpaper"
+}
+
+start_video() {
+  local video="$1" output="$2"
+  log "Đang phát: $(basename "$video") trên $output"
+  mpvpaper -vs -f -o "no-audio loop panscan=1.0" "$output" "$video" 2>/dev/null
+  sleep 1
+}
+
+if [ "${1:-}" = "stop" ]; then
+  stop_video
+  restore_noctalia_wallpaper
+  log "Đã khôi phục ảnh nền Noctalia."
+  exit 0
+fi
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+  echo "Video Wallpaper Selector (mpvpaper + fzf)"
+  echo "  vwall            → chọn video + output, tự ẩn ảnh nền Noctalia (fill kín màn hình)"
+  echo "  vwall stop       → tắt video + khôi phục ảnh nền Noctalia"
+  echo "  VWALL_DIR=... vwall → đổi thư mục quét video"
+  exit 0
+fi
+
+mapfile -t VIDEOS < <(find "$VIDEO_DIR" -type f \( -iname '*.mp4' -o -iname '*.webm' -o -iname '*.mkv' -o -iname '*.mov' \) 2>/dev/null | sort)
+
+if [ ${#VIDEOS[@]} -eq 0 ]; then
+  err "Không tìm thấy video trong $VIDEO_DIR"
+  exit 1
+fi
+
+log "Chọn video (↑↓ di chuyển, Enter chọn, Esc hủy):"
+SELECTED=$(printf '%s\n' "${VIDEOS[@]}" | sed "s|$HOME|~|" | fzf \
+  --height 60% \
+  --border rounded \
+  --prompt "🎬 Video > " \
+  --preview 'echo "Video: {}"' \
+  --preview-window right:40% \
+  2>/dev/null | sed "s|^~|$HOME|" || true)
+
+[ -z "$SELECTED" ] && { log "Đã hủy"; exit 0; }
+
+log "Chọn màn hình (mặc định: tất cả):"
+CHOICE=$(printf '%s\n' "tất cả" "${OUTPUTS[@]}" | fzf \
+  --height 20% \
+  --border rounded \
+  --prompt "🖥️  Output > " 2>/dev/null || echo "tất cả")
+
+stop_video
+hide_noctalia_wallpaper
+sleep 1
+
+if [ "$CHOICE" = "tất cả" ] || [ -z "$CHOICE" ]; then
+  for out in "${OUTPUTS[@]}"; do
+    start_video "$SELECTED" "$out"
+  done
+else
+  start_video "$SELECTED" "$CHOICE"
+fi
+
+sleep 1
+pgrep -f "mpvpaper" > "$PID_FILE" 2>/dev/null || true
+log "OK — video fill kín màn hình, ảnh nền Noctalia đã ẩn"

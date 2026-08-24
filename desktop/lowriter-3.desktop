@@ -1,0 +1,6 @@
+[Desktop Entry]
+Exec=/usr/bin/lowriter
+MimeType=application/msword;
+Name=lowriter
+NoDisplay=true
+Type=Application
