@@ -50,7 +50,7 @@ Item {
     anchors.bottomMargin: 10
     width: 550
     height: 28
-    visible: MediaService.isPlaying
+    visible: !SpectrumService.isIdle || MediaService.isPlaying
     opacity: visible ? 1.0 : 0.0
 
     Behavior on opacity {
