@@ -16,6 +16,7 @@ x-scheme-handler/tonsite=org.telegram.desktop.desktop;
 x-scheme-handler/opencode=ai.opencode.desktop.desktop;
 image/jpeg=org.gnome.Loupe.desktop;
 image/png=org.gnome.Loupe.desktop;
+image/webp=org.gnome.Loupe.desktop;
 application/pdf=wps-office-pdf.desktop;
 application/x-zerosize=code.desktop;
 
@@ -49,3 +50,4 @@ x-scheme-handler/unknown=google-chrome.desktop
 x-scheme-handler/opencode=ai.opencode.desktop.desktop
 image/jpeg=org.gnome.Loupe.desktop
 image/png=org.gnome.Loupe.desktop
+image/webp=org.gnome.Loupe.desktop

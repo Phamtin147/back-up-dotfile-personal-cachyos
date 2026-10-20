@@ -10,8 +10,9 @@ source $HOME/cachyos-config.zsh
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Created by `pipx` on 2026-05-04 02:47:01
-export PATH="$PATH:/home/amtia/.local/bin"
+# Put ~/.local/bin at the front of PATH
+export PATH="/home/amtia/.local/bin:$PATH"
+alias wifi-menu="/home/amtia/.local/bin/wifi-menu"
 
 # bun completions
 [ -s "/home/amtia/.bun/_bun" ] && source "/home/amtia/.bun/_bun"
@@ -27,3 +28,5 @@ source <(ng completion script)
 export PATH="$PATH:$HOME/flutter/bin"
 export NODE_TLS_REJECT_UNAUTHORIZED=0
 
+export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools"

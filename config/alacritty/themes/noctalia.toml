@@ -6,50 +6,50 @@ family = "LMMono10"
 style = "Regular"
 
 [colors.primary]
-background = '#292214'
-foreground = '#f3f2f2'
+background = '#151311'
+foreground = '#e7e2dd'
  
 [colors.cursor]
-text = '#f3f2f2'
-cursor = '#b6b4af' 
+text = '#e7e2dd'
+cursor = '#cdc6b8' 
  
 [colors.vi_mode_cursor]
-text = '#292214'
-cursor = '#e7bb64' 
+text = '#151311'
+cursor = '#d5c59e' 
  
 [colors.search.matches]
-foreground = '#372d1b' 
-background = '#81e44e' 
+foreground = '#4b463c' 
+background = '#becbab' 
  
 [colors.search.focused_match]
-foreground = '#372d1b' 
-background = '#e7bb64' 
+foreground = '#4b463c' 
+background = '#d5c59e' 
  
 [colors.footer_bar]
-foreground = '#372d1b' 
-background = '#e8e6e3' 
+foreground = '#4b463c' 
+background = '#e7e2dd' 
  
 [colors.hints.start]
-foreground = '#372d1b' 
-background = '#cce44e' 
+foreground = '#4b463c' 
+background = '#cfc6b3' 
  
 [colors.hints.end]
-foreground = '#372d1b' 
-background = '#cce44e' 
+foreground = '#4b463c' 
+background = '#cfc6b3' 
  
 [colors.selection]
-text = '#292214'
-background = '#e7bb64'
+text = '#151311'
+background = '#d5c59e'
  
  
 [colors.normal]
 black = '#181818' 
-red = '#fd4663' 
-green = '#e7bb64' 
-yellow = '#a2792a' 
-blue = '#e7bb64' 
-magenta = '#81e44e' 
-cyan = '#cce44e' 
+red = '#ffb4ab' 
+green = '#d5c59e' 
+yellow = '#695e3d' 
+blue = '#d5c59e' 
+magenta = '#becbab' 
+cyan = '#cfc6b3' 
 white = '#BAC2DE' 
  
  

@@ -7,7 +7,7 @@ binds {
     // https://docs.noctalia.dev/getting-started/keybinds/
 
     MOD+SHIFT+SLASH                     { show-hotkey-overlay; }
-    MOD+CTRL+R                          hotkey-overlay-title="Reload Niri Config" { spawn "niri" "msg" "action" "reload-config"; }
+    MOD+CTRL+R                          hotkey-overlay-title="Reload Niri Config" { spawn "niri" "msg" "action" "load-config-file"; }
 
     // --- Shader Effects ---
     MOD+SHIFT+S                         hotkey-overlay-title="Next Window Shader" { spawn-sh "niri-shader next"; }
@@ -26,7 +26,7 @@ binds {
 
     // Please choose your own file manager.l
     MOD+E                         hotkey-overlay-title="File Manager: yazi" { spawn "alacritty" "-e" "yazi"; }
-    MOD+A                           hotkey-overlay-title="antigravity: antigravity" { spawn "antigravity-ide"; }
+    MOD+A                           hotkey-overlay-title="antigravity: antigravity" { spawn "antigravity"; }
     MOD+I                           hotkey-overlay-title="Visual Studio: vs" { spawn "code"; }
 
     // --- Audio & Media Controls ---
@@ -132,6 +132,8 @@ binds {
     // --- Screenshots ---
     Print                               { screenshot; }
     MOD+S                               { screenshot; }
+    ALT+S                               { screenshot; }
+
     CTRL+SHIFT+2                        { screenshot-screen; }
     CTRL+SHIFT+3                        { screenshot-window; }
 

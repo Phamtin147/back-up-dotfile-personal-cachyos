@@ -124,6 +124,12 @@ for ext_dir in "$HOME/.vscode/extensions" "$HOME/.antigravity/extensions"; do
     fi
 done
 
+# Sao lưu Nautilus extensions
+if [ -d "$HOME/.local/share/nautilus-python/extensions" ]; then
+    mkdir -p "$DOTFILES_DIR/extensions/nautilus-python"
+    rsync -a --delete "$HOME/.local/share/nautilus-python/extensions/" "$DOTFILES_DIR/extensions/nautilus-python/"
+fi
+
 # 8. Sao lưu Scripts ~/.local/bin
 echo "==> [7/9] Sao lưu các scripts trong ~/.local/bin..."
 mkdir -p "$DOTFILES_DIR/scripts/hyprlock" \
@@ -207,9 +213,17 @@ chmod +x "$DOTFILES_DIR/install.sh" "$DOTFILES_DIR/backup.sh" 2>/dev/null || tru
 
 echo "==> [9/9] Đã hoàn tất Full Backup 100%!"
 
-# 10. Sao lưu cấu hình Ly Display Manager (/etc/ly)
-echo "==> [10/10] Sao lưu cấu hình Ly Display Manager (/etc/ly)..."
-mkdir -p "$DOTFILES_DIR/system/etc/ly"
+# 10. Sao lưu cấu hình hệ thống bổ sung (/etc)
+echo "==> [10/10] Sao lưu cấu hình hệ thống (/etc)..."
+mkdir -p "$DOTFILES_DIR/system/etc/ly" \
+         "$DOTFILES_DIR/system/etc/modules-load.d" \
+         "$DOTFILES_DIR/system/etc/alsa-card-profile"
 if [ -d "/etc/ly" ]; then
     cp -afr /etc/ly/* "$DOTFILES_DIR/system/etc/ly/" 2>/dev/null || true
+fi
+if [ -d "/etc/modules-load.d" ]; then
+    cp -afr /etc/modules-load.d/* "$DOTFILES_DIR/system/etc/modules-load.d/" 2>/dev/null || true
+fi
+if [ -d "/etc/alsa-card-profile" ]; then
+    cp -afr /etc/alsa-card-profile/* "$DOTFILES_DIR/system/etc/alsa-card-profile/" 2>/dev/null || true
 fi

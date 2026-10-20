@@ -123,9 +123,17 @@ install_extensions() {
             mkdir -p "$target_dir"
             for ext in "$DOTFILES_DIR"/extensions/*; do
                 [ -e "$ext" ] || continue
+                [ "$(basename "$ext")" = "nautilus-python" ] && continue
                 copy_entry "$ext" "$target_dir/$(basename "$ext")"
             done
         done
+
+        if [ -d "$DOTFILES_DIR/extensions/nautilus-python" ]; then
+            local nautilus_ext_dir="$HOME/.local/share/nautilus-python/extensions"
+            mkdir -p "$nautilus_ext_dir"
+            echo "  + Cài đặt Nautilus Extensions..."
+            copy_entry "$DOTFILES_DIR/extensions/nautilus-python" "$nautilus_ext_dir"
+        fi
     fi
 }
 

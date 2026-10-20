@@ -12,6 +12,7 @@ __pycache__/
 config/obs-studio/logs/
 config/obs-studio/profiler_data/
 config/qBittorrent/rss/
+config/qBittorrent/lockfile
 config/systemd/user/default.target.wants/
 config/systemd/user/sockets.target.wants/
 config/systemd/user/timers.target.wants/

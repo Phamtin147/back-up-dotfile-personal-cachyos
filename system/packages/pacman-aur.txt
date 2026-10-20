@@ -25,4 +25,5 @@ ttf-wps-fonts
 vial-appimage
 virtio-win
 visual-studio-code-bin
+wps-office
 wps-office-fonts

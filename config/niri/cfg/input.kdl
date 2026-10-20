@@ -11,9 +11,12 @@ input {
 
     touchpad {
         tap // Enable tap-to-click
+        drag-lock // Maintain drag even if fingers momentarily lift or reach edges
         natural-scroll // Enable natural (macOS-style) scrolling
-        scroll-factor 0.3 // Adjust this value for slower/faster scrolling (default 1.0)
-        
+        click-method "clickfinger" // Click with 1, 2, 3 fingers matching hyper repo
+        accel-speed 0.0 // Neutral comfortable pointer speed
+        accel-profile "adaptive"
+        scroll-factor 0.35 // Gentle comfortable scrolling speed
     }
 
     mouse {

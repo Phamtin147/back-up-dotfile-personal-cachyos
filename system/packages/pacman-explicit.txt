@@ -94,6 +94,7 @@ interception-caps2esc
 iotop
 iptables
 iwd
+jdk17-openjdk
 jfsutils
 jose
 joyutils
@@ -110,6 +111,7 @@ lib32-opencl-nvidia
 lib32-vulkan-icd-loader
 libc++
 libc++abi
+libinput-tools
 libmaxminddb
 libreoffice-still
 libva-nvidia-driver
@@ -141,6 +143,7 @@ mkinitcpio
 mpvpaper
 nano
 nasm
+nautilus-python
 neovim
 netctl
 networkmanager
@@ -208,6 +211,7 @@ ttf-meslo-nerd
 ufw
 ufw-extras
 unixodbc
+unzip
 usb_modeswitch
 usbutils
 ventoy-bin
@@ -224,7 +228,6 @@ which
 wireplumber
 wl-mirror
 wlsunset
-wps-office
 wtype
 xdg-desktop-portal-wlr
 xdotool

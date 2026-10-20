@@ -2,10 +2,16 @@
 // Xem thêm tại: https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
 
 output "eDP-1" {
-    mode "2560x1600@165.000" 
+    mode "2560x1600@165.004" 
     scale 1.75
     position x=0 y=0
     
     // Xoay màn hình (normal, 90, 180, 270, flipped-90, v.v.)
     // transform "normal"
+}
+
+output "DP-4" {
+    mode "1920x1200@59.998"
+    scale 1.3
+    position x=0 y=915
 }

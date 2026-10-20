@@ -1,0 +1,14 @@
+[Unit]
+Description=9router AI Gateway
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/amtia/.npm-global/bin/9router --port 20128 --no-browser --skip-update
+Restart=on-failure
+RestartSec=5
+Environment=HOME=/home/amtia
+Environment=PATH=/home/amtia/.npm-global/bin:/usr/local/bin:/usr/bin:/bin
+
+[Install]
+WantedBy=default.target
