@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Tắt Màn Hình (Screen Off)
+Comment=Tắt toàn bộ màn hình ngay lập tức
+Exec=screen-off
+Icon=preferences-desktop-display
+Terminal=false
+Type=Application
+Categories=Utility;System;
+Keywords=screen;monitor;display;off;power;tat;man;hinh;

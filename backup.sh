@@ -168,6 +168,9 @@ fi
 if [ -f "$HOME/.local/bin/legion-startup.sh" ]; then
     cp -af "$HOME/.local/bin/legion-startup.sh" "$DOTFILES_DIR/scripts/system/"
 fi
+if [ -f "$HOME/.local/bin/screen-off" ]; then
+    cp -af "$HOME/.local/bin/screen-off" "$DOTFILES_DIR/scripts/system/"
+fi
 
 # 9. Sao lưu Fonts, Icons, Themes, Wallpapers, Desktop files, Shaders
 echo "==> [8/9] Sao lưu Fonts, Icons, Themes, Wallpapers, Desktop files, Shaders..."
