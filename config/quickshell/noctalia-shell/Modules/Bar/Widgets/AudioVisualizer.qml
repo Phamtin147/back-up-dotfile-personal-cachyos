@@ -299,6 +299,11 @@ Item {
 
     model: [
       {
+        "label": "Open Control Center (Wifi, Bluetooth...)",
+        "action": "open-control-center",
+        "icon": "sliders"
+      },
+      {
         "label": I18n.tr("actions.cycle-visualizer"),
         "action": "cycle-visualizer",
         "icon": "chart-column"
@@ -321,7 +326,10 @@ Item {
                      PanelService.closeContextMenu(screen);
                    }
 
-                   if (action === "cycle-visualizer") {
+                   if (action === "open-control-center") {
+                     var controlCenterPanel = PanelService.getPanel("controlCenterPanel", screen);
+                     controlCenterPanel?.toggle(null, "ControlCenter");
+                   } else if (action === "cycle-visualizer") {
                      const types = ["linear", "mirrored", "wave"];
                      const currentIndex = types.indexOf(currentVisualizerType);
                      const nextIndex = (currentIndex + 1) % types.length;
@@ -342,19 +350,32 @@ Item {
                  }
   }
 
-  // Click to cycle through visualizer types
+  // Click handling:
+  // - Left click: cycle visualizer mode (Linear, Mirrored, Wave)
+  // - Right click: open Control Center directly (Wifi, Bluetooth...) at mouse cursor (matching empty bar gap behavior)
+  // - Shift + Right click or Middle click: open Visualizer context menu
   MouseArea {
     id: mouseArea
     anchors.fill: parent
     cursorShape: Qt.PointingHandCursor
     hoverEnabled: true
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
     onClicked: mouse => {
                  if (mouse.button === Qt.RightButton) {
-                   if (screen) {
-                     PanelService.showContextMenu(contextMenu, root, screen);
+                   if (mouse.modifiers & Qt.ShiftModifier) {
+                     if (screen) PanelService.showContextMenu(contextMenu, root, screen);
+                   } else {
+                     var controlCenterPanel = PanelService.getPanel("controlCenterPanel", screen);
+                     if (controlCenterPanel) {
+                       var pt = mapToItem(null, mouse.x, mouse.y);
+                       controlCenterPanel.toggle(null, Settings.data.bar.rightClickFollowMouse ? pt : "ControlCenter");
+                     }
                    }
+                   mouse.accepted = true;
+                 } else if (mouse.button === Qt.MiddleButton) {
+                   if (screen) PanelService.showContextMenu(contextMenu, root, screen);
+                   mouse.accepted = true;
                  } else {
                    const types = ["linear", "mirrored", "wave"];
                    const currentIndex = types.indexOf(currentVisualizerType);

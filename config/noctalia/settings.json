@@ -100,7 +100,6 @@
                     "hideWhenIdle": false,
                     "id": "AudioVisualizer",
                     "idleAnimation": true,
-                    "idleStyle": "pulse",
                     "width": 400
                 }
             ],
@@ -217,6 +216,16 @@
                         "textColor": "none"
                     },
                     "id": "plugin:timer"
+                },
+                {
+                    "colorizeDistroLogo": false,
+                    "colorizeSystemIcon": "none",
+                    "colorizeSystemText": "none",
+                    "customIconPath": "",
+                    "enableColorization": false,
+                    "icon": "sliders",
+                    "id": "ControlCenter",
+                    "useDistroLogo": false
                 }
             ]
         }
