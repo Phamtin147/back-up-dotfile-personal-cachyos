@@ -299,19 +299,14 @@ Item {
 
     model: [
       {
-        "label": "Open Control Center (Wifi, Bluetooth...)",
-        "action": "open-control-center",
-        "icon": "sliders"
+        "label": "Cycle idle animation",
+        "action": "cycle-idle-style",
+        "icon": "wand-magic-sparkles"
       },
       {
         "label": I18n.tr("actions.cycle-visualizer"),
         "action": "cycle-visualizer",
         "icon": "chart-column"
-      },
-      {
-        "label": "Cycle idle animation",
-        "action": "cycle-idle-style",
-        "icon": "wand-magic-sparkles"
       },
       {
         "label": I18n.tr("actions.widget-settings"),
@@ -326,15 +321,7 @@ Item {
                      PanelService.closeContextMenu(screen);
                    }
 
-                   if (action === "open-control-center") {
-                     var controlCenterPanel = PanelService.getPanel("controlCenterPanel", screen);
-                     controlCenterPanel?.toggle(null, "ControlCenter");
-                   } else if (action === "cycle-visualizer") {
-                     const types = ["linear", "mirrored", "wave"];
-                     const currentIndex = types.indexOf(currentVisualizerType);
-                     const nextIndex = (currentIndex + 1) % types.length;
-                     Settings.data.audio.visualizerType = types[nextIndex];
-                   } else if (action === "cycle-idle-style") {
+                   if (action === "cycle-idle-style") {
                      const styles = ["aurora", "pulse", "scanner", "shimmer", "wave"];
                      const curIdx = styles.indexOf(root.idleStyle);
                      const nextIdx = (curIdx + 1) % styles.length;
@@ -344,6 +331,11 @@ Item {
                        currentWidgets[section][sectionWidgetIndex].idleStyle = newStyle;
                        Settings.save();
                      }
+                   } else if (action === "cycle-visualizer") {
+                     const types = ["linear", "mirrored", "wave"];
+                     const currentIndex = types.indexOf(currentVisualizerType);
+                     const nextIndex = (currentIndex + 1) % types.length;
+                     Settings.data.audio.visualizerType = types[nextIndex];
                    } else if (action === "widget-settings" && screen) {
                      BarService.openWidgetSettings(screen, section, sectionWidgetIndex, widgetId, widgetSettings);
                    }
@@ -352,30 +344,19 @@ Item {
 
   // Click handling:
   // - Left click: cycle visualizer mode (Linear, Mirrored, Wave)
-  // - Right click: open Control Center directly (Wifi, Bluetooth...) at mouse cursor (matching empty bar gap behavior)
-  // - Shift + Right click or Middle click: open Visualizer context menu
+  // - Right click: open Visualizer context menu (cycle animation, visualizer type, widget settings)
   MouseArea {
     id: mouseArea
     anchors.fill: parent
     cursorShape: Qt.PointingHandCursor
     hoverEnabled: true
-    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
 
     onClicked: mouse => {
                  if (mouse.button === Qt.RightButton) {
-                   if (mouse.modifiers & Qt.ShiftModifier) {
-                     if (screen) PanelService.showContextMenu(contextMenu, root, screen);
-                   } else {
-                     var controlCenterPanel = PanelService.getPanel("controlCenterPanel", screen);
-                     if (controlCenterPanel) {
-                       var pt = mapToItem(null, mouse.x, mouse.y);
-                       controlCenterPanel.toggle(null, Settings.data.bar.rightClickFollowMouse ? pt : "ControlCenter");
-                     }
+                   if (screen) {
+                     PanelService.showContextMenu(contextMenu, root, screen);
                    }
-                   mouse.accepted = true;
-                 } else if (mouse.button === Qt.MiddleButton) {
-                   if (screen) PanelService.showContextMenu(contextMenu, root, screen);
-                   mouse.accepted = true;
                  } else {
                    const types = ["linear", "mirrored", "wave"];
                    const currentIndex = types.indexOf(currentVisualizerType);
