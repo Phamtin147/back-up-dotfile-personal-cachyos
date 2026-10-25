@@ -93,6 +93,7 @@ Singleton {
                                     "colorName": "primary",
                                     "hideWhenIdle": false,
                                     "idleAnimation": true,
+                                    "idleStyle": "aurora",
                                     "fillGap": true
                                   },
                                   "Battery": {

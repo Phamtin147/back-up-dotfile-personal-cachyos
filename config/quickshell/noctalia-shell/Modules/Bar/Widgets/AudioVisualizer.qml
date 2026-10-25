@@ -37,12 +37,19 @@ Item {
   }
 
   // Resolve settings: try user settings or defaults from BarWidgetRegistry
-  readonly property bool fillGap: widgetSettings.fillGap !== undefined ? widgetSettings.fillGap : (section === "center")
+  property bool fillGap: (widgetSettings && widgetSettings.fillGap !== undefined) ? widgetSettings.fillGap : (section === "center")
   readonly property int configuredWidth: widgetSettings.width !== undefined ? widgetSettings.width : (widgetMetadata.width || 400)
   readonly property bool hideWhenIdle: widgetSettings.hideWhenIdle !== undefined ? widgetSettings.hideWhenIdle : widgetMetadata.hideWhenIdle
   readonly property string colorName: widgetSettings.colorName !== undefined ? widgetSettings.colorName : widgetMetadata.colorName
   readonly property bool idleAnimation: widgetSettings.idleAnimation !== undefined ? widgetSettings.idleAnimation : true
-  readonly property string idleStyle: widgetSettings.idleStyle !== undefined ? widgetSettings.idleStyle : "aurora"
+  property string currentIdleStyle: (widgetSettings && widgetSettings.idleStyle !== undefined) ? widgetSettings.idleStyle : (widgetMetadata.idleStyle || "aurora")
+  readonly property string idleStyle: currentIdleStyle
+
+  onWidgetSettingsChanged: {
+    if (widgetSettings && widgetSettings.idleStyle !== undefined) {
+      currentIdleStyle = widgetSettings.idleStyle;
+    }
+  }
 
   readonly property bool isGapFillActive: fillGap && section === "center" && !isVerticalBar && root.parent && root.parent.width > 50
   readonly property int visualizerWidth: isGapFillActive ? root.parent.width : configuredWidth
@@ -122,7 +129,7 @@ Item {
     var isMirrored = Settings.data.audio.spectrumMirrored;
     var out = new Array(n);
 
-    var style = root.idleStyle; // "aurora", "pulse", "scanner", "shimmer", "wave"
+    var style = root.currentIdleStyle; // "aurora", "pulse", "scanner", "shimmer", "wave"
 
     for (var i = 0; i < n; i++) {
       // Coordinate u: 0 at center, 1 at edges
@@ -323,13 +330,31 @@ Item {
 
                    if (action === "cycle-idle-style") {
                      const styles = ["aurora", "pulse", "scanner", "shimmer", "wave"];
-                     const curIdx = styles.indexOf(root.idleStyle);
+                     const curIdx = styles.indexOf(root.currentIdleStyle);
                      const nextIdx = (curIdx + 1) % styles.length;
                      var newStyle = styles[nextIdx];
-                     var currentWidgets = Settings.getBarWidgetsForScreen(screenName);
-                     if (currentWidgets && currentWidgets[section] && sectionWidgetIndex < currentWidgets[section].length) {
-                       currentWidgets[section][sectionWidgetIndex].idleStyle = newStyle;
-                       Settings.save();
+                     root.currentIdleStyle = newStyle;
+
+                     var sec = root.section;
+                     var idx = root.sectionWidgetIndex;
+                     var scr = root.screenName;
+                     if (sec && idx >= 0) {
+                       if (Settings.hasScreenOverride(scr, "widgets")) {
+                         var overrideWidgets = Settings.getBarWidgetsForScreen(scr);
+                         if (overrideWidgets && overrideWidgets[sec] && idx < overrideWidgets[sec].length) {
+                           overrideWidgets[sec][idx] = Object.assign({}, overrideWidgets[sec][idx], { "idleStyle": newStyle });
+                           Settings.setScreenOverride(scr, "widgets", overrideWidgets);
+                           Settings.saveImmediate();
+                         }
+                       } else {
+                         var widgets = Settings.data.bar.widgets[sec];
+                         if (widgets && idx < widgets.length) {
+                           var updatedWidgets = JSON.parse(JSON.stringify(widgets));
+                           updatedWidgets[idx] = Object.assign({}, updatedWidgets[idx], { "idleStyle": newStyle });
+                           Settings.data.bar.widgets[sec] = updatedWidgets;
+                           Settings.saveImmediate();
+                         }
+                       }
                      }
                    } else if (action === "cycle-visualizer") {
                      const types = ["linear", "mirrored", "wave"];

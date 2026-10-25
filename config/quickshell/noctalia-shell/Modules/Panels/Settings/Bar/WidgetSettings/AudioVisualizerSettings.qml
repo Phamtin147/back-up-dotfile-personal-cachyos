@@ -19,7 +19,7 @@ ColumnLayout {
   property bool valueHideWhenIdle: widgetData.hideWhenIdle !== undefined ? widgetData.hideWhenIdle : widgetMetadata.hideWhenIdle
   property string valueColorName: widgetData.colorName !== undefined ? widgetData.colorName : widgetMetadata.colorName
   property bool valueIdleAnimation: widgetData.idleAnimation !== undefined ? widgetData.idleAnimation : true
-  property string valueIdleStyle: widgetData.idleStyle !== undefined ? widgetData.idleStyle : "aurora"
+  property string valueIdleStyle: widgetData.idleStyle !== undefined ? widgetData.idleStyle : (widgetMetadata.idleStyle || "aurora")
   property bool valueFillGap: widgetData.fillGap !== undefined ? widgetData.fillGap : true
 
   function saveSettings() {
@@ -31,6 +31,7 @@ ColumnLayout {
     settings.idleStyle = valueIdleStyle;
     settings.fillGap = valueFillGap;
     settingsChanged(settings);
+    return settings;
   }
 
   NTextInput {

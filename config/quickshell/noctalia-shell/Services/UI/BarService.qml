@@ -565,6 +565,7 @@ Singleton {
                                                 if (overrideWidgets && overrideWidgets[sec] && idx < overrideWidgets[sec].length) {
                                                   overrideWidgets[sec][idx] = Object.assign({}, overrideWidgets[sec][idx], settings);
                                                   Settings.setScreenOverride(screenName, "widgets", overrideWidgets);
+                                                  Settings.saveImmediate();
                                                 }
                                               } else {
                                                 var widgets = Settings.data.bar.widgets[sec];

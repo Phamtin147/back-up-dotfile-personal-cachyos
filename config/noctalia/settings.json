@@ -100,6 +100,7 @@
                     "hideWhenIdle": false,
                     "id": "AudioVisualizer",
                     "idleAnimation": true,
+                    "idleStyle": "pulse",
                     "width": 400
                 }
             ],
@@ -557,7 +558,7 @@
         "bluetoothRssiPollIntervalMs": 60000,
         "bluetoothRssiPollingEnabled": false,
         "disableDiscoverability": false,
-        "networkPanelView": "ethernet",
+        "networkPanelView": "wifi",
         "wifiDetailsViewMode": "grid"
     },
     "nightLight": {
