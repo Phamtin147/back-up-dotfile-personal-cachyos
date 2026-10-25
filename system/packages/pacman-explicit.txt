@@ -175,6 +175,7 @@ playerctl
 plymouth
 polkit-gnome
 postgresql
+proton-cachyos-slr
 proton-vpn-gtk-app
 protonplus
 protonup-qt

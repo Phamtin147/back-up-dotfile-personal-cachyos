@@ -86,6 +86,16 @@ Item {
   property ListModel centerWidgetsModel: ListModel {}
   property ListModel rightWidgetsModel: ListModel {}
 
+  readonly property bool centerHasFillWidget: {
+    for (var i = 0; i < centerWidgetsModel.count; i++) {
+      var w = centerWidgetsModel.get(i);
+      if (w && (w.fillGap === true || (w.id === "AudioVisualizer" && w.fillGap !== false))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Guard: set when Bar is destroyed; prevents Qt.callLater callbacks from running
   // during/after teardown (avoids SIGSEGV in QV4::Object::insertMember when rapid
   // workspace switch causes load/unload overlap with async widget incubation)
@@ -701,11 +711,22 @@ Item {
         }
       }
 
+      readonly property bool hasCenterFillGap: {
+        if (!root.centerHasFillWidget)
+          return false;
+        var availableSpace = rightSection.x - (leftSection.x + leftSection.width);
+        return availableSpace > 80;
+      }
+
       // Center Section
       RowLayout {
         id: centerSection
         objectName: "centerSection"
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.horizontalCenter: hasCenterFillGap ? undefined : parent.horizontalCenter
+        anchors.left: hasCenterFillGap ? leftSection.right : undefined
+        anchors.right: hasCenterFillGap ? rightSection.left : undefined
+        anchors.leftMargin: hasCenterFillGap ? Settings.data.bar.widgetSpacing : 0
+        anchors.rightMargin: hasCenterFillGap ? Settings.data.bar.widgetSpacing : 0
         y: Style.pixelAlignCenter(parent.height, height)
         spacing: Settings.data.bar.widgetSpacing
 
@@ -721,9 +742,11 @@ Item {
                             "widgetId": model.id,
                             "section": "center",
                             "sectionWidgetIndex": index,
-                            "sectionWidgetsCount": root.centerWidgetsModel.count
+                            "sectionWidgetsCount": root.centerWidgetsModel.count,
+                            "fillGap": (model.fillGap !== undefined) ? model.fillGap : (model.id === "AudioVisualizer")
                           })
             Layout.alignment: Qt.AlignVCenter
+            Layout.fillWidth: hasCenterFillGap && (model.fillGap === true || (model.id === "AudioVisualizer" && model.fillGap !== false))
           }
         }
       }

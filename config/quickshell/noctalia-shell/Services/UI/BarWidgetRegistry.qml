@@ -91,7 +91,9 @@ Singleton {
                                   "AudioVisualizer": {
                                     "width": 200,
                                     "colorName": "primary",
-                                    "hideWhenIdle": false
+                                    "hideWhenIdle": false,
+                                    "idleAnimation": true,
+                                    "fillGap": true
                                   },
                                   "Battery": {
                                     "displayMode": "graphic-clean",

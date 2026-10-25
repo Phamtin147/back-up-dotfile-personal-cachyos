@@ -33,7 +33,7 @@
         "preferredPlayer": "",
         "spectrumFrameRate": 60,
         "spectrumMirrored": true,
-        "visualizerType": "mirrored",
+        "visualizerType": "linear",
         "volumeFeedback": false,
         "volumeFeedbackSoundFile": "",
         "volumeOverdrive": false,
@@ -96,8 +96,11 @@
             "center": [
                 {
                     "colorName": "primary",
-                    "hideWhenIdle": true,
+                    "fillGap": true,
+                    "hideWhenIdle": false,
                     "id": "AudioVisualizer",
+                    "idleAnimation": true,
+                    "idleStyle": "pulse",
                     "width": 400
                 }
             ],
@@ -545,7 +548,7 @@
         "bluetoothRssiPollIntervalMs": 60000,
         "bluetoothRssiPollingEnabled": false,
         "disableDiscoverability": false,
-        "networkPanelView": "wifi",
+        "networkPanelView": "ethernet",
         "wifiDetailsViewMode": "grid"
     },
     "nightLight": {

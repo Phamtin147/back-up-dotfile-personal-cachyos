@@ -148,9 +148,9 @@ binds {
 
     // --- Exit / Power ---
     // CTRL+ALT+DELETE                     { quit; } // Also quits Niri
-    MOD+P                               allow-when-locked=true hotkey-overlay-title="Turn Off Screen" { power-off-monitors; }
-    MOD+SHIFT+P                         allow-when-locked=true hotkey-overlay-title="Turn Off Screen" { power-off-monitors; }
-    XF86Display                         allow-when-locked=true { power-off-monitors; }
+    MOD+P                               hotkey-overlay-title="Turn Off Screen" { power-off-monitors; }
+    MOD+SHIFT+P                         hotkey-overlay-title="Turn Off Screen" { power-off-monitors; }
+    XF86Display                         { power-off-monitors; }
     MOD+O                               repeat=false { toggle-overview; }
 
     // // --- Lockscreen Power Shortcuts (Hyprlock bottom label bindings) ---
