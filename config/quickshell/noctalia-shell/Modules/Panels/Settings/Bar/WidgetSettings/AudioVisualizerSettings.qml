@@ -20,6 +20,7 @@ ColumnLayout {
   property string valueColorName: widgetData.colorName !== undefined ? widgetData.colorName : widgetMetadata.colorName
   property bool valueIdleAnimation: widgetData.idleAnimation !== undefined ? widgetData.idleAnimation : true
   property string valueIdleStyle: widgetData.idleStyle !== undefined ? widgetData.idleStyle : (widgetMetadata.idleStyle || "aurora")
+  property bool valueCpuReactive: widgetData.cpuReactive !== undefined ? widgetData.cpuReactive : (widgetMetadata.cpuReactive !== undefined ? widgetMetadata.cpuReactive : true)
   property bool valueFillGap: widgetData.fillGap !== undefined ? widgetData.fillGap : true
 
   function saveSettings() {
@@ -29,6 +30,7 @@ ColumnLayout {
     settings.colorName = valueColorName;
     settings.idleAnimation = valueIdleAnimation;
     settings.idleStyle = valueIdleStyle;
+    settings.cpuReactive = valueCpuReactive;
     settings.fillGap = valueFillGap;
     settingsChanged(settings);
     return settings;
@@ -112,6 +114,18 @@ ColumnLayout {
                   saveSettings();
                 }
     defaultValue: "aurora"
+  }
+
+  NToggle {
+    label: "CPU reactive speed"
+    description: "Accelerate animation tempo dynamically when CPU usage increases"
+    visible: root.valueIdleAnimation
+    checked: valueCpuReactive
+    onToggled: checked => {
+                 valueCpuReactive = checked;
+                 saveSettings();
+               }
+    defaultValue: true
   }
 
   NToggle {

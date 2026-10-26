@@ -4,6 +4,7 @@ import Quickshell
 import qs.Commons
 import qs.Modules.Bar.Extras
 import qs.Services.Media
+import qs.Services.System
 import qs.Services.UI
 import qs.Widgets
 import qs.Widgets.AudioSpectrum
@@ -45,9 +46,44 @@ Item {
   property string currentIdleStyle: (widgetSettings && widgetSettings.idleStyle !== undefined) ? widgetSettings.idleStyle : (widgetMetadata.idleStyle || "aurora")
   readonly property string idleStyle: currentIdleStyle
 
+  property bool currentCpuReactive: (widgetSettings && widgetSettings.cpuReactive !== undefined) ? widgetSettings.cpuReactive : (widgetMetadata.cpuReactive !== undefined ? widgetMetadata.cpuReactive : true)
+  readonly property bool cpuReactive: currentCpuReactive
+
+  property real smoothedCpuUsage: 0.0
+
+  function saveSettingKey(key, value) {
+    var sec = root.section;
+    var idx = root.sectionWidgetIndex;
+    var scr = root.screenName;
+    if (!sec || idx < 0) return;
+
+    var patch = {};
+    patch[key] = value;
+
+    if (Settings.hasScreenOverride(scr, "widgets")) {
+      var overrideWidgets = Settings.getBarWidgetsForScreen(scr);
+      if (overrideWidgets && overrideWidgets[sec] && idx < overrideWidgets[sec].length) {
+        overrideWidgets[sec][idx] = Object.assign({}, overrideWidgets[sec][idx], patch);
+        Settings.setScreenOverride(scr, "widgets", overrideWidgets);
+        Settings.saveImmediate();
+      }
+    } else {
+      var widgets = Settings.data.bar.widgets[sec];
+      if (widgets && idx < widgets.length) {
+        var updatedWidgets = JSON.parse(JSON.stringify(widgets));
+        updatedWidgets[idx] = Object.assign({}, updatedWidgets[idx], patch);
+        Settings.data.bar.widgets[sec] = updatedWidgets;
+        Settings.saveImmediate();
+      }
+    }
+  }
+
   onWidgetSettingsChanged: {
     if (widgetSettings && widgetSettings.idleStyle !== undefined) {
       currentIdleStyle = widgetSettings.idleStyle;
+    }
+    if (widgetSettings && widgetSettings.cpuReactive !== undefined) {
+      currentCpuReactive = widgetSettings.cpuReactive;
     }
   }
 
@@ -93,8 +129,19 @@ Item {
     root._lastTime = now;
     if (dt <= 0 || dt > 0.1) dt = 0.016;
 
-    // Advance idle wave phase
-    root.idlePhase += dt * 3.0;
+    // Calculate CPU reactivity
+    var targetCpu = root.cpuReactive ? (SystemStatService.cpuUsage || 0.0) : 0.0;
+    var cpuLerpSpeed = targetCpu > root.smoothedCpuUsage ? 3.0 : 1.2;
+    root.smoothedCpuUsage += (targetCpu - root.smoothedCpuUsage) * Math.min(1.0, dt * cpuLerpSpeed);
+
+    // Speed multiplier: smoothly scales from 1.0x (normal idle <= 5%) up to 2.8x (100% CPU load)
+    var cpuRatio = Math.max(0.0, Math.min(1.0, (root.smoothedCpuUsage - 5.0) / 80.0));
+    var cpuFactor = Math.pow(cpuRatio, 1.2);
+    var speedMultiplier = root.cpuReactive ? (1.0 + cpuFactor * 1.8) : 1.0;
+    var loadBoost = root.cpuReactive ? (1.0 + cpuRatio * 0.18) : 1.0;
+
+    // Advance idle wave phase with CPU-modulated speed
+    root.idlePhase += dt * 3.0 * speedMultiplier;
     if (root.idlePhase > 6283.18) {
       root.idlePhase -= 6283.18;
     }
@@ -180,7 +227,7 @@ Item {
         idleHeight = (0.07 + 0.34 * aCombined * breath) * taper;
       }
 
-      idleHeight = Math.max(0.05, Math.min(0.60, idleHeight));
+      idleHeight = Math.max(0.05, Math.min(0.65, idleHeight * loadBoost));
 
       if (!root.idleAnimation) {
         idleHeight = 0.0;
@@ -224,6 +271,7 @@ Item {
   }
 
   Component.onCompleted: {
+    SystemStatService.registerComponent("bar-audiovisualizer:" + (screen?.name || "unknown"));
     if (root.isVisualizerConfigured) {
       SpectrumService.registerComponent(root.spectrumComponentId);
     }
@@ -231,6 +279,7 @@ Item {
   }
 
   Component.onDestruction: {
+    SystemStatService.unregisterComponent("bar-audiovisualizer:" + (screen?.name || "unknown"));
     SpectrumService.unregisterComponent(root.spectrumComponentId);
   }
 
@@ -311,6 +360,11 @@ Item {
         "icon": "wand-magic-sparkles"
       },
       {
+        "label": root.currentCpuReactive ? "CPU Reactive: ON" : "CPU Reactive: OFF",
+        "action": "toggle-cpu-reactive",
+        "icon": "cpu"
+      },
+      {
         "label": I18n.tr("actions.cycle-visualizer"),
         "action": "cycle-visualizer",
         "icon": "chart-column"
@@ -334,28 +388,10 @@ Item {
                      const nextIdx = (curIdx + 1) % styles.length;
                      var newStyle = styles[nextIdx];
                      root.currentIdleStyle = newStyle;
-
-                     var sec = root.section;
-                     var idx = root.sectionWidgetIndex;
-                     var scr = root.screenName;
-                     if (sec && idx >= 0) {
-                       if (Settings.hasScreenOverride(scr, "widgets")) {
-                         var overrideWidgets = Settings.getBarWidgetsForScreen(scr);
-                         if (overrideWidgets && overrideWidgets[sec] && idx < overrideWidgets[sec].length) {
-                           overrideWidgets[sec][idx] = Object.assign({}, overrideWidgets[sec][idx], { "idleStyle": newStyle });
-                           Settings.setScreenOverride(scr, "widgets", overrideWidgets);
-                           Settings.saveImmediate();
-                         }
-                       } else {
-                         var widgets = Settings.data.bar.widgets[sec];
-                         if (widgets && idx < widgets.length) {
-                           var updatedWidgets = JSON.parse(JSON.stringify(widgets));
-                           updatedWidgets[idx] = Object.assign({}, updatedWidgets[idx], { "idleStyle": newStyle });
-                           Settings.data.bar.widgets[sec] = updatedWidgets;
-                           Settings.saveImmediate();
-                         }
-                       }
-                     }
+                     root.saveSettingKey("idleStyle", newStyle);
+                   } else if (action === "toggle-cpu-reactive") {
+                     root.currentCpuReactive = !root.currentCpuReactive;
+                     root.saveSettingKey("cpuReactive", root.currentCpuReactive);
                    } else if (action === "cycle-visualizer") {
                      const types = ["linear", "mirrored", "wave"];
                      const currentIndex = types.indexOf(currentVisualizerType);

@@ -96,6 +96,7 @@
             "center": [
                 {
                     "colorName": "primary",
+                    "cpuReactive": true,
                     "fillGap": true,
                     "hideWhenIdle": false,
                     "id": "AudioVisualizer",
@@ -161,19 +162,12 @@
             ],
             "right": [
                 {
-                    "defaultSettings": {
-                        "hideBackground": false,
-                        "minimumThreshold": 10
-                    },
-                    "id": "plugin:catwalk"
-                },
-                {
                     "blacklist": [
                     ],
-                    "chevronColor": "primary",
-                    "colorizeIcons": true,
+                    "chevronColor": "error",
+                    "colorizeIcons": false,
                     "drawerEnabled": true,
-                    "hidePassive": true,
+                    "hidePassive": false,
                     "id": "Tray",
                     "pinned": [
                         "steam",

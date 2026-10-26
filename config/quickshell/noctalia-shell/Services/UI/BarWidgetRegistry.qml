@@ -94,6 +94,7 @@ Singleton {
                                     "hideWhenIdle": false,
                                     "idleAnimation": true,
                                     "idleStyle": "aurora",
+                                    "cpuReactive": true,
                                     "fillGap": true
                                   },
                                   "Battery": {
