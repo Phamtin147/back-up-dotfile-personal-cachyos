@@ -6,6 +6,7 @@ alsa-plugins
 alsa-utils
 android-tools
 android-udev
+aria2
 aspnet-runtime-8.0
 aspnet-targeting-pack-8.0
 awesome-terminal-fonts
@@ -79,6 +80,7 @@ gamescope
 gdb
 gdb-common
 geoclue
+ggml-cuda
 ghostscript
 git
 github-cli
@@ -86,6 +88,7 @@ godot
 grub-btrfs-support
 gst-plugin-pipewire
 gst-plugins-bad
+guvcview
 hyprlock
 inetutils
 intel-media-driver
@@ -203,7 +206,11 @@ sudo
 switcheroo-control
 swtpm
 sysfsutils
+tailscale
 talloc
+tesseract
+tesseract-data-eng
+tesseract-data-vie
 tevent
 texinfo
 tlp
@@ -226,6 +233,7 @@ wdisplays
 wf-recorder
 wget
 which
+whisper-cpp
 wireplumber
 wl-mirror
 wlsunset

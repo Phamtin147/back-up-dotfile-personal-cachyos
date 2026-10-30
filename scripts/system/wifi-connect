@@ -1,0 +1,677 @@
+#!/usr/bin/env python3
+import curses
+import subprocess
+import os
+import sys
+import json
+
+def hex_to_rgb(hex_str):
+    try:
+        hex_str = hex_str.strip().lstrip("#")
+        if len(hex_str) == 6:
+            return tuple(int(hex_str[i:i+2], 16) for i in (0, 2, 4))
+        elif len(hex_str) == 3:
+            return tuple(int(c * 2, 16) for c in hex_str)
+    except Exception:
+        pass
+    return None
+
+def relative_luminance(r, g, b):
+    def channel_lum(c):
+        c = c / 255.0
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    return 0.2126 * channel_lum(r) + 0.7152 * channel_lum(g) + 0.0722 * channel_lum(b)
+
+def contrast_ratio(rgb1, rgb2):
+    l1 = relative_luminance(*rgb1)
+    l2 = relative_luminance(*rgb2)
+    lighter = max(l1, l2)
+    darker = min(l1, l2)
+    return (lighter + 0.05) / (darker + 0.05)
+
+def get_contrasting_fg(bg_rgb, candidate_fg_rgb=None):
+    if candidate_fg_rgb and contrast_ratio(bg_rgb, candidate_fg_rgb) >= 4.5:
+        return candidate_fg_rgb
+    black = (17, 17, 17)
+    white = (255, 255, 255)
+    return black if contrast_ratio(bg_rgb, black) >= contrast_ratio(bg_rgb, white) else white
+
+def load_system_theme():
+    home = os.path.expanduser("~")
+    for cpath in [os.path.join(home, ".config/noctalia/colors.json"),
+                  os.path.join(home, ".cache/ryoku/colors.json")]:
+        if os.path.isfile(cpath):
+            try:
+                with open(cpath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    bg_hex = data.get("mPrimary")
+                    fg_hex = data.get("mOnPrimary")
+                    if bg_hex:
+                        bg_rgb = hex_to_rgb(bg_hex)
+                        fg_rgb = hex_to_rgb(fg_hex) if fg_hex else None
+                        if bg_rgb:
+                            return bg_rgb, get_contrasting_fg(bg_rgb, fg_rgb)
+            except Exception:
+                pass
+
+    kitty_conf = os.path.join(home, ".config/kitty/kitty.conf")
+    if os.path.isfile(kitty_conf):
+        try:
+            sel_bg, sel_fg, col4 = None, None, None
+            with open(kitty_conf, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("selection_background"):
+                        parts = line.split()
+                        if len(parts) >= 2: sel_bg = hex_to_rgb(parts[1])
+                    elif line.startswith("selection_foreground"):
+                        parts = line.split()
+                        if len(parts) >= 2: sel_fg = hex_to_rgb(parts[1])
+                    elif line.startswith("color4"):
+                        parts = line.split()
+                        if len(parts) >= 2: col4 = hex_to_rgb(parts[1])
+            bg_rgb = sel_bg or col4
+            if bg_rgb:
+                return bg_rgb, get_contrasting_fg(bg_rgb, sel_fg)
+        except Exception:
+            pass
+
+    return (66, 133, 244), (255, 255, 255)
+
+def get_theme_mtime():
+    home = os.path.expanduser("~")
+    paths = [
+        os.path.join(home, ".config/noctalia/colors.json"),
+        os.path.join(home, ".cache/ryoku/colors.json"),
+        os.path.join(home, ".config/kitty/kitty.conf")
+    ]
+    mtimes = []
+    for p in paths:
+        try:
+            mtimes.append(os.path.getmtime(p))
+        except OSError:
+            pass
+    return tuple(mtimes)
+
+def setup_theme_colors():
+    if not curses.has_colors():
+        return
+
+    try:
+        curses.start_color()
+        curses.use_default_colors()
+    except Exception:
+        pass
+
+    bg_rgb, fg_rgb = load_system_theme()
+
+    try:
+        curses.init_pair(2, curses.COLOR_GREEN, -1)   # Active / Connected
+        curses.init_pair(3, curses.COLOR_CYAN, -1)    # Saved
+        curses.init_pair(4, curses.COLOR_YELLOW, -1)  # Enterprise
+        curses.init_pair(5, curses.COLOR_MAGENTA, -1) # Active card tab
+    except Exception:
+        pass
+
+    if curses.can_change_color():
+        try:
+            curses.init_color(20, int(bg_rgb[0] * 1000 / 255),
+                                  int(bg_rgb[1] * 1000 / 255),
+                                  int(bg_rgb[2] * 1000 / 255))
+            curses.init_color(21, int(fg_rgb[0] * 1000 / 255),
+                                  int(fg_rgb[1] * 1000 / 255),
+                                  int(fg_rgb[2] * 1000 / 255))
+            curses.init_pair(1, 21, 20)
+            return
+        except Exception:
+            pass
+
+    try:
+        black = (0, 0, 0)
+        white = (255, 255, 255)
+        ansi_fg = curses.COLOR_BLACK if contrast_ratio(bg_rgb, black) >= contrast_ratio(bg_rgb, white) else curses.COLOR_WHITE
+        curses.init_pair(1, ansi_fg, curses.COLOR_BLUE)
+    except Exception:
+        pass
+
+def safe_curs_set(vis):
+    try:
+        curses.curs_set(vis)
+    except Exception:
+        pass
+
+def safe_addstr(win, y, x, text, attr=0):
+    try:
+        max_y, max_x = win.getmaxyx()
+        if y < 0 or y >= max_y or x < 0 or x >= max_x:
+            return
+        avail = max_x - x
+        if y == max_y - 1:
+            avail = max(0, avail - 1)
+        if avail <= 0:
+            return
+        win.addstr(y, x, text[:avail], attr)
+    except Exception:
+        pass
+
+def get_wifi_devices():
+    try:
+        out = subprocess.check_output(
+            ["nmcli", "-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "dev"],
+            text=True, stderr=subprocess.DEVNULL
+        )
+        devs = []
+        for line in out.strip().split("\n"):
+            parts = line.split(":")
+            if len(parts) >= 2 and parts[1] == "wifi":
+                dev = parts[0]
+                state = parts[2] if len(parts) > 2 else "disconnected"
+                conn = parts[3] if len(parts) > 3 else ""
+                
+                vendor = ""
+                prod = ""
+                try:
+                    pout = subprocess.check_output(
+                        ["nmcli", "-t", "-f", "GENERAL.PRODUCT,GENERAL.VENDOR", "dev", "show", dev],
+                        text=True, stderr=subprocess.DEVNULL
+                    )
+                    for pline in pout.strip().split("\n"):
+                        if pline.startswith("GENERAL.PRODUCT:"):
+                            prod = pline.split(":", 1)[1].strip()
+                        elif pline.startswith("GENERAL.VENDOR:"):
+                            vendor = pline.split(":", 1)[1].strip()
+                except Exception:
+                    pass
+                
+                short_name = ""
+                if "Realtek" in vendor or "Realtek" in prod:
+                    short_name = "Realtek USB"
+                elif "Broadcom" in vendor or "BCM" in prod:
+                    short_name = "Broadcom PCI"
+                elif "Intel" in vendor or "Intel" in prod:
+                    short_name = "Intel Wi-Fi"
+                elif prod:
+                    short_name = prod[:14]
+                else:
+                    short_name = dev
+                
+                devs.append({
+                    "dev": dev,
+                    "state": state,
+                    "conn": conn,
+                    "vendor": vendor,
+                    "product": prod,
+                    "short_name": short_name,
+                    "label": f"{dev} ({short_name})"
+                })
+        return devs
+    except Exception:
+        return []
+
+def get_saved_connections():
+    try:
+        out = subprocess.check_output(
+            ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"],
+            text=True, stderr=subprocess.DEVNULL
+        )
+        saved = set()
+        for line in out.strip().split("\n"):
+            if ":802-11-wireless" in line:
+                saved.add(line.split(":802-11-wireless")[0])
+        return saved
+    except Exception:
+        return set()
+
+def forget_network(ssid):
+    try:
+        out = subprocess.check_output(
+            ["nmcli", "-t", "-f", "NAME,UUID,TYPE", "connection", "show"],
+            text=True, stderr=subprocess.DEVNULL
+        )
+        deleted = False
+        for line in out.strip().split("\n"):
+            if not line:
+                continue
+            parts = line.split(":")
+            if len(parts) >= 3 and parts[2] == "802-11-wireless":
+                con_name = parts[0]
+                uuid = parts[1]
+                if con_name == ssid:
+                    res = subprocess.run(["nmcli", "connection", "delete", "uuid", uuid], capture_output=True, text=True)
+                    if res.returncode == 0:
+                        deleted = True
+        return deleted
+    except Exception:
+        return False
+
+def scan_wifi(ifname):
+    if ifname:
+        subprocess.run(["nmcli", "dev", "wifi", "rescan", "ifname", ifname], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        cmd = ["nmcli", "-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY", "dev", "wifi", "list", "ifname", ifname]
+    else:
+        subprocess.run(["nmcli", "dev", "wifi", "rescan"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        cmd = ["nmcli", "-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY", "dev", "wifi", "list"]
+        
+    out = ""
+    try:
+        out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+    
+    saved_conns = get_saved_connections()
+    seen = {}
+    for line in out.strip().split("\n"):
+        if not line:
+            continue
+        parts = line.split(":")
+        if len(parts) >= 4:
+            in_use = parts[0] == "*"
+            ssid = parts[1].strip()
+            signal = parts[2].strip()
+            sec = parts[3].strip()
+            if not ssid:
+                continue
+            sig_num = int(signal) if signal.isdigit() else 0
+            is_saved = ssid in saved_conns
+            if ssid not in seen or sig_num > seen[ssid]["signal"]:
+                seen[ssid] = {
+                    "in_use": in_use,
+                    "ssid": ssid,
+                    "signal": sig_num,
+                    "security": sec if sec else "Open",
+                    "saved": is_saved
+                }
+    
+    nets = list(seen.values())
+    nets.sort(key=lambda x: (not x["in_use"], not x["saved"], -x["signal"]))
+    return nets
+
+def draw_input_box(stdscr, title, fields):
+    safe_curs_set(1)
+    h, w = stdscr.getmaxyx()
+    box_h = len(fields) * 3 + 6
+    box_w = min(64, max(42, w - 4))
+    start_y = max(0, (h - box_h) // 2)
+    start_x = max(0, (w - box_w) // 2)
+    
+    win = curses.newwin(box_h, box_w, start_y, start_x)
+    win.keypad(True)
+    
+    values = {label: "" for label, _ in fields}
+    cursors = {label: 0 for label, _ in fields}
+    field_idx = 0
+    
+    while True:
+        win.clear()
+        win.box()
+        title_str = f" {title} "
+        safe_addstr(win, 0, max(2, (box_w - len(title_str)) // 2), title_str, curses.A_BOLD)
+        
+        for idx, (label, is_pw) in enumerate(fields):
+            y = 2 + idx * 3
+            is_active = (idx == field_idx)
+            safe_addstr(win, y, 3, f"{label}:", curses.A_BOLD if is_active else curses.A_NORMAL)
+            
+            val = values[label]
+            display_val = ("*" * len(val)) if is_pw else val
+            input_w = box_w - 8
+            padded_val = display_val.ljust(input_w)
+            
+            attr = (curses.color_pair(1) | curses.A_BOLD) if is_active else curses.A_NORMAL
+            safe_addstr(win, y + 1, 3, f"[{padded_val}]", attr)
+            
+        btn_str = "< OK: Enter >      < Cancel: Esc >"
+        safe_addstr(win, box_h - 2, max(2, (box_w - len(btn_str)) // 2), btn_str)
+        
+        # Position the terminal cursor
+        curr_label, _ = fields[field_idx]
+        cur_pos = cursors[curr_label]
+        try:
+            win.move(2 + field_idx * 3 + 1, 4 + cur_pos)
+        except Exception:
+            pass
+        win.refresh()
+        
+        ch = win.getch()
+        if ch in (27, 3):  # Esc or Ctrl+C
+            safe_curs_set(0)
+            return None
+        elif ch in (curses.KEY_ENTER, 10, 13):
+            if field_idx < len(fields) - 1:
+                field_idx += 1
+            else:
+                safe_curs_set(0)
+                return values
+        elif ch == curses.KEY_UP:
+            field_idx = max(0, field_idx - 1)
+        elif ch in (curses.KEY_DOWN, 9):  # Down or Tab
+            field_idx = (field_idx + 1) % len(fields)
+        elif ch in (curses.KEY_BACKSPACE, 127, 8):
+            curr_label, _ = fields[field_idx]
+            cur_pos = cursors[curr_label]
+            if cur_pos > 0:
+                values[curr_label] = values[curr_label][:cur_pos-1] + values[curr_label][cur_pos:]
+                cursors[curr_label] -= 1
+        elif ch == curses.KEY_DC:  # Delete key
+            curr_label, _ = fields[field_idx]
+            cur_pos = cursors[curr_label]
+            if cur_pos < len(values[curr_label]):
+                values[curr_label] = values[curr_label][:cur_pos] + values[curr_label][cur_pos+1:]
+        elif ch == curses.KEY_LEFT:
+            curr_label, _ = fields[field_idx]
+            if cursors[curr_label] > 0:
+                cursors[curr_label] -= 1
+        elif ch == curses.KEY_RIGHT:
+            curr_label, _ = fields[field_idx]
+            if cursors[curr_label] < len(values[curr_label]):
+                cursors[curr_label] += 1
+        elif 32 <= ch <= 126:
+            curr_label, _ = fields[field_idx]
+            cur_pos = cursors[curr_label]
+            if len(values[curr_label]) < box_w - 10:
+                values[curr_label] = values[curr_label][:cur_pos] + chr(ch) + values[curr_label][cur_pos:]
+                cursors[curr_label] += 1
+
+def connect_network(stdscr, ifname, net):
+    ssid = net["ssid"]
+    is_saved = net["saved"]
+    is_enterprise = "802.1X" in net["security"]
+    is_open = net["security"] == "Open"
+    
+    h, w = stdscr.getmaxyx()
+    
+    # 1. If already saved, connect immediately with saved profile on selected ifname
+    if is_saved:
+        stdscr.clear()
+        stdscr.box()
+        msg = f"Connecting to saved network '{ssid}' on {ifname}..."
+        safe_addstr(stdscr, h // 2, max(2, (w - len(msg)) // 2), msg, curses.A_BOLD)
+        stdscr.refresh()
+        
+        cmd = ["nmcli", "connection", "up", "id", ssid]
+        if ifname:
+            cmd.extend(["ifname", ifname])
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        if res.returncode == 0:
+            return True, "Connected"
+        # Fallback to dev wifi connect if con up fails
+        res2 = subprocess.run(["nmcli", "dev", "wifi", "connect", ssid, "ifname", ifname], capture_output=True, text=True)
+        return res2.returncode == 0, res2.stderr or res2.stdout or res.stderr
+
+    # 2. If new Enterprise network, ask Username + Password
+    if is_enterprise:
+        creds = draw_input_box(stdscr, f"802.1X Login: {ssid}", [("Username", False), ("Password", True)])
+        if creds is None:
+            return None, "Cancelled"
+        user = creds["Username"].strip()
+        pw = creds["Password"]
+        if not user:
+            return False, "Username cannot be empty"
+            
+        stdscr.clear()
+        stdscr.box()
+        msg = f"Configuring & connecting to '{ssid}' on {ifname}..."
+        safe_addstr(stdscr, h // 2, max(2, (w - len(msg)) // 2), msg, curses.A_BOLD)
+        stdscr.refresh()
+        
+        subprocess.run(["nmcli", "connection", "delete", ssid], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        cmd_add = [
+            "nmcli", "connection", "add", "type", "wifi", "con-name", ssid,
+            "ifname", ifname, "ssid", ssid,
+            "wifi-sec.key-mgmt", "wpa-eap", "802-1x.eap", "peap", "802-1x.phase2-auth", "mschapv2",
+            "802-1x.identity", user, "802-1x.password", pw
+        ]
+        res_add = subprocess.run(cmd_add, capture_output=True, text=True)
+        if res_add.returncode != 0:
+            return False, res_add.stderr
+            
+        cmd_up = ["nmcli", "connection", "up", "id", ssid, "ifname", ifname]
+        res_up = subprocess.run(cmd_up, capture_output=True, text=True)
+        return res_up.returncode == 0, res_up.stderr or res_up.stdout
+
+    # 3. If new WPA-Personal network, ask Password
+    if not is_open:
+        creds = draw_input_box(stdscr, f"Wi-Fi Password: {ssid}", [("Password", True)])
+        if creds is None:
+            return None, "Cancelled"
+        pw = creds["Password"]
+        
+        stdscr.clear()
+        stdscr.box()
+        msg = f"Connecting to '{ssid}' on {ifname}..."
+        safe_addstr(stdscr, h // 2, max(2, (w - len(msg)) // 2), msg, curses.A_BOLD)
+        stdscr.refresh()
+        
+        cmd = ["nmcli", "dev", "wifi", "connect", ssid, "password", pw]
+        if ifname:
+            cmd.extend(["ifname", ifname])
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        return res.returncode == 0, res.stderr or res.stdout
+
+    # 4. Open network
+    stdscr.clear()
+    stdscr.box()
+    msg = f"Connecting to open network '{ssid}' on {ifname}..."
+    safe_addstr(stdscr, h // 2, max(2, (w - len(msg)) // 2), msg, curses.A_BOLD)
+    stdscr.refresh()
+    
+    cmd = ["nmcli", "dev", "wifi", "connect", ssid]
+    if ifname:
+        cmd.extend(["ifname", ifname])
+    res = subprocess.run(cmd, capture_output=True, text=True)
+    return res.returncode == 0, res.stderr or res.stdout
+
+def tui_main(stdscr):
+    safe_curs_set(0)
+    stdscr.keypad(True)
+    stdscr.timeout(1500)
+    
+    setup_theme_colors()
+    last_theme_mtime = get_theme_mtime()
+    
+    devs = get_wifi_devices()
+    dev_idx = 0
+    nets = []
+    selected_idx = 0
+    top_idx = 0
+    status_msg = "Ready"
+    
+    # If no wifi devices found, fallback to generic
+    if not devs:
+        devs = [{"dev": "", "label": "Default Wi-Fi", "short_name": "Wi-Fi", "state": "unknown", "conn": ""}]
+
+    while True:
+        curr_theme_mtime = get_theme_mtime()
+        if curr_theme_mtime != last_theme_mtime:
+            setup_theme_colors()
+            last_theme_mtime = curr_theme_mtime
+
+        curr_dev = devs[dev_idx]
+        curr_ifname = curr_dev["dev"]
+        
+        if not nets:
+            stdscr.clear()
+            stdscr.box()
+            safe_addstr(stdscr, 1, 3, "Network Connections", curses.A_BOLD)
+            scan_hint = f"Scanning Wi-Fi networks on {curr_dev['label']}..."
+            safe_addstr(stdscr, 3, 3, scan_hint)
+            stdscr.refresh()
+            nets = scan_wifi(curr_ifname)
+            devs = get_wifi_devices() or devs
+            curr_dev = devs[dev_idx]
+            status_msg = f"Found {len(nets)} networks on {curr_dev['label']}"
+            
+        h, w = stdscr.getmaxyx()
+        stdscr.clear()
+        stdscr.box()
+        
+        # Header title
+        header = " NetworkManager Wi-Fi "
+        safe_addstr(stdscr, 0, max(2, (w - len(header)) // 2), header, curses.A_BOLD)
+        
+        # Row 1: Wi-Fi Card Selector Tabs
+        cur_x = 2
+        safe_addstr(stdscr, 1, cur_x, "Card: ")
+        cur_x += 6
+        for i, d in enumerate(devs):
+            is_active_card = (i == dev_idx)
+            tab_text = f" [{i+1}: {d['label']}] "
+            if is_active_card:
+                safe_addstr(stdscr, 1, cur_x, tab_text, curses.color_pair(1) | curses.A_BOLD)
+            else:
+                safe_addstr(stdscr, 1, cur_x, tab_text, curses.A_DIM)
+            cur_x += len(tab_text) + 1
+            
+        # Divider below cards
+        safe_addstr(stdscr, 2, 1, "─" * (w - 2))
+        
+        # Column Headers
+        ssid_w = max(15, w - 44)
+        col_hdr = f" {'STATUS':<11} {'SSID':<{ssid_w}} {'SIGNAL':<8} {'SECURITY':<14}"
+        safe_addstr(stdscr, 3, 2, col_hdr, curses.A_UNDERLINE | curses.A_BOLD)
+        
+        # Network List rows
+        list_start_y = 4
+        max_rows = max(1, h - 8)
+        if selected_idx < top_idx:
+            top_idx = selected_idx
+        elif selected_idx >= top_idx + max_rows:
+            top_idx = selected_idx - max_rows + 1
+            
+        visible_nets = nets[top_idx:top_idx + max_rows]
+        
+        if not visible_nets:
+            safe_addstr(stdscr, list_start_y + 1, 4, "(No Wi-Fi networks found. Press 'r' to rescan)", curses.A_DIM)
+        
+        for i, net in enumerate(visible_nets):
+            row_idx = top_idx + i
+            y = list_start_y + i
+            is_sel = (row_idx == selected_idx)
+            
+            st_text = "* CONNECTED" if net["in_use"] else ("[SAVED]" if net["saved"] else "")
+            sig_text = f"{net['signal']}%"
+            sec_text = "802.1X (EAP)" if "802.1X" in net["security"] else net["security"]
+            ssid_disp = net["ssid"][:ssid_w-1]
+            
+            row_str = f" {st_text:<11} {ssid_disp:<{ssid_w}} {sig_text:<8} {sec_text:<14}"
+            row_str = row_str[:w-4].ljust(w-4)
+            
+            if is_sel:
+                safe_addstr(stdscr, y, 2, row_str, curses.color_pair(1) | curses.A_BOLD)
+            elif net["in_use"]:
+                safe_addstr(stdscr, y, 2, row_str, curses.color_pair(2) | curses.A_BOLD)
+            elif net["saved"]:
+                safe_addstr(stdscr, y, 2, row_str, curses.color_pair(3))
+            elif "802.1X" in net["security"]:
+                safe_addstr(stdscr, y, 2, row_str, curses.color_pair(4))
+            else:
+                safe_addstr(stdscr, y, 2, row_str)
+                
+        # Footer Dividers & Status
+        safe_addstr(stdscr, h - 3, 1, "─" * (w - 2))
+        safe_addstr(stdscr, h - 2, 2, f"Status: {status_msg}"[:w-4])
+        
+        hint_str = "<Enter: Connect>  <f: Forget>  <d: Disconnect>  <Tab: Card>  <r: Rescan>  <q: Quit>"
+        safe_addstr(stdscr, h - 1, max(2, (w - len(hint_str)) // 2), hint_str[:w-4], curses.A_BOLD)
+        stdscr.refresh()
+        
+        ch = stdscr.getch()
+        if ch == -1:
+            continue
+        elif ch in (ord('q'), ord('Q'), 27):  # Quit
+            break
+        elif ch in (ord('r'), ord('R')):  # Rescan
+            setup_theme_colors()
+            last_theme_mtime = get_theme_mtime()
+            nets = []
+            status_msg = "Rescanning..."
+        elif ch in (9, ord('c'), ord('C')):  # Tab or 'c' -> Switch Wi-Fi card
+            if len(devs) > 1:
+                dev_idx = (dev_idx + 1) % len(devs)
+                nets = []
+                selected_idx = 0
+                top_idx = 0
+                status_msg = f"Switched to {devs[dev_idx]['label']}"
+        elif ord('1') <= ch <= ord('9'):  # Number keys 1..9 to jump to card
+            target_dev_idx = ch - ord('1')
+            if 0 <= target_dev_idx < len(devs) and target_dev_idx != dev_idx:
+                dev_idx = target_dev_idx
+                nets = []
+                selected_idx = 0
+                top_idx = 0
+                status_msg = f"Switched to {devs[dev_idx]['label']}"
+        elif ch == curses.KEY_LEFT:
+            if len(devs) > 1:
+                dev_idx = (dev_idx - 1) % len(devs)
+                nets = []
+                selected_idx = 0
+                top_idx = 0
+                status_msg = f"Switched to {devs[dev_idx]['label']}"
+        elif ch == curses.KEY_RIGHT:
+            if len(devs) > 1:
+                dev_idx = (dev_idx + 1) % len(devs)
+                nets = []
+                selected_idx = 0
+                top_idx = 0
+                status_msg = f"Switched to {devs[dev_idx]['label']}"
+        elif ch in (ord('f'), ord('F'), curses.KEY_DC, ord('x'), ord('X')):  # Forget network
+            if 0 <= selected_idx < len(nets):
+                chosen = nets[selected_idx]
+                ssid = chosen["ssid"]
+                if chosen["saved"]:
+                    stdscr.clear()
+                    stdscr.box()
+                    msg = f"Forgetting saved profile for '{ssid}'..."
+                    safe_addstr(stdscr, h // 2, max(2, (w - len(msg)) // 2), msg, curses.A_BOLD)
+                    stdscr.refresh()
+                    if forget_network(ssid):
+                        status_msg = f"Forgot network '{ssid}'. Press Enter to reconnect with new password."
+                    else:
+                        status_msg = f"Failed to forget '{ssid}'."
+                    nets = scan_wifi(curr_ifname)
+                    devs = get_wifi_devices() or devs
+                else:
+                    status_msg = f"'{ssid}' is not a saved network."
+        elif ch in (ord('d'), ord('D')):  # Disconnect active connection on current card
+            if curr_ifname:
+                stdscr.clear()
+                stdscr.box()
+                msg = f"Disconnecting {curr_ifname}..."
+                safe_addstr(stdscr, h // 2, max(2, (w - len(msg)) // 2), msg, curses.A_BOLD)
+                stdscr.refresh()
+                res = subprocess.run(["nmcli", "device", "disconnect", curr_ifname], capture_output=True, text=True)
+                if res.returncode == 0:
+                    status_msg = f"Disconnected {curr_ifname}."
+                else:
+                    status_msg = f"Disconnect error: {res.stderr.strip()[:40]}"
+                nets = scan_wifi(curr_ifname)
+                devs = get_wifi_devices() or devs
+        elif ch in (curses.KEY_UP, ord('k')):
+            if selected_idx > 0:
+                selected_idx -= 1
+        elif ch in (curses.KEY_DOWN, ord('j')):
+            if selected_idx < len(nets) - 1:
+                selected_idx += 1
+        elif ch == curses.KEY_PPAGE:  # Page Up
+            selected_idx = max(0, selected_idx - 10)
+        elif ch == curses.KEY_NPAGE:  # Page Down
+            selected_idx = min(len(nets) - 1, selected_idx + 10)
+        elif ch in (curses.KEY_ENTER, 10, 13):
+            if 0 <= selected_idx < len(nets):
+                chosen = nets[selected_idx]
+                ok, msg = connect_network(stdscr, curr_ifname, chosen)
+                if ok is True:
+                    status_msg = f"Connected to {chosen['ssid']} on {curr_ifname} successfully!"
+                    nets = scan_wifi(curr_ifname)
+                    devs = get_wifi_devices() or devs
+                elif ok is False:
+                    status_msg = f"Failed: {msg[:40]}"
+                else:
+                    status_msg = "Cancelled."
+
+if __name__ == "__main__":
+    try:
+        curses.wrapper(tui_main)
+    except KeyboardInterrupt:
+        pass
+

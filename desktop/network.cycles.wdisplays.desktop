@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Categories=GTK;Settings;DesktopSettings;
+Exec=/home/amtia/.local/bin/wdisplays
+Icon=network.cycles.wdisplays
+
+Name=Displays
+GenericName=Displays configuration
+Comment=wlroots displays configuration (Auto-sync to Niri)

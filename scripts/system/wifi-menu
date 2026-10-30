@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+if [ -t 0 ] && [ -t 1 ]; then
+    exec /home/amtia/.local/bin/wifi-connect "$@"
+else
+    exec kitty --title "Wi-Fi Manager" -o initial_window_width=80c -o initial_window_height=25c /home/amtia/.local/bin/wifi-connect "$@"
+fi

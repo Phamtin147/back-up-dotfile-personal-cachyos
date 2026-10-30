@@ -43,6 +43,7 @@ echo "==> [4/9] Sao lưu cấu hình ~/.config..."
 mkdir -p "$DOTFILES_DIR/config"
 
 CONFIG_ITEMS=(
+    "mpv"
     "noctalia"
     "quickshell"
     "hypr"
@@ -171,6 +172,20 @@ fi
 if [ -f "$HOME/.local/bin/screen-off" ]; then
     cp -af "$HOME/.local/bin/screen-off" "$DOTFILES_DIR/scripts/system/"
 fi
+
+# Camera & Microscope scripts
+for s in camera-selector camera-menu cam-menu soi-mach; do
+    if [ -e "$HOME/.local/bin/$s" ]; then
+        cp -af "$HOME/.local/bin/$s" "$DOTFILES_DIR/scripts/system/"
+    fi
+done
+
+# Wi-Fi & Network TUI scripts
+for s in wifi-menu wifi-connect ryoku-wifi-editor; do
+    if [ -e "$HOME/.local/bin/$s" ]; then
+        cp -af "$HOME/.local/bin/$s" "$DOTFILES_DIR/scripts/system/"
+    fi
+done
 
 # 9. Sao lưu Fonts, Icons, Themes, Wallpapers, Desktop files, Shaders
 echo "==> [8/9] Sao lưu Fonts, Icons, Themes, Wallpapers, Desktop files, Shaders..."

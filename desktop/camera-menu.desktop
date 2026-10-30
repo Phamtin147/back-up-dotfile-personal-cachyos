@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Camera Soi Mạch (Microscope Selector)
+Comment=Menu TUI chọn và mở camera soi mạch USB / Webcam
+Exec=/home/amtia/.local/bin/camera-menu
+Icon=camera-web
+Terminal=false
+Type=Application
+Categories=Utility;AudioVideo;Video;
+Keywords=camera;microscope;soi mach;usb;webcam;

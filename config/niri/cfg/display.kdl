@@ -1,17 +1,15 @@
 // ────────────── Output Configuration ──────────────
-// Xem thêm tại: https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
-
-output "eDP-1" {
-    mode "2560x1600@165.004" 
-    scale 1.75
-    position x=0 y=0
-    
-    // Xoay màn hình (normal, 90, 180, 270, flipped-90, v.v.)
-    // transform "normal"
-}
+// Tự động lưu từ niri msg outputs / Displays app
+// Xem thêm: https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
 
 output "DP-4" {
     mode "1920x1200@59.998"
-    scale 1.3
-    position x=0 y=915
+    scale 1.5
+    position x=0 y=0
+}
+
+output "eDP-1" {
+    mode "2560x1600@165.004"
+    scale 2.05
+    position x=1280 y=0
 }

@@ -1,0 +1,392 @@
+#!/usr/bin/env python3
+import curses
+import subprocess
+import os
+import sys
+import json
+import glob
+import re
+
+def hex_to_rgb(hex_str):
+    try:
+        hex_str = hex_str.strip().lstrip("#")
+        if len(hex_str) == 6:
+            return tuple(int(hex_str[i:i+2], 16) for i in (0, 2, 4))
+        elif len(hex_str) == 3:
+            return tuple(int(c * 2, 16) for c in hex_str)
+    except Exception:
+        pass
+    return None
+
+def relative_luminance(r, g, b):
+    def channel_lum(c):
+        c = c / 255.0
+        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+    return 0.2126 * channel_lum(r) + 0.7152 * channel_lum(g) + 0.0722 * channel_lum(b)
+
+def contrast_ratio(rgb1, rgb2):
+    l1 = relative_luminance(*rgb1)
+    l2 = relative_luminance(*rgb2)
+    lighter = max(l1, l2)
+    darker = min(l1, l2)
+    return (lighter + 0.05) / (darker + 0.05)
+
+def get_contrasting_fg(bg_rgb, candidate_fg_rgb=None):
+    if candidate_fg_rgb and contrast_ratio(bg_rgb, candidate_fg_rgb) >= 4.5:
+        return candidate_fg_rgb
+    black = (17, 17, 17)
+    white = (255, 255, 255)
+    return black if contrast_ratio(bg_rgb, black) >= contrast_ratio(bg_rgb, white) else white
+
+def load_system_theme():
+    home = os.path.expanduser("~")
+    for cpath in [os.path.join(home, ".config/noctalia/colors.json"),
+                  os.path.join(home, ".cache/ryoku/colors.json")]:
+        if os.path.isfile(cpath):
+            try:
+                with open(cpath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    bg_hex = data.get("mPrimary")
+                    fg_hex = data.get("mOnPrimary")
+                    if bg_hex:
+                        bg_rgb = hex_to_rgb(bg_hex)
+                        fg_rgb = hex_to_rgb(fg_hex) if fg_hex else None
+                        if bg_rgb:
+                            return bg_rgb, get_contrasting_fg(bg_rgb, fg_rgb)
+            except Exception:
+                pass
+
+    kitty_conf = os.path.join(home, ".config/kitty/kitty.conf")
+    if os.path.isfile(kitty_conf):
+        try:
+            sel_bg, sel_fg, col4 = None, None, None
+            with open(kitty_conf, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("selection_background"):
+                        parts = line.split()
+                        if len(parts) >= 2: sel_bg = hex_to_rgb(parts[1])
+                    elif line.startswith("selection_foreground"):
+                        parts = line.split()
+                        if len(parts) >= 2: sel_fg = hex_to_rgb(parts[1])
+                    elif line.startswith("color4"):
+                        parts = line.split()
+                        if len(parts) >= 2: col4 = hex_to_rgb(parts[1])
+            bg_rgb = sel_bg or col4
+            if bg_rgb:
+                return bg_rgb, get_contrasting_fg(bg_rgb, sel_fg)
+        except Exception:
+            pass
+
+    return (66, 133, 244), (255, 255, 255)
+
+def setup_theme_colors():
+    if not curses.has_colors():
+        return
+    try:
+        curses.start_color()
+        curses.use_default_colors()
+    except Exception:
+        pass
+
+    bg_rgb, fg_rgb = load_system_theme()
+
+    try:
+        curses.init_pair(2, curses.COLOR_GREEN, -1)   # Active / Selected status
+        curses.init_pair(3, curses.COLOR_CYAN, -1)    # Device node
+        curses.init_pair(4, curses.COLOR_YELLOW, -1)  # Tag / Type
+        curses.init_pair(5, curses.COLOR_MAGENTA, -1) # Highlight
+    except Exception:
+        pass
+
+    if curses.can_change_color():
+        try:
+            curses.init_color(20, int(bg_rgb[0] * 1000 / 255),
+                                  int(bg_rgb[1] * 1000 / 255),
+                                  int(bg_rgb[2] * 1000 / 255))
+            curses.init_color(21, int(fg_rgb[0] * 1000 / 255),
+                                  int(fg_rgb[1] * 1000 / 255),
+                                  int(fg_rgb[2] * 1000 / 255))
+            curses.init_pair(1, 21, 20)
+            return
+        except Exception:
+            pass
+
+    try:
+        black = (0, 0, 0)
+        white = (255, 255, 255)
+        ansi_fg = curses.COLOR_BLACK if contrast_ratio(bg_rgb, black) >= contrast_ratio(bg_rgb, white) else curses.COLOR_WHITE
+        curses.init_pair(1, ansi_fg, curses.COLOR_BLUE)
+    except Exception:
+        pass
+
+def safe_curs_set(vis):
+    try:
+        curses.curs_set(vis)
+    except Exception:
+        pass
+
+def safe_addstr(win, y, x, text, attr=0):
+    try:
+        max_y, max_x = win.getmaxyx()
+        if y < 0 or y >= max_y or x < 0 or x >= max_x:
+            return
+        avail = max_x - x
+        if y == max_y - 1:
+            avail = max(0, avail - 1)
+        if avail <= 0:
+            return
+        win.addstr(y, x, text[:avail], attr)
+    except Exception:
+        pass
+
+def scan_camera_devices():
+    devices = []
+    seen_nodes = set()
+    try:
+        out = subprocess.check_output(['v4l2-ctl', '--list-devices'], text=True, stderr=subprocess.DEVNULL)
+        blocks = out.strip().split('\n\n')
+        for block in blocks:
+            lines = [l.strip() for l in block.split('\n') if l.strip()]
+            if not lines:
+                continue
+            header = lines[0].rstrip(':')
+            nodes = [l for l in lines[1:] if l.startswith('/dev/video')]
+            if not nodes:
+                continue
+            main_node = nodes[0]
+            if main_node in seen_nodes:
+                continue
+            seen_nodes.add(main_node)
+
+            sysnode = os.path.basename(main_node)
+            syspath = f'/sys/class/video4linux/{sysnode}'
+            usb_name = header
+            is_microscope = False
+            
+            if os.path.exists(syspath):
+                cur = os.path.realpath(syspath)
+                id_v, id_p = None, None
+                while cur != '/':
+                    vf = os.path.join(cur, 'idVendor')
+                    pf = os.path.join(cur, 'idProduct')
+                    if os.path.exists(vf) and os.path.exists(pf):
+                        id_v = open(vf).read().strip()
+                        id_p = open(pf).read().strip()
+                        break
+                    cur = os.path.dirname(cur)
+                if id_v and id_p:
+                    try:
+                        lsout = subprocess.check_output(['lsusb', '-d', f'{id_v}:{id_p}'], text=True, stderr=subprocess.DEVNULL).strip()
+                        if 'ID ' in lsout:
+                            usb_desc = lsout.split(f'{id_v}:{id_p}', 1)[1].strip()
+                            if usb_desc:
+                                usb_name = usb_desc
+                    except Exception:
+                        pass
+
+            lower_name = (usb_name + " " + header).lower()
+            if any(k in lower_name for k in ['microscope', 'soi', 'magnifier', 'inspect']):
+                dev_type = "🔬 MICROSCOPE (SOI MẠCH)"
+                is_microscope = True
+            elif 'integrated' in lower_name or 'internal' in lower_name:
+                dev_type = "📷 LAPTOP WEBCAM"
+            else:
+                # Default USB camera
+                dev_type = "🔬 USB CAMERA"
+
+            res_str = "640x480 @ 30fps"
+            try:
+                fmt_out = subprocess.check_output(['v4l2-ctl', '-d', main_node, '--list-formats-ext'], text=True, stderr=subprocess.DEVNULL)
+                sizes = re.findall(r'Size:\s+Discrete\s+(\d+x\d+)', fmt_out)
+                fps_matches = re.findall(r'\(([0-9.]+)\s+fps\)', fmt_out)
+                max_fps = fps_matches[0] if fps_matches else '30'
+                if sizes:
+                    def res_key(s):
+                        w, h = map(int, s.split('x'))
+                        return w * h
+                    best_res = max(sizes, key=res_key)
+                    res_str = f"{best_res} @ {float(max_fps):.0f}fps"
+            except Exception:
+                pass
+
+            devices.append({
+                'node': main_node,
+                'name': usb_name,
+                'header': header,
+                'type': dev_type,
+                'is_microscope': is_microscope,
+                'resolution': res_str
+            })
+    except Exception:
+        pass
+
+    # Sort so Microscope / external USB cams appear first
+    devices.sort(key=lambda d: (0 if d['is_microscope'] else (1 if 'USB' in d['type'] else 2)))
+    return devices
+
+def launch_mpv(node, dev_name, low_latency=True, ontop=True, custom_input=True):
+    conf_path = os.path.expanduser("~/.config/mpv/microscope-input.conf")
+    cmd = [
+        "mpv",
+        f"av://v4l2:{node}",
+        f"--title=Camera Soi Mạch [{dev_name}]",
+        f"--screenshot-directory={os.path.expanduser('~/Pictures')}"
+    ]
+    if low_latency:
+        cmd.extend(["--profile=low-latency", "--untimed"])
+    if ontop:
+        cmd.append("--ontop")
+    if custom_input and os.path.exists(conf_path):
+        cmd.append(f"--input-conf={conf_path}")
+
+    # Launch detached in background
+    subprocess.Popen(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+        start_new_session=True
+    )
+
+def launch_guvcview(node):
+    subprocess.Popen(
+        ["guvcview", "-d", node],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        stdin=subprocess.DEVNULL,
+        start_new_session=True
+    )
+
+def tui_main(stdscr):
+    safe_curs_set(0)
+    stdscr.keypad(True)
+    stdscr.timeout(1000)
+
+    setup_theme_colors()
+
+    devices = scan_camera_devices()
+    selected_idx = 0
+    opt_low_latency = True
+    opt_ontop = True
+    opt_custom_keys = True
+    status_msg = "Sẵn sàng"
+
+    while True:
+        h, w = stdscr.getmaxyx()
+        stdscr.clear()
+        stdscr.box()
+
+        # Header Title
+        title = " USB Camera & Microscope Selector (Kính Soi Mạch) "
+        safe_addstr(stdscr, 0, max(2, (w - len(title)) // 2), title, curses.A_BOLD)
+
+        # Instructions / Hints
+        hint = "Chọn thiết bị soi mạch rồi nhấn Enter để mở trực tiếp qua MPV Low Latency"
+        safe_addstr(stdscr, 1, max(2, (w - len(hint)) // 2), hint, curses.A_DIM)
+        safe_addstr(stdscr, 2, 1, "─" * (w - 2))
+
+        # Table Column Headers
+        col_node_w = 14
+        col_type_w = 26
+        col_res_w = 18
+        col_name_w = max(20, w - (col_node_w + col_type_w + col_res_w + 8))
+
+        col_hdr = f" {'DEVICE':<{col_node_w}} {'TÊN THIẾT BỊ':<{col_name_w}} {'LOẠI':<{col_type_w}} {'ĐỘ PHÂN GIẢI':<{col_res_w}}"
+        safe_addstr(stdscr, 3, 2, col_hdr, curses.A_UNDERLINE | curses.A_BOLD)
+
+        # Device List
+        list_start_y = 5
+        if not devices:
+            safe_addstr(stdscr, list_start_y + 1, 4, "Không tìm thấy USB Camera nào. Cắm lại thiết bị rồi bấm 'r' để quét lại.", curses.A_BOLD)
+        else:
+            if selected_idx >= len(devices):
+                selected_idx = len(devices) - 1
+            if selected_idx < 0:
+                selected_idx = 0
+
+            for idx, dev in enumerate(devices):
+                y = list_start_y + idx * 2
+                is_sel = (idx == selected_idx)
+
+                node_disp = f"[{dev['node']}]"
+                name_disp = dev['name'][:col_name_w-1]
+                type_disp = dev['type'][:col_type_w-1]
+                res_disp = dev['resolution'][:col_res_w-1]
+
+                prefix = "▶ " if is_sel else "  "
+                row_str = f"{prefix}{node_disp:<{col_node_w-2}} {name_disp:<{col_name_w}} {type_disp:<{col_type_w}} {res_disp:<{col_res_w}}"
+                row_str = row_str[:w-4].ljust(w-4)
+
+                if is_sel:
+                    safe_addstr(stdscr, y, 2, row_str, curses.color_pair(1) | curses.A_BOLD)
+                else:
+                    safe_addstr(stdscr, y, 2, row_str)
+
+        # Options Box
+        opt_y = h - 7
+        safe_addstr(stdscr, opt_y, 1, "─" * (w - 2))
+        safe_addstr(stdscr, opt_y + 1, 3, "Tùy chọn hiển thị (bấm phím tắt để bật/tắt):", curses.A_BOLD)
+
+        t1 = f"[L] Low-latency: {'BẬT' if opt_low_latency else 'TẮT'}"
+        t2 = f"[T] Luôn trên cùng: {'BẬT' if opt_ontop else 'TẮT'}"
+        t3 = f"[Z] Zoom phím tắt: {'BẬT' if opt_custom_keys else 'TẮT'}"
+        safe_addstr(stdscr, opt_y + 2, 5, f"• {t1}    • {t2}    • {t3}", curses.A_NORMAL)
+
+        # Status Line
+        status_bar = f" Trạng thái: {status_msg} "
+        safe_addstr(stdscr, h - 3, 3, status_bar, curses.color_pair(2) | curses.A_BOLD)
+
+        # Keybinding footer
+        keys_str = "< Enter: Mở >  < Space: Mở & giữ menu >  < g: Guvcview GTK >  < r: Quét lại >  < q: Thoát >"
+        safe_addstr(stdscr, h - 1, max(2, (w - len(keys_str)) // 2), keys_str, curses.A_DIM)
+
+        stdscr.refresh()
+
+        try:
+            ch = stdscr.getch()
+        except KeyboardInterrupt:
+            break
+
+        if ch in (27, ord('q'), ord('Q')):
+            break
+        elif ch in (curses.KEY_UP, ord('k'), ord('K')):
+            if devices:
+                selected_idx = (selected_idx - 1) % len(devices)
+        elif ch in (curses.KEY_DOWN, ord('j'), ord('J')):
+            if devices:
+                selected_idx = (selected_idx + 1) % len(devices)
+        elif ch in (ord('l'), ord('L')):
+            opt_low_latency = not opt_low_latency
+            status_msg = f"Low Latency: {'BẬT' if opt_low_latency else 'TẮT'}"
+        elif ch in (ord('t'), ord('T')):
+            opt_ontop = not opt_ontop
+            status_msg = f"Always On Top: {'BẬT' if opt_ontop else 'TẮT'}"
+        elif ch in (ord('z'), ord('Z')):
+            opt_custom_keys = not opt_custom_keys
+            status_msg = f"Custom Keys: {'BẬT' if opt_custom_keys else 'TẮT'}"
+        elif ch in (ord('r'), ord('R')):
+            status_msg = "Đang quét lại thiết bị USB..."
+            devices = scan_camera_devices()
+            status_msg = f"Tìm thấy {len(devices)} thiết bị camera"
+        elif ch in (ord('g'), ord('G')):
+            if devices:
+                target = devices[selected_idx]
+                launch_guvcview(target['node'])
+                status_msg = f"Đã mở Guvcview cho {target['node']}"
+        elif ch == ord(' '):
+            if devices:
+                target = devices[selected_idx]
+                launch_mpv(target['node'], target['name'], opt_low_latency, opt_ontop, opt_custom_keys)
+                status_msg = f"Đang chạy: {target['name']} ({target['node']})"
+        elif ch in (curses.KEY_ENTER, 10, 13):
+            if devices:
+                target = devices[selected_idx]
+                launch_mpv(target['node'], target['name'], opt_low_latency, opt_ontop, opt_custom_keys)
+                break
+
+if __name__ == "__main__":
+    try:
+        curses.wrapper(tui_main)
+    except Exception as e:
+        print("Lỗi:", e)

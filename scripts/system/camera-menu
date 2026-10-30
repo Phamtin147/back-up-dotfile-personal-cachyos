@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+if [ -t 0 ] && [ -t 1 ]; then
+    exec /home/amtia/.local/bin/camera-selector "$@"
+fi
+
+if command -v alacritty >/dev/null 2>&1; then
+    exec alacritty --title "Camera & Microscope Selector" -o window.dimensions.columns=88 -o window.dimensions.lines=24 -e /home/amtia/.local/bin/camera-selector "$@"
+elif command -v kitty >/dev/null 2>&1; then
+    exec kitty --title "Camera & Microscope Selector" -o initial_window_width=88c -o initial_window_height=24c /home/amtia/.local/bin/camera-selector "$@"
+else
+    exec /home/amtia/.local/bin/camera-selector "$@"
+fi
