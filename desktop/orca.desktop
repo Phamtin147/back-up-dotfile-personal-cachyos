@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Orca
+Comment=Run a fleet of coding agents (Claude Code, etc.)
+Exec=/home/amtia/Applications/orca.AppImage --no-sandbox %U
+Icon=/home/amtia/.local/share/icons/orca.png
+Terminal=false
+Type=Application
+Categories=Development;IDE;
+StartupWMClass=Orca

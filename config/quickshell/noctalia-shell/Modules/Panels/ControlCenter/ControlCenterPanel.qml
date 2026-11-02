@@ -89,51 +89,61 @@ SmartPanel {
   panelContent: Item {
     id: panelContent
 
-    ColumnLayout {
-      id: layout
-      x: Style.marginL
-      y: Style.marginL
-      width: parent.width - Style.margin2L
-      spacing: Style.marginL
+    NScrollView {
+      id: scrollView
+      anchors.fill: parent
+      anchors.margins: Style.marginL
+      clip: true
+      horizontalPolicy: ScrollBar.AlwaysOff
+      verticalPolicy: ScrollBar.AsNeeded
+      contentWidth: availableWidth
+      reserveScrollbarSpace: false
+      gradientColor: Color.mSurface
 
-      Repeater {
-        model: Settings.data.controlCenter.cards
-        Loader {
-          active: modelData.enabled && (modelData.id !== "weather-card" || Settings.data.location.weatherEnabled)
-          visible: active
-          Layout.fillWidth: true
-          Layout.preferredHeight: {
-            switch (modelData.id) {
-            case "profile-card":
-              return profileHeight;
-            case "shortcuts-card":
-              return shortcutsHeight;
-            case "audio-card":
-              return audioHeight;
-            case "brightness-card":
-              return brightnessHeight;
-            case "weather-card":
-              return weatherHeight;
-            case "media-sysmon-card":
-              return mediaSysMonHeight;
-            default:
-              return 0;
+      ColumnLayout {
+        id: layout
+        width: scrollView.availableWidth
+        spacing: Style.marginL
+
+        Repeater {
+          model: Settings.data.controlCenter.cards
+          Loader {
+            active: modelData.enabled && (modelData.id !== "weather-card" || Settings.data.location.weatherEnabled)
+            visible: active
+            Layout.fillWidth: true
+            Layout.preferredHeight: {
+              switch (modelData.id) {
+              case "profile-card":
+                return profileHeight;
+              case "shortcuts-card":
+                return shortcutsHeight;
+              case "audio-card":
+                return audioHeight;
+              case "brightness-card":
+                return brightnessHeight;
+              case "weather-card":
+                return weatherHeight;
+              case "media-sysmon-card":
+                return mediaSysMonHeight;
+              default:
+                return 0;
+              }
             }
-          }
-          sourceComponent: {
-            switch (modelData.id) {
-            case "profile-card":
-              return profileCard;
-            case "shortcuts-card":
-              return shortcutsCard;
-            case "audio-card":
-              return audioCard;
-            case "brightness-card":
-              return brightnessCard;
-            case "weather-card":
-              return weatherCard;
-            case "media-sysmon-card":
-              return mediaSysMonCard;
+            sourceComponent: {
+              switch (modelData.id) {
+              case "profile-card":
+                return profileCard;
+              case "shortcuts-card":
+                return shortcutsCard;
+              case "audio-card":
+                return audioCard;
+              case "brightness-card":
+                return brightnessCard;
+              case "weather-card":
+                return weatherCard;
+              case "media-sysmon-card":
+                return mediaSysMonCard;
+              }
             }
           }
         }

@@ -8,6 +8,7 @@ envycontrol
 game-devices-udev
 geforcenow-electron-bin
 google-chrome
+graphify-bin
 legionaura
 libtiff5
 mariadb-jdbc

@@ -491,7 +491,7 @@
         "passwordChars": true,
         "radiusRatio": 1,
         "reverseScroll": false,
-        "scaleRatio": 1,
+        "scaleRatio": 0.88,
         "screenRadiusRatio": 1,
         "shadowDirection": "bottom",
         "shadowOffsetX": 0,
@@ -764,6 +764,174 @@
         "enableMultiMonitorDirectories": false,
         "enabled": true,
         "favorites": [
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#dec29e",
+                    "#d3c4b3",
+                    "#c4caa6",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/walls-main/anime/a_computer_generated_image_of_a_machine.png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#dec39a",
+                    "#d3c4b1",
+                    "#c2cba4",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/walls-main/abstract/a_painting_of_a_man_with_a_dripping_face.jpg",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#c2c6d1",
+                    "#c6c6cb",
+                    "#d0c2ce",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/walls-main/abstract/a_woman_with_long_hair_wearing_sunglasses.png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#d9c3a8",
+                    "#d1c5b7",
+                    "#c4c9af",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/walls-main/abstract/a_painting_of_a_man_with_a_face_on_his_head.png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#f8ba87",
+                    "#e2c0a8",
+                    "#c8cb86",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/walls-main/aerial/a_cup_of_coffee_with_foam.jpg",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#ffb4ac",
+                    "#ffb4ac",
+                    "#ffb86c",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/walls-main/anime/a_cartoon_of_a_girl_with_blue_hair_and_a_skull.jpg",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#ccc7b0",
+                    "#cac6bb",
+                    "#c0c9ba",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/Background YoRHa 1440p.png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#ccc7b0",
+                    "#cac6bb",
+                    "#c0c9ba",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/wallhaven-jeyg2w.png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#dbb9ed",
+                    "#d2c0d6",
+                    "#f3b3cf",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/wallhaven-5y3711.jpg",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#d5c59e",
+                    "#cfc6b3",
+                    "#becbab",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/wallhaven-1qg66v.png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#d1c4b9",
+                    "#cdc5bf",
+                    "#c7c7bb",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/1Background YoRHa 1440p(dark).png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#ccc7b0",
+                    "#cac6bb",
+                    "#c0c9bb",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/1Background YoRHa 1440p.png",
+                "useWallpaperColors": true
+            }
         ],
         "fillColor": "#000000",
         "fillMode": "crop",

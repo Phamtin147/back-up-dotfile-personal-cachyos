@@ -4,9 +4,9 @@
 */
 
 :root {
-    --accent-color: #d5c59e;
-    --accent-bg-color: #d5c59e; 
-    --accent-fg-color: #393013;
+    --accent-color: #ffb4ac;
+    --accent-bg-color: #ffb4ac; 
+    --accent-fg-color: #690007;
 
     --destructive-bg-color: #ffb4ab;
     --destructive-fg-color: #690005;
@@ -15,40 +15,40 @@
     --error-fg-color: #690005;
     --error-color: #ffb4ab;
 
-    --window-bg-color: #151311;
-    --window-fg-color: #e7e2dd;
+    --window-bg-color: #200f0d;
+    --window-fg-color: #fedbd7;
 
-    --view-bg-color: #151311;
-    --view-fg-color: #e7e2dd;
+    --view-bg-color: #200f0d;
+    --view-fg-color: #fedbd7;
 
-    --headerbar-bg-color: #151311;
-    --headerbar-fg-color: #e7e2dd;
-    --headerbar-backdrop-color: #151311;
+    --headerbar-bg-color: #200f0d;
+    --headerbar-fg-color: #fedbd7;
+    --headerbar-backdrop-color: #200f0d;
 
-    --popover-bg-color: #211f1d;
-    --popover-fg-color: #e7e2dd;
+    --popover-bg-color: #2e1b19;
+    --popover-fg-color: #fedbd7;
 
-    --card-bg-color: #211f1d;
-    --card-fg-color: #e7e2dd;
+    --card-bg-color: #2e1b19;
+    --card-fg-color: #fedbd7;
 
-    --dialog-bg-color: #151311;
-    --dialog-fg-color: #e7e2dd;
+    --dialog-bg-color: #200f0d;
+    --dialog-fg-color: #fedbd7;
 
-    --overview-bg-color: #211f1d;
-    --overview-fg-color: #e7e2dd;
+    --overview-bg-color: #2e1b19;
+    --overview-fg-color: #fedbd7;
 
-    --sidebar-bg-color: #211f1d;
-    --sidebar-fg-color: #e7e2dd;
-    --sidebar-backdrop-color: #151311;
-    --sidebar-border-color: #151311;
+    --sidebar-bg-color: #2e1b19;
+    --sidebar-fg-color: #fedbd7;
+    --sidebar-backdrop-color: #200f0d;
+    --sidebar-border-color: #200f0d;
 
-    --warning-bg-color: #3f4a32;
-    --warning-fg-color: #dae7c6;
-    --warning-color: #becbab;
+    --warning-bg-color: #683d00;
+    --warning-fg-color: #ffdcbc;
+    --warning-color: #ffb86c;
 
-    --success-color: #cfc6b3;
-    --success-bg-color: #4c4638;
-    --success-fg-color: #ebe2ce;
+    --success-color: #ffb4ac;
+    --success-bg-color: #8c1617;
+    --success-fg-color: #ffdad6;
     
     --shade-color: rgba(0, 0, 0, 0.36);
 }

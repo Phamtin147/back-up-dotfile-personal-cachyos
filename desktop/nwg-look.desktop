@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=GTK Settings (nwg-look)
+GenericName=Adjust Look and Feel
+Comment=Customizes GTK3 look and feel settings with Niri auto-sync
+Keywords=windows;preferences;settings;theme;style;appearance;look;
+Icon=nwg-look
+Exec=/home/amtia/.local/bin/nwg-look
+NotShowIn=GNOME;KDE;XFCE;MATE;
+StartupNotify=true
+Categories=GTK;Settings;DesktopSettings;
