@@ -2,6 +2,6 @@
   "refreshInterval": 5000,
   "iconColor": "none",
   "statusState": "all",
-  "activeColor": "primary",
-  "inactiveColor": "error"
+  "activeColor": "error",
+  "inactiveColor": "none"
 }

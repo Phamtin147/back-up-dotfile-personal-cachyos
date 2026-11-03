@@ -2,12 +2,6 @@
 // Tự động lưu từ niri msg outputs / Displays app
 // Xem thêm: https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
 
-output "DP-4" {
-    mode "1920x1200@59.998"
-    scale 1.5
-    position x=0 y=0
-}
-
 output "eDP-1" {
     mode "2560x1600@165.004"
     scale 2.05

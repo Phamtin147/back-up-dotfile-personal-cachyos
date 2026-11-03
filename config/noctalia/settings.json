@@ -249,7 +249,7 @@
         ]
     },
     "colorSchemes": {
-        "darkMode": true,
+        "darkMode": false,
         "generationMethod": "content",
         "manualSunrise": "06:30",
         "manualSunset": "18:30",
@@ -450,7 +450,7 @@
         "enableLockScreenCountdown": true,
         "enableLockScreenMediaControls": true,
         "enableShadows": true,
-        "forceBlackScreenCorners": false,
+        "forceBlackScreenCorners": true,
         "iRadiusRatio": 1,
         "keybinds": {
             "keyDown": [
@@ -492,13 +492,13 @@
         "radiusRatio": 1,
         "reverseScroll": false,
         "scaleRatio": 0.88,
-        "screenRadiusRatio": 1,
+        "screenRadiusRatio": 0.1,
         "shadowDirection": "bottom",
         "shadowOffsetX": 0,
         "shadowOffsetY": 3,
         "showChangelogOnStartup": true,
         "showHibernateOnLockScreen": true,
-        "showScreenCorners": false,
+        "showScreenCorners": true,
         "showSessionButtonsOnLockScreen": true,
         "smoothScrollEnabled": true,
         "telemetryEnabled": false
@@ -810,10 +810,10 @@
                 "darkMode": true,
                 "generationMethod": "content",
                 "paletteColors": [
-                    "#c2c6d1",
-                    "#c6c6cb",
-                    "#d0c2ce",
-                    "#ffb4ab"
+                    "#5a5f68",
+                    "#5d5e62",
+                    "#665b65",
+                    "#ba1a1a"
                 ],
                 "path": "/home/amtia/Pictures/Wallpapers/walls-main/abstract/a_woman_with_long_hair_wearing_sunglasses.png",
                 "useWallpaperColors": true
@@ -894,9 +894,9 @@
                 "darkMode": true,
                 "generationMethod": "content",
                 "paletteColors": [
-                    "#dbb9ed",
-                    "#d2c0d6",
-                    "#f3b3cf",
+                    "#fdb5ac",
+                    "#e3beb9",
+                    "#ebbf83",
                     "#ffb4ab"
                 ],
                 "path": "/home/amtia/Pictures/Wallpapers/wallhaven-5y3711.jpg",

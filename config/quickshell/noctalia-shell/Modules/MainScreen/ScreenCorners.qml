@@ -12,6 +12,7 @@ Item {
   id: root
 
   anchors.fill: parent
+  z: 9999
 
   // Wrapper with layer caching to reduce GPU tessellation overhead
   Item {
