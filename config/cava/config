@@ -1,0 +1,13 @@
+[general]
+framerate = 60
+autosens = 1
+
+[input]
+method = pulse
+source = auto
+
+[output]
+method = noncurses
+
+[color]
+theme = "noctalia"

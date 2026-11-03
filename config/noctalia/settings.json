@@ -740,6 +740,18 @@
             {
                 "enabled": true,
                 "id": "zenBrowser"
+            },
+            {
+                "enabled": true,
+                "id": "btop"
+            },
+            {
+                "enabled": true,
+                "id": "cava"
+            },
+            {
+                "enabled": true,
+                "id": "telegram"
             }
         ],
         "enableUserTheming": true
