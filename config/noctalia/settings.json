@@ -492,7 +492,7 @@
         "radiusRatio": 1,
         "reverseScroll": false,
         "scaleRatio": 0.88,
-        "screenRadiusRatio": 0.1,
+        "screenRadiusRatio": 0.3,
         "shadowDirection": "bottom",
         "shadowOffsetX": 0,
         "shadowOffsetY": 3,
