@@ -30,3 +30,9 @@ export NODE_TLS_REJECT_UNAUTHORIZED=0
 
 export ANDROID_HOME="$HOME/Android/Sdk"
 export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools"
+export PATH="$PATH:$HOME/.pub-cache/bin:$HOME/flutter/bin"
+
+# Lenovo Legion Fan Shortcuts
+alias fan-max='sudo /home/amtia/.local/bin/legion_cli maximumfanspeed-enable'
+alias fan-auto='sudo /home/amtia/.local/bin/legion_cli maximumfanspeed-disable'
+alias fan-status='sudo /home/amtia/.local/bin/legion_cli maximumfanspeed-status'
