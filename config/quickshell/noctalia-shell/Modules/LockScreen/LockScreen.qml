@@ -171,10 +171,11 @@ Loader {
                 opacity: lockContentWrapper.contentOpacity
                 z: -50
 
-                layer.enabled: lockContentWrapper.usePerlinShader
+                layer.enabled: lockContentWrapper.useGpuShader
                 layer.effect: ShaderEffect {
                   property real progress: lockContentWrapper.shaderProgress
-                  fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/lock_perlin.frag.qsb")
+                  property int effectType: lockContentWrapper.activeShaderId
+                  fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/lock_master.frag.qsb")
                 }
               }
 
@@ -224,15 +225,17 @@ Loader {
                 property real translateYVal: 0.0
                 property real crtFlashOpacity: 0.0
                 property real shaderProgress: 1.0
-                property bool usePerlinShader: false
+                property int activeShaderId: 0
+                property bool useGpuShader: false
                 property bool isClosing: false
 
                 opacity: lockContentWrapper.contentOpacity
 
-                layer.enabled: usePerlinShader
+                layer.enabled: useGpuShader
                 layer.effect: ShaderEffect {
                   property real progress: lockContentWrapper.shaderProgress
-                  fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/lock_perlin.frag.qsb")
+                  property int effectType: lockContentWrapper.activeShaderId
+                  fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/lock_master.frag.qsb")
                 }
 
                 transform: [
@@ -496,10 +499,10 @@ Loader {
                   ScriptAction { script: lockContentWrapper.finishUnlock() }
                 }
 
-                // ── EFFECT 5: Perlin Noise Dissolve (Native GPU Fragment Shader) ──
+                // ── EFFECT 5: Native Master GPU Fragment Shader (Reverse Engineered from Niri) ──
                 ParallelAnimation {
-                  id: perlinEnterAnim
-                  PropertyAction { target: lockContentWrapper; property: "usePerlinShader"; value: true }
+                  id: gpuEnterAnim
+                  PropertyAction { target: lockContentWrapper; property: "useGpuShader"; value: true }
                   PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 1.0 }
                   PropertyAction { target: lockContentWrapper; property: "shaderProgress"; value: 0.0 }
                   NumberAnimation {
@@ -513,8 +516,8 @@ Loader {
                 }
 
                 SequentialAnimation {
-                  id: perlinExitAnim
-                  PropertyAction { target: lockContentWrapper; property: "usePerlinShader"; value: true }
+                  id: gpuExitAnim
+                  PropertyAction { target: lockContentWrapper; property: "useGpuShader"; value: true }
                   NumberAnimation {
                     target: lockContentWrapper
                     property: "shaderProgress"
@@ -525,6 +528,9 @@ Loader {
                   }
                   ScriptAction { script: lockContentWrapper.finishUnlock() }
                 }
+
+                readonly property alias perlinEnterAnim: gpuEnterAnim
+                readonly property alias perlinExitAnim: gpuExitAnim
 
                 // ── EFFECT 6: Circle / Polar / Flyeye ────────────────────
                 ParallelAnimation {
@@ -804,7 +810,7 @@ Loader {
                 }
 
                 function resetProperties() {
-                  lockContentWrapper.usePerlinShader = false;
+                  lockContentWrapper.useGpuShader = false;
                   lockContentWrapper.shaderProgress = 1.0;
                   lockContentWrapper.scaleXVal = 1.0;
                   lockContentWrapper.scaleYVal = 1.0;
@@ -814,7 +820,63 @@ Loader {
                   if (overexposureOverlay) overexposureOverlay.opacity = 0.0;
                 }
 
-                function getActiveCategory() {
+                function getShaderIdForEffect(name) {
+                  name = (name || "").toLowerCase().trim();
+                  switch (name) {
+                    case "perlin":
+                    case "heat-melt":
+                    case "plasma-flow":
+                      return 0; // Perlin 2D Noise
+                    case "circle":
+                      return 1; // Circle Iris
+                    case "polar-function":
+                      return 2; // Polar 5-segment Flower
+                    case "glitch":
+                    case "static-fade":
+                      return 3; // Glitch RGB Chromatic Aberration & Slice
+                    case "pixelate":
+                    case "pixelfade-wave":
+                      return 4; // Pixelate Wave
+                    case "randomsquares":
+                      return 5; // Random Squares
+                    case "dissolve":
+                    case "smoke":
+                      return 6; // FBM Smoke / Dissolve
+                    case "ripple":
+                      return 7; // Ripple wave
+                    case "flyeye":
+                      return 8; // Flyeye lens
+                    case "overexposure":
+                    case "fadecolor":
+                    case "colour-distance":
+                    case "crazy-parametric":
+                      return 9; // Overexposure Bloom
+                    case "directional":
+                    case "directional-wipe":
+                      return 10; // Directional Slide
+                    case "voronoi-shatter":
+                      return 11; // Voronoi Shatter
+                    case "wave-warp":
+                    case "glass-warp":
+                    case "soft-warp-fade":
+                      return 12; // Wave Warp
+                    case "polka-dots-curtain":
+                    case "ink-splash":
+                    case "inkwell-drop":
+                      return 13; // Polka Dots / Droplet
+                    case "bounce":
+                    case "snap":
+                      return 14; // Bounce Wave
+                    case "crosshatch":
+                    case "crosswarp":
+                    case "morph":
+                    case "fade":
+                    default:
+                      return 15; // Smooth Fade
+                  }
+                }
+
+                function getActiveShaderName() {
                   let eff = "";
                   if (shaderStateWatcher && typeof shaderStateWatcher.text === "function") {
                     try {
@@ -825,73 +887,40 @@ Loader {
                   if (!eff && root.currentEffect) {
                     eff = root.currentEffect.trim();
                   }
-                  eff = (eff || "fade").toLowerCase();
-
-                  if (eff === "crt-tv") return "crt";
-                  if (eff === "bounce" || eff === "snap") return "bounce";
-                  if (eff === "glitch" || eff === "static-fade" || eff === "voronoi-shatter") return "glitch";
-                  if (eff === "perlin" || eff === "smoke" || eff === "plasma-flow" || eff === "heat-melt" || eff === "wave-warp") return "perlin";
-                  if (eff === "circle" || eff === "polar-function" || eff === "flyeye") return "circle";
-                  if (eff === "directional" || eff === "directional-wipe") return "directional";
-                  if (eff === "ink-splash" || eff === "inkwell-drop" || eff === "ripple" || eff === "polka-dots-curtain") return "ripple";
-                  if (eff === "pixelate" || eff === "pixelfade-wave" || eff === "randomsquares" || eff === "dissolve") return "pixel";
-                  if (eff === "overexposure" || eff === "fadecolor" || eff === "colour-distance" || eff === "crazy-parametric") return "overexposure";
-                  return "fade";
+                  return (eff || "fade").toLowerCase();
                 }
 
                 // Trigger entrance animation based on current active effect
                 function startEnter() {
                   resetProperties();
-                  const cat = getActiveCategory();
-                  Logger.i("LockScreen", "Starting enter animation for category:", cat, "(raw effect:", root.currentEffect, ")");
-                  if (cat === "crt") {
+                  const eff = getActiveShaderName();
+                  Logger.i("LockScreen", "Starting enter animation for shader:", eff);
+
+                  // Keep classic CRT-TV animation intact as requested
+                  if (eff === "crt-tv") {
                     crtEnterAnim.start();
-                  } else if (cat === "bounce") {
-                    bounceEnterAnim.start();
-                  } else if (cat === "glitch") {
-                    glitchEnterAnim.start();
-                  } else if (cat === "perlin") {
-                    perlinEnterAnim.start();
-                  } else if (cat === "circle") {
-                    circleEnterAnim.start();
-                  } else if (cat === "directional") {
-                    directionalEnterAnim.start();
-                  } else if (cat === "ripple") {
-                    rippleEnterAnim.start();
-                  } else if (cat === "pixel") {
-                    pixelEnterAnim.start();
-                  } else if (cat === "overexposure") {
-                    overexposureEnterAnim.start();
-                  } else {
-                    fadeEnterAnim.start();
+                    return;
                   }
+
+                  // All other 33 shaders run on reverse-engineered hardware GPU shader
+                  lockContentWrapper.activeShaderId = getShaderIdForEffect(eff);
+                  gpuEnterAnim.start();
                 }
 
                 function startUnlock() {
                   isClosing = true;
-                  const cat = getActiveCategory();
-                  Logger.i("LockScreen", "Starting exit animation for category:", cat);
-                  if (cat === "crt") {
+                  const eff = getActiveShaderName();
+                  Logger.i("LockScreen", "Starting exit animation for shader:", eff);
+
+                  // Keep classic CRT-TV animation intact as requested
+                  if (eff === "crt-tv") {
                     crtExitAnim.start();
-                  } else if (cat === "bounce") {
-                    bounceExitAnim.start();
-                  } else if (cat === "glitch") {
-                    glitchExitAnim.start();
-                  } else if (cat === "perlin") {
-                    perlinExitAnim.start();
-                  } else if (cat === "circle") {
-                    circleExitAnim.start();
-                  } else if (cat === "directional") {
-                    directionalExitAnim.start();
-                  } else if (cat === "ripple") {
-                    rippleExitAnim.start();
-                  } else if (cat === "pixel") {
-                    pixelExitAnim.start();
-                  } else if (cat === "overexposure") {
-                    overexposureExitAnim.start();
-                  } else {
-                    fadeExitAnim.start();
+                    return;
                   }
+
+                  // All other shaders run on reverse-engineered hardware GPU shader
+                  lockContentWrapper.activeShaderId = getShaderIdForEffect(eff);
+                  gpuExitAnim.start();
                 }
 
                 Component.onCompleted: {
