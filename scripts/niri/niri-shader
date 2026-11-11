@@ -92,6 +92,7 @@ ANIMEOF
     niri msg action load-config-file 2>/dev/null || true
     echo "$EFFECT" > "$STATE_FILE"
     echo "$EFFECT" > "$TMP_STATE" 2>/dev/null || true
+    qs -c noctalia-shell ipc call lockScreen setShader "$EFFECT" 2>/dev/null || true
     echo "Current: $EFFECT"
 }
 

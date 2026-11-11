@@ -249,7 +249,7 @@
         ]
     },
     "colorSchemes": {
-        "darkMode": false,
+        "darkMode": true,
         "generationMethod": "content",
         "manualSunrise": "06:30",
         "manualSunset": "18:30",
@@ -810,10 +810,10 @@
                 "darkMode": true,
                 "generationMethod": "content",
                 "paletteColors": [
-                    "#5a5f68",
-                    "#5d5e62",
-                    "#665b65",
-                    "#ba1a1a"
+                    "#c2c6d1",
+                    "#c6c6cb",
+                    "#d0c2ce",
+                    "#ffb4ab"
                 ],
                 "path": "/home/amtia/Pictures/Wallpapers/walls-main/abstract/a_woman_with_long_hair_wearing_sunglasses.png",
                 "useWallpaperColors": true
@@ -880,9 +880,9 @@
                 "darkMode": true,
                 "generationMethod": "content",
                 "paletteColors": [
-                    "#ccc7b0",
-                    "#cac6bb",
-                    "#c0c9ba",
+                    "#d3bbff",
+                    "#cec1df",
+                    "#f6b1e4",
                     "#ffb4ab"
                 ],
                 "path": "/home/amtia/Pictures/Wallpapers/wallhaven-jeyg2w.png",

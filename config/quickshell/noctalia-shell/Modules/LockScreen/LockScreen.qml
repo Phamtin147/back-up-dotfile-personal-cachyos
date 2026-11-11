@@ -17,10 +17,33 @@ Loader {
   id: root
   active: false
 
+  property string currentEffect: "overexposure"
+
+  FileView {
+    id: shaderStateWatcher
+    path: Quickshell.env("HOME") + "/shaders/.current"
+    watchChanges: true
+    printErrors: false
+    onLoaded: {
+      var e = text() ? text().trim() : "";
+      if (e) root.currentEffect = e;
+    }
+    onFileChanged: {
+      var e = text() ? text().trim() : "";
+      if (e) root.currentEffect = e;
+    }
+  }
+
   // Track if the visualizer should be shown (lockscreen active + media playing + non-compact mode)
   readonly property bool needsSpectrum: root.active && !Settings.data.general.compactLockScreen && Settings.data.audio.visualizerType !== "" && Settings.data.audio.visualizerType !== "none"
 
   onActiveChanged: {
+    if (root.active) {
+      if (shaderStateWatcher && typeof shaderStateWatcher.reload === "function") {
+        try { shaderStateWatcher.reload(); } catch(e) {}
+      }
+    }
+
     if (root.active && root.needsSpectrum) {
       SpectrumService.registerComponent("lockscreen");
     } else {
@@ -141,26 +164,76 @@ Loader {
                 property string currentLayout: KeyboardLayoutService.currentLayout
               }
 
-              // 2. Background with wallpaper, blur, gradient - always solid
+              // 2. Background with wallpaper, blur, gradient - synchronized with lock animation
               LockScreenBackground {
                 id: backgroundComponent
                 screen: lockSurface.screen
+                opacity: lockContentWrapper.contentOpacity
                 z: -50
+
+                layer.enabled: lockContentWrapper.usePerlinShader
+                layer.effect: ShaderEffect {
+                  property real progress: lockContentWrapper.shaderProgress
+                  fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/lock_perlin.frag.qsb")
+                }
               }
 
-              // 3. Animated Widgets Wrapper with Pure CRT-TV Turn-On / Turn-Off
+              // Overexposure Flash Overlay
+              Rectangle {
+                id: overexposureOverlay
+                anchors.fill: parent
+                color: "#ffffff"
+                opacity: 0.0
+                visible: opacity > 0.005
+                z: 998
+              }
+
+              // CRT Beam Line Overlay
+              Rectangle {
+                id: crtLineBeam
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width * lockContentWrapper.scaleXVal
+                height: 3
+                color: "#ffffff"
+                opacity: lockContentWrapper.crtFlashOpacity
+                visible: opacity > 0.05
+                z: 999
+              }
+
+              // CRT Phosphor Flash Overlay
+              Rectangle {
+                id: crtFlashOverlay
+                anchors.fill: parent
+                color: "#ffffff"
+                opacity: lockContentWrapper.crtFlashOpacity * 0.45
+                visible: opacity > 0.01
+                z: 997
+              }
+
+              // 3. Animated Widgets Wrapper (Dynamic based on active niri-shader effect)
               Item {
                 id: lockContentWrapper
                 anchors.fill: parent
                 z: 10
 
-                property real scaleXVal: 0.005
-                property real scaleYVal: 0.01
                 property real contentOpacity: 0.0
+                property real scaleXVal: 1.0
+                property real scaleYVal: 1.0
+                property real translateXVal: 0.0
+                property real translateYVal: 0.0
                 property real crtFlashOpacity: 0.0
+                property real shaderProgress: 1.0
+                property bool usePerlinShader: false
                 property bool isClosing: false
 
                 opacity: lockContentWrapper.contentOpacity
+
+                layer.enabled: usePerlinShader
+                layer.effect: ShaderEffect {
+                  property real progress: lockContentWrapper.shaderProgress
+                  fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/lock_perlin.frag.qsb")
+                }
 
                 transform: [
                   Scale {
@@ -168,39 +241,90 @@ Loader {
                     origin.y: lockContentWrapper.height / 2
                     xScale: lockContentWrapper.scaleXVal
                     yScale: lockContentWrapper.scaleYVal
+                  },
+                  Translate {
+                    x: lockContentWrapper.translateXVal
+                    y: lockContentWrapper.translateYVal
                   }
                 ]
 
-                // CRT Phosphor Flash Overlay
-                Rectangle {
-                  anchors.fill: parent
-                  color: "#ffffff"
-                  opacity: lockContentWrapper.crtFlashOpacity * 0.45
-                  visible: opacity > 0.01
-                  z: 998
+                function finishUnlock() {
+                  lockSession.locked = false;
+                  root.active = false;
+                  lockContentWrapper.isClosing = false;
                 }
 
-                // CRT Horizontal Line Beam
-                Rectangle {
-                  anchors.horizontalCenter: parent.horizontalCenter
-                  anchors.verticalCenter: parent.verticalCenter
-                  width: parent.width * lockContentWrapper.scaleXVal
-                  height: 3
-                  color: "#ffffff"
-                  visible: lockContentWrapper.crtFlashOpacity > 0.05
-                  opacity: lockContentWrapper.crtFlashOpacity
-                  z: 999
+                // ── EFFECT 1: Overexposure / Bloom ─────────────────────
+                ParallelAnimation {
+                  id: overexposureEnterAnim
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "contentOpacity"
+                    from: 0.0
+                    to: 1.0
+                    duration: 500
+                    easing.type: Easing.OutCubic
+                  }
+                  SequentialAnimation {
+                    NumberAnimation {
+                      target: overexposureOverlay
+                      property: "opacity"
+                      from: 0.0
+                      to: 0.45
+                      duration: 200
+                      easing.type: Easing.OutQuad
+                    }
+                    NumberAnimation {
+                      target: overexposureOverlay
+                      property: "opacity"
+                      from: 0.45
+                      to: 0.0
+                      duration: 300
+                      easing.type: Easing.OutCubic
+                    }
+                  }
                 }
 
-                // CRT-TV Entrance Animation (Turn ON)
+                SequentialAnimation {
+                  id: overexposureExitAnim
+                  ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "contentOpacity"
+                      from: 1.0
+                      to: 0.0
+                      duration: 500
+                      easing.type: Easing.OutCubic
+                    }
+                    SequentialAnimation {
+                      NumberAnimation {
+                        target: overexposureOverlay
+                        property: "opacity"
+                        from: 0.0
+                        to: 0.40
+                        duration: 180
+                        easing.type: Easing.OutQuad
+                      }
+                      NumberAnimation {
+                        target: overexposureOverlay
+                        property: "opacity"
+                        from: 0.40
+                        to: 0.0
+                        duration: 320
+                        easing.type: Easing.InQuad
+                      }
+                    }
+                  }
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                // ── EFFECT 2: CRT-TV ─────────────────────────────────────
                 SequentialAnimation {
                   id: crtEnterAnim
                   PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 1.0 }
                   PropertyAction { target: lockContentWrapper; property: "scaleXVal"; value: 0.005 }
                   PropertyAction { target: lockContentWrapper; property: "scaleYVal"; value: 0.01 }
                   PropertyAction { target: lockContentWrapper; property: "crtFlashOpacity"; value: 0.9 }
-
-                  // Stage 1: Expand horizontal ray (220ms)
                   NumberAnimation {
                     target: lockContentWrapper
                     property: "scaleXVal"
@@ -209,7 +333,6 @@ Loader {
                     duration: 220
                     easing.type: Easing.OutQuad
                   }
-                  // Stage 2: Expand vertical height into full screen (300ms)
                   ParallelAnimation {
                     NumberAnimation {
                       target: lockContentWrapper
@@ -230,10 +353,8 @@ Loader {
                   }
                 }
 
-                // CRT-TV Exit Animation (Turn OFF)
                 SequentialAnimation {
                   id: crtExitAnim
-                  // Stage 1: Collapse vertical height into a thin beam (230ms)
                   ParallelAnimation {
                     NumberAnimation {
                       target: lockContentWrapper
@@ -252,7 +373,6 @@ Loader {
                       easing.type: Easing.InQuad
                     }
                   }
-                  // Stage 2: Collapse horizontal beam into a dot & fade out (180ms)
                   ParallelAnimation {
                     NumberAnimation {
                       target: lockContentWrapper
@@ -272,12 +392,505 @@ Loader {
                     }
                   }
                   PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.0 }
-                  ScriptAction {
-                    script: {
-                      lockSession.locked = false;
-                      root.active = false;
-                      lockContentWrapper.isClosing = false;
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                // ── EFFECT 3: Bounce / Snap ──────────────────────────────
+                ParallelAnimation {
+                  id: bounceEnterAnim
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "contentOpacity"
+                    from: 0.0
+                    to: 1.0
+                    duration: 350
+                    easing.type: Easing.OutCubic
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "scaleXVal"
+                    from: 0.82
+                    to: 1.0
+                    duration: 520
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 1.35
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "scaleYVal"
+                    from: 0.82
+                    to: 1.0
+                    duration: 520
+                    easing.type: Easing.OutBack
+                    easing.overshoot: 1.35
+                  }
+                }
+
+                SequentialAnimation {
+                  id: bounceExitAnim
+                  ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "contentOpacity"
+                      from: 1.0
+                      to: 0.0
+                      duration: 320
+                      easing.type: Easing.InQuad
                     }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleXVal"
+                      from: 1.0
+                      to: 0.80
+                      duration: 320
+                      easing.type: Easing.InBack
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleYVal"
+                      from: 1.0
+                      to: 0.80
+                      duration: 320
+                      easing.type: Easing.InBack
+                    }
+                  }
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                // ── EFFECT 4: Glitch / Static / Voronoi ──────────────────
+                SequentialAnimation {
+                  id: glitchEnterAnim
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.8 }
+                  PropertyAction { target: lockContentWrapper; property: "translateXVal"; value: 8 }
+                  PauseAnimation { duration: 50 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.2 }
+                  PropertyAction { target: lockContentWrapper; property: "translateXVal"; value: -6 }
+                  PropertyAction { target: lockContentWrapper; property: "translateYVal"; value: 4 }
+                  PauseAnimation { duration: 40 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.95 }
+                  PropertyAction { target: lockContentWrapper; property: "translateXVal"; value: 4 }
+                  PropertyAction { target: lockContentWrapper; property: "translateYVal"; value: -2 }
+                  PauseAnimation { duration: 50 }
+                  PropertyAction { target: lockContentWrapper; property: "translateXVal"; value: 0 }
+                  PropertyAction { target: lockContentWrapper; property: "translateYVal"; value: 0 }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "contentOpacity"
+                    from: 0.95
+                    to: 1.0
+                    duration: 120
+                    easing.type: Easing.OutQuad
+                  }
+                }
+
+                SequentialAnimation {
+                  id: glitchExitAnim
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.4 }
+                  PropertyAction { target: lockContentWrapper; property: "translateXVal"; value: -8 }
+                  PauseAnimation { duration: 40 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.85 }
+                  PropertyAction { target: lockContentWrapper; property: "translateXVal"; value: 6 }
+                  PauseAnimation { duration: 40 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.0 }
+                  PropertyAction { target: lockContentWrapper; property: "translateXVal"; value: 0 }
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                // ── EFFECT 5: Perlin Noise Dissolve (Native GPU Fragment Shader) ──
+                ParallelAnimation {
+                  id: perlinEnterAnim
+                  PropertyAction { target: lockContentWrapper; property: "usePerlinShader"; value: true }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 1.0 }
+                  PropertyAction { target: lockContentWrapper; property: "shaderProgress"; value: 0.0 }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "shaderProgress"
+                    from: 0.0
+                    to: 1.0
+                    duration: 500
+                    easing.type: Easing.OutCubic
+                  }
+                }
+
+                SequentialAnimation {
+                  id: perlinExitAnim
+                  PropertyAction { target: lockContentWrapper; property: "usePerlinShader"; value: true }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "shaderProgress"
+                    from: 1.0
+                    to: 0.0
+                    duration: 450
+                    easing.type: Easing.OutCubic
+                  }
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                // ── EFFECT 6: Circle / Polar / Flyeye ────────────────────
+                ParallelAnimation {
+                  id: circleEnterAnim
+                  PropertyAction { target: lockContentWrapper; property: "scaleXVal"; value: 0.35 }
+                  PropertyAction { target: lockContentWrapper; property: "scaleYVal"; value: 0.35 }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "scaleXVal"
+                    from: 0.35
+                    to: 1.0
+                    duration: 480
+                    easing.type: Easing.OutExpo
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "scaleYVal"
+                    from: 0.35
+                    to: 1.0
+                    duration: 480
+                    easing.type: Easing.OutExpo
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "contentOpacity"
+                    from: 0.0
+                    to: 1.0
+                    duration: 400
+                    easing.type: Easing.OutQuad
+                  }
+                }
+
+                SequentialAnimation {
+                  id: circleExitAnim
+                  ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleXVal"
+                      from: 1.0
+                      to: 0.30
+                      duration: 350
+                      easing.type: Easing.InExpo
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleYVal"
+                      from: 1.0
+                      to: 0.30
+                      duration: 350
+                      easing.type: Easing.InExpo
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "contentOpacity"
+                      from: 1.0
+                      to: 0.0
+                      duration: 320
+                      easing.type: Easing.InQuad
+                    }
+                  }
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                // ── EFFECT 7: Directional / Slide ────────────────────────
+                ParallelAnimation {
+                  id: directionalEnterAnim
+                  PropertyAction { target: lockContentWrapper; property: "translateYVal"; value: -70 }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "translateYVal"
+                    from: -70
+                    to: 0
+                    duration: 450
+                    easing.type: Easing.OutCubic
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "contentOpacity"
+                    from: 0.0
+                    to: 1.0
+                    duration: 400
+                    easing.type: Easing.OutQuad
+                  }
+                }
+
+                SequentialAnimation {
+                  id: directionalExitAnim
+                  ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "translateYVal"
+                      from: 0
+                      to: 70
+                      duration: 350
+                      easing.type: Easing.InCubic
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "contentOpacity"
+                      from: 1.0
+                      to: 0.0
+                      duration: 320
+                      easing.type: Easing.InQuad
+                    }
+                  }
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                // ── EFFECT 8: Ripple / Ink-splash / Droplet ──────────────
+                ParallelAnimation {
+                  id: rippleEnterAnim
+                  PropertyAction { target: lockContentWrapper; property: "scaleXVal"; value: 0.75 }
+                  PropertyAction { target: lockContentWrapper; property: "scaleYVal"; value: 0.75 }
+                  SequentialAnimation {
+                    ParallelAnimation {
+                      NumberAnimation {
+                        target: lockContentWrapper
+                        property: "scaleXVal"
+                        from: 0.75
+                        to: 1.04
+                        duration: 300
+                        easing.type: Easing.OutQuad
+                      }
+                      NumberAnimation {
+                        target: lockContentWrapper
+                        property: "scaleYVal"
+                        from: 0.75
+                        to: 1.04
+                        duration: 300
+                        easing.type: Easing.OutQuad
+                      }
+                    }
+                    ParallelAnimation {
+                      NumberAnimation {
+                        target: lockContentWrapper
+                        property: "scaleXVal"
+                        from: 1.04
+                        to: 1.0
+                        duration: 180
+                        easing.type: Easing.InOutQuad
+                      }
+                      NumberAnimation {
+                        target: lockContentWrapper
+                        property: "scaleYVal"
+                        from: 1.04
+                        to: 1.0
+                        duration: 180
+                        easing.type: Easing.InOutQuad
+                      }
+                    }
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "contentOpacity"
+                    from: 0.0
+                    to: 1.0
+                    duration: 350
+                    easing.type: Easing.OutQuad
+                  }
+                }
+
+                SequentialAnimation {
+                  id: rippleExitAnim
+                  ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleXVal"
+                      from: 1.0
+                      to: 0.70
+                      duration: 350
+                      easing.type: Easing.InQuad
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleYVal"
+                      from: 1.0
+                      to: 0.70
+                      duration: 350
+                      easing.type: Easing.InQuad
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "contentOpacity"
+                      from: 1.0
+                      to: 0.0
+                      duration: 320
+                      easing.type: Easing.InQuad
+                    }
+                  }
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                // ── EFFECT 9: Pixel / Quantized Dissolve ─────────────────
+                SequentialAnimation {
+                  id: pixelEnterAnim
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.0 }
+                  PauseAnimation { duration: 40 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.22 }
+                  PauseAnimation { duration: 60 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.48 }
+                  PauseAnimation { duration: 60 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.75 }
+                  PauseAnimation { duration: 60 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 1.0 }
+                }
+
+                SequentialAnimation {
+                  id: pixelExitAnim
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.75 }
+                  PauseAnimation { duration: 50 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.45 }
+                  PauseAnimation { duration: 50 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.15 }
+                  PauseAnimation { duration: 40 }
+                  PropertyAction { target: lockContentWrapper; property: "contentOpacity"; value: 0.0 }
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                // ── EFFECT 10: Smooth Fade (Default fallback) ────────────
+                ParallelAnimation {
+                  id: fadeEnterAnim
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "contentOpacity"
+                    from: 0.0
+                    to: 1.0
+                    duration: 450
+                    easing.type: Easing.OutCubic
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "scaleXVal"
+                    from: 0.96
+                    to: 1.0
+                    duration: 450
+                    easing.type: Easing.OutCubic
+                  }
+                  NumberAnimation {
+                    target: lockContentWrapper
+                    property: "scaleYVal"
+                    from: 0.96
+                    to: 1.0
+                    duration: 450
+                    easing.type: Easing.OutCubic
+                  }
+                }
+
+                SequentialAnimation {
+                  id: fadeExitAnim
+                  ParallelAnimation {
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "contentOpacity"
+                      from: 1.0
+                      to: 0.0
+                      duration: 400
+                      easing.type: Easing.OutCubic
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleXVal"
+                      from: 1.0
+                      to: 0.96
+                      duration: 400
+                      easing.type: Easing.OutCubic
+                    }
+                    NumberAnimation {
+                      target: lockContentWrapper
+                      property: "scaleYVal"
+                      from: 1.0
+                      to: 0.96
+                      duration: 400
+                      easing.type: Easing.OutCubic
+                    }
+                  }
+                  ScriptAction { script: lockContentWrapper.finishUnlock() }
+                }
+
+                function resetProperties() {
+                  lockContentWrapper.usePerlinShader = false;
+                  lockContentWrapper.shaderProgress = 1.0;
+                  lockContentWrapper.scaleXVal = 1.0;
+                  lockContentWrapper.scaleYVal = 1.0;
+                  lockContentWrapper.translateXVal = 0.0;
+                  lockContentWrapper.translateYVal = 0.0;
+                  lockContentWrapper.crtFlashOpacity = 0.0;
+                  if (overexposureOverlay) overexposureOverlay.opacity = 0.0;
+                }
+
+                function getActiveCategory() {
+                  let eff = "";
+                  if (shaderStateWatcher && typeof shaderStateWatcher.text === "function") {
+                    try {
+                      let t = shaderStateWatcher.text();
+                      if (t && t.trim()) eff = t.trim();
+                    } catch(e) {}
+                  }
+                  if (!eff && root.currentEffect) {
+                    eff = root.currentEffect.trim();
+                  }
+                  eff = (eff || "fade").toLowerCase();
+
+                  if (eff === "crt-tv") return "crt";
+                  if (eff === "bounce" || eff === "snap") return "bounce";
+                  if (eff === "glitch" || eff === "static-fade" || eff === "voronoi-shatter") return "glitch";
+                  if (eff === "perlin" || eff === "smoke" || eff === "plasma-flow" || eff === "heat-melt" || eff === "wave-warp") return "perlin";
+                  if (eff === "circle" || eff === "polar-function" || eff === "flyeye") return "circle";
+                  if (eff === "directional" || eff === "directional-wipe") return "directional";
+                  if (eff === "ink-splash" || eff === "inkwell-drop" || eff === "ripple" || eff === "polka-dots-curtain") return "ripple";
+                  if (eff === "pixelate" || eff === "pixelfade-wave" || eff === "randomsquares" || eff === "dissolve") return "pixel";
+                  if (eff === "overexposure" || eff === "fadecolor" || eff === "colour-distance" || eff === "crazy-parametric") return "overexposure";
+                  return "fade";
+                }
+
+                // Trigger entrance animation based on current active effect
+                function startEnter() {
+                  resetProperties();
+                  const cat = getActiveCategory();
+                  Logger.i("LockScreen", "Starting enter animation for category:", cat, "(raw effect:", root.currentEffect, ")");
+                  if (cat === "crt") {
+                    crtEnterAnim.start();
+                  } else if (cat === "bounce") {
+                    bounceEnterAnim.start();
+                  } else if (cat === "glitch") {
+                    glitchEnterAnim.start();
+                  } else if (cat === "perlin") {
+                    perlinEnterAnim.start();
+                  } else if (cat === "circle") {
+                    circleEnterAnim.start();
+                  } else if (cat === "directional") {
+                    directionalEnterAnim.start();
+                  } else if (cat === "ripple") {
+                    rippleEnterAnim.start();
+                  } else if (cat === "pixel") {
+                    pixelEnterAnim.start();
+                  } else if (cat === "overexposure") {
+                    overexposureEnterAnim.start();
+                  } else {
+                    fadeEnterAnim.start();
+                  }
+                }
+
+                function startUnlock() {
+                  isClosing = true;
+                  const cat = getActiveCategory();
+                  Logger.i("LockScreen", "Starting exit animation for category:", cat);
+                  if (cat === "crt") {
+                    crtExitAnim.start();
+                  } else if (cat === "bounce") {
+                    bounceExitAnim.start();
+                  } else if (cat === "glitch") {
+                    glitchExitAnim.start();
+                  } else if (cat === "perlin") {
+                    perlinExitAnim.start();
+                  } else if (cat === "circle") {
+                    circleExitAnim.start();
+                  } else if (cat === "directional") {
+                    directionalExitAnim.start();
+                  } else if (cat === "ripple") {
+                    rippleExitAnim.start();
+                  } else if (cat === "pixel") {
+                    pixelExitAnim.start();
+                  } else if (cat === "overexposure") {
+                    overexposureExitAnim.start();
+                  } else {
+                    fadeExitAnim.start();
                   }
                 }
 
@@ -285,7 +898,7 @@ Loader {
                   if (lockContainer.activeWrappers) {
                     lockContainer.activeWrappers.push(this);
                   }
-                  crtEnterAnim.start();
+                  startEnter();
                 }
 
                 Component.onDestruction: {
@@ -295,11 +908,6 @@ Loader {
                       lockContainer.activeWrappers.splice(idx, 1);
                     }
                   }
-                }
-
-                function startUnlock() {
-                  isClosing = true;
-                  crtExitAnim.start();
                 }
 
                 // Mouse area to trigger focus on cursor movement

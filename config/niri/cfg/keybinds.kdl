@@ -130,12 +130,12 @@ binds {
     MOD+W                               { toggle-column-tabbed-display; }
 
     // --- Screenshots ---
-    Print                               { screenshot; }
-    MOD+S                               { screenshot; }
-    ALT+S                               { screenshot; }
+    Print                               { screenshot show-pointer=false; }
+    MOD+S                               { screenshot show-pointer=false; }
+    ALT+S                               { screenshot show-pointer=false; }
 
-    CTRL+SHIFT+2                        { screenshot-screen; }
-    CTRL+SHIFT+3                        { screenshot-window; }
+    CTRL+SHIFT+2                        { screenshot-screen show-pointer=false; }
+    CTRL+SHIFT+3                        { screenshot-window show-pointer=false; }
 
 // shortcuts for the apps
     MOD+M                               hotkey-overlay-title="Duplicate Screen" { spawn "sh" "-c" "wl-mirror $(niri msg --json focused-output | jq -r .name)"; }
