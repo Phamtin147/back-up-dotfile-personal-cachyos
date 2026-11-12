@@ -10,6 +10,7 @@ echo "==> Bắt đầu sao lưu toàn bộ cấu hình máy vào: $DOTFILES_DIR"
 # 1. Dọn dẹp thư mục trùng lặp cũ
 rm -rf "$DOTFILES_DIR/.config"
 rm -f "$DOTFILES_DIR/config/antigravity-css-preload.js\""
+rm -rf "$DOTFILES_DIR/config/fcitx/dbus"
 
 # 2. Xuất danh sách phần mềm (Packages)
 echo "==> [1/9] Xuất danh sách gói phần mềm..."
@@ -235,7 +236,11 @@ echo "==> [9/9] Đã hoàn tất Full Backup 100%!"
 echo "==> [10/10] Sao lưu cấu hình hệ thống (/etc)..."
 mkdir -p "$DOTFILES_DIR/system/etc/ly" \
          "$DOTFILES_DIR/system/etc/modules-load.d" \
-         "$DOTFILES_DIR/system/etc/alsa-card-profile"
+         "$DOTFILES_DIR/system/etc/alsa-card-profile" \
+         "$DOTFILES_DIR/system/etc/systemd"
+if [ -f "/etc/systemd/zram-generator.conf" ]; then
+    cp -af /etc/systemd/zram-generator.conf "$DOTFILES_DIR/system/etc/systemd/" 2>/dev/null || true
+fi
 if [ -d "/etc/ly" ]; then
     cp -afr /etc/ly/* "$DOTFILES_DIR/system/etc/ly/" 2>/dev/null || true
 fi

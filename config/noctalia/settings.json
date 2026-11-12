@@ -943,6 +943,90 @@
                 ],
                 "path": "/home/amtia/Pictures/Wallpapers/1Background YoRHa 1440p.png",
                 "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#ffb4a5",
+                    "#e5beb5",
+                    "#c7cb87",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/wallhaven-yqwmp7.png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#f1baa1",
+                    "#ddc1b4",
+                    "#c8ca98",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/wallhaven-jer55w.png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#ffb599",
+                    "#e7beaf",
+                    "#c7cb83",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/wallhaven-yqwmmg.jpg",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#feb1c7",
+                    "#e4bcc6",
+                    "#ffb786",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/wallhaven-lyrmmy.jpg",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#ffb3b6",
+                    "#ffb3b6",
+                    "#ffb783",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/wallhaven-mlrqdm.png",
+                "useWallpaperColors": true
+            },
+            {
+                "appearance": "dark",
+                "colorScheme": "Tokyo Night Storm",
+                "darkMode": true,
+                "generationMethod": "content",
+                "paletteColors": [
+                    "#ffb68b",
+                    "#ecbda2",
+                    "#cacc6d",
+                    "#ffb4ab"
+                ],
+                "path": "/home/amtia/Pictures/Wallpapers/wallhaven-e865qw.png",
+                "useWallpaperColors": true
             }
         ],
         "fillColor": "#000000",
@@ -974,7 +1058,7 @@
         "useOriginalImages": true,
         "useSolidColor": false,
         "useWallhaven": false,
-        "viewMode": "recursive",
+        "viewMode": "single",
         "wallhavenApiKey": "",
         "wallhavenCategories": "111",
         "wallhavenOrder": "desc",

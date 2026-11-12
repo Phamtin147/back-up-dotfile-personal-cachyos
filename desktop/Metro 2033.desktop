@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Metro 2033
+Comment=Play this game on Steam
+Exec=steam steam://rungameid/43110
+Icon=steam_icon_43110
+Terminal=false
+Type=Application
+Categories=Game;

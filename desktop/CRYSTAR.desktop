@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=CRYSTAR
+Comment=Play this game on Steam
+Exec=steam steam://rungameid/981750
+Icon=steam_icon_981750
+Terminal=false
+Type=Application
+Categories=Game;

@@ -126,6 +126,7 @@ binds {
     MOD+T                               { toggle-window-floating; }
     MOD+G                               hotkey-overlay-title="Toggle Sticky Window" { spawn "niri-float-sticky" "-ipc" "toggle_sticky"; }
     MOD+SHIFT+F                         { fullscreen-window; }
+    F11                                 hotkey-overlay-title="Toggle Fullscreen" { fullscreen-window; }
     MOD+F                               { maximize-column; }
     MOD+W                               { toggle-column-tabbed-display; }
 

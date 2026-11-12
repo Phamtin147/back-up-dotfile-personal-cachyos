@@ -7,12 +7,6 @@
     }
 
     window-rule {
-        match app-id="^steam_app_"
-        geometry-corner-radius 3
-        clip-to-geometry true
-    }
-
-    window-rule {
         match is-active=false
         focus-ring {
             on
